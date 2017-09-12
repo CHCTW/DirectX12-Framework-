@@ -19,7 +19,7 @@ A framework for learning DirectX12 and demonstrate graphics techniques
 9. Model Loading : Use assimp to load and draw obj file
 10. Gamma Correction : Test for gamma correction
 11. Skybox : Test TextureCube
-12. Root Constants : Drw four triangles with four draw call and use root constant to decide the position and color
+12. Root Constants : Draw four triangles with four draw call and use root constant to decide the position and color
 
 
 ### 2. Graphics Techniques: Projects in this part is for demostaring some graphcis techniques(lighting, deffered shading...)
@@ -29,4 +29,4 @@ Shadow Map : Use one simple shadow map to demostrate the shadow for spot light
 OmniDirection Shadow Map : use cube mapping to demostrate the shadow for point light
 
 ### 3. Direcx12 Framework : This project is included by all the Unitests and Graphics Techniques. It is the core of this framework. It only generate lib file.
-### 3. Graphics Utility : This project is included by part Unitests and Graphics Techniques. It contains some helper structer like spot light, Transform, Camera.... It only generate lib file.
+### 4. Graphics Utility : This project is included by part Unitests and Graphics Techniques. It contains some helper structer like spot light, Transform, Camera.... It only generate lib file.
