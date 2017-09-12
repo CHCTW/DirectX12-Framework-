@@ -1,0 +1,162 @@
+// stdafx.h : include file for standard system include files,
+// or project specific include files that are used frequently, but
+// are changed infrequently
+//
+
+#pragma once
+
+#include "targetver.h"
+#include <iostream>
+#include "d3dx12.h"
+//#pragma comment( lib,"dxgi")
+//#pragma comment( lib,"d3d12")
+//#pragma comment( lib,"d3dcompiler")
+using namespace std;
+#define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
+
+#define SAFE_RELEASE(p) { if ( (p) ) { (p)->Release(); (p) = 0; } }
+inline void ThrowIfFailed(HRESULT hr)
+{
+	if (FAILED(hr))
+	{
+		throw std::exception();
+	}
+}
+// TODO: reference additional headers your program requires here
+
+
+// Render configuration 
+static const unsigned int RTVHeapSize = 30;
+static const unsigned int MaxSubmitCommandList = 30;
+enum ViewType
+{
+	CBV,
+	SRV,
+	UAV,
+	RTV,
+	DSV,
+	VIEW_COUNT
+};
+enum BufferType
+{
+	NONE = 0,
+	VERTEX = 1,
+	INDEX = 2,
+	CONSTANT = 3,
+	STRUCTERED = 4,
+	STRUCTERED_COUNTER = 5
+};
+enum ParameterType
+{
+	PARAMETERTYPE_UNDEFINE,
+	PARAMETERTYPE_ROOTCONSTANT,
+	PARAMETERTYPE_CBV,
+	PARAMETERTYPE_SRV,
+	PARAMETERTYPE_UAV,
+	PARAMETERTYPE_SAMPLER
+};
+enum ShaderType
+{
+	VS,
+	PS,
+	CS,
+	GS,
+	DS,
+	HS,
+	SHADERTYPE_COUNT
+};
+enum IndexBufferFormat
+{
+	INDEX_BUFFER_FORMAT_32BIT,
+	INDEX_BUFFER_FORMAT_16BIT
+};
+typedef enum StructeredBufferType {
+	STRUCTERED_BUFFER_TYPE_READ = 1,
+	STRUCTERED_BUFFER_TYPE_READ_WRITE = 2,
+
+} StructeredBufferType;
+struct Handles
+{
+	CD3DX12_GPU_DESCRIPTOR_HANDLE Gpu;
+	CD3DX12_CPU_DESCRIPTOR_HANDLE Cpu;
+};
+enum VertexInputLayOutType
+{
+	VERTEX_LAYOUT_TYPE_NONE_SPLIT,
+	VERTEX_LAYOUT_TYPE_SPLIT_ALL
+
+};
+struct ClearValue
+{
+	union
+	{
+		FLOAT                     Color[4];
+		D3D12_DEPTH_STENCIL_VALUE DepthStencil;
+	};
+};
+struct RenderTargetFormat  // assume all render targt and depth buffer will need to create SRV 
+{
+
+
+
+	RenderTargetFormat() :mDepth(false), mNumofRenderTargets(1), mDepthStencilFormat(DXGI_FORMAT_R32_TYPELESS),
+		mRenderTargetflags(D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET), mDepthStencilflags(D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL), mCube(false)
+	{
+		mRenderTargetFormat[0] = DXGI_FORMAT_B8G8R8A8_UNORM;
+		mRenderTargetClearValue[0] = { 0.0,0.0,0.0,0.0 };
+		if (mDepth)
+		{
+			mDepthStencilClearValue.DepthStencil.Depth = 1.0f;
+		}
+	}
+
+	RenderTargetFormat(DXGI_FORMAT formatforrendertarget) :mDepth(false), mNumofRenderTargets(1), mDepthStencilFormat(DXGI_FORMAT_R32_TYPELESS),
+		mRenderTargetflags(D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET), mDepthStencilflags(D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL), mCube(false)
+	{
+		mRenderTargetFormat[0] = formatforrendertarget;
+		mRenderTargetClearValue[0] = { 0.0,0.0,0.0,0.0 };
+	}
+
+
+
+	RenderTargetFormat( bool depth) :mDepth(depth), mNumofRenderTargets(1), mDepthStencilFormat(DXGI_FORMAT_R32_TYPELESS),
+		mRenderTargetflags(D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET), mDepthStencilflags(D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL), mCube(false)
+	{
+		mRenderTargetFormat[0] = DXGI_FORMAT_B8G8R8A8_UNORM;
+		mRenderTargetClearValue[0] = { 0.0,0.0,0.0,0.0 };
+	}
+	RenderTargetFormat(UINT rendertargetnum, DXGI_FORMAT *renderTargetFormat, bool depth = false, bool cube = false, DXGI_FORMAT depthFormat = DXGI_FORMAT_R32_TYPELESS, D3D12_RESOURCE_FLAGS rendertargetflags = D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_FLAGS depthflags = D3D12_RESOURCE_FLAG_NONE)
+		:mDepth(depth), mNumofRenderTargets(rendertargetnum), mDepthStencilFormat(depthFormat),
+		mRenderTargetflags(D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET| rendertargetflags), mDepthStencilflags(D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL| depthflags), mCube(false)
+	{
+		for (unsigned int i = 0; i < rendertargetnum; ++i)
+		{
+			mRenderTargetFormat[i] = renderTargetFormat[i];
+			mRenderTargetClearValue[i] = { 0.0,0.0,0.0,0.0 };
+		}
+		if (mDepth)
+		{
+			mDepthStencilClearValue.DepthStencil.Depth = 1.0f;
+		}
+	}
+
+	bool mDepth;
+	bool mCube;
+	UINT mNumofRenderTargets;
+	DXGI_FORMAT mRenderTargetFormat[8];
+	DXGI_FORMAT mDepthStencilFormat;
+	D3D12_RESOURCE_FLAGS mRenderTargetflags;
+	D3D12_RESOURCE_FLAGS mDepthStencilflags;
+	ClearValue mRenderTargetClearValue[8];
+	ClearValue mDepthStencilClearValue;
+
+};
+
+const static char *Targetchars[SHADERTYPE_COUNT]
+{
+	"vs_5_0","ps_5_0","cs_5_0","gs_5_0","ds_5_0","hs_5_0"
+};
+static unsigned int HeapSizes[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES] = { 3000,10,30,30 };
+static unsigned int HeapOffset[VIEW_COUNT] = {0,1000,2000,0,0};
+static FLOAT DefaultBorderColor[4] = { 0.0,0.0,0.0,0.0 };
+static ClearValue DefaultClearValue= {};

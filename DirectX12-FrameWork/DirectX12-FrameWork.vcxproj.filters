@@ -1,0 +1,174 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Systems">
+      <UniqueIdentifier>{433448bb-3a65-49a1-b6da-46680193d7a8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Render">
+      <UniqueIdentifier>{4be1ff48-404b-44d7-ba8d-6e853d44037e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Render\Structers">
+      <UniqueIdentifier>{643b2513-ebc7-4d3b-8c97-eb462795ec30}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Render\Structers\Resource">
+      <UniqueIdentifier>{ed6b4006-f196-438d-a54c-e199e4642d91}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Render\RenderState">
+      <UniqueIdentifier>{7e1e0052-5b35-485a-b47e-6173753dfaad}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StructureHeaders.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Window.h">
+      <Filter>Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="Render.h">
+      <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="DescriptorHeap.h">
+      <Filter>Render\Structers</Filter>
+    </ClInclude>
+    <ClInclude Include="d3dx12.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CommandAllocator.h">
+      <Filter>Render\Structers</Filter>
+    </ClInclude>
+    <ClInclude Include="CommandList.h">
+      <Filter>Render\Structers</Filter>
+    </ClInclude>
+    <ClInclude Include="Fence.h">
+      <Filter>Render\Structers</Filter>
+    </ClInclude>
+    <ClInclude Include="Pipeline.h">
+      <Filter>Render\Structers</Filter>
+    </ClInclude>
+    <ClInclude Include="RootSignature.h">
+      <Filter>Render\Structers</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader.h">
+      <Filter>Render\Structers</Filter>
+    </ClInclude>
+    <ClInclude Include="Sampler.h">
+      <Filter>Render\Structers</Filter>
+    </ClInclude>
+    <ClInclude Include="Buffer.h">
+      <Filter>Render\Structers\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Render\Structers\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>Render\Structers\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderTarget.h">
+      <Filter>Render\Structers\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Scissor.h">
+      <Filter>Render\RenderState</Filter>
+    </ClInclude>
+    <ClInclude Include="ViewPort.h">
+      <Filter>Render\RenderState</Filter>
+    </ClInclude>
+    <ClInclude Include="DepthStencilState.h">
+      <Filter>Render\RenderState</Filter>
+    </ClInclude>
+    <ClInclude Include="BlendState.h">
+      <Filter>Render\RenderState</Filter>
+    </ClInclude>
+    <ClInclude Include="RasterizerState.h">
+      <Filter>Render\RenderState</Filter>
+    </ClInclude>
+    <ClInclude Include="CubeRenderTarget.h">
+      <Filter>Render\Structers\Resource</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Window.cpp">
+      <Filter>Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="Render.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="CommandAllocator.cpp">
+      <Filter>Render\Structers</Filter>
+    </ClCompile>
+    <ClCompile Include="CommandList.cpp">
+      <Filter>Render\Structers</Filter>
+    </ClCompile>
+    <ClCompile Include="Fence.cpp">
+      <Filter>Render\Structers</Filter>
+    </ClCompile>
+    <ClCompile Include="Pipeline.cpp">
+      <Filter>Render\Structers</Filter>
+    </ClCompile>
+    <ClCompile Include="RootSignature.cpp">
+      <Filter>Render\Structers</Filter>
+    </ClCompile>
+    <ClCompile Include="Shader.cpp">
+      <Filter>Render\Structers</Filter>
+    </ClCompile>
+    <ClCompile Include="Sampler.cpp">
+      <Filter>Render\Structers</Filter>
+    </ClCompile>
+    <ClCompile Include="DescriptorHeap.cpp">
+      <Filter>Render\Structers</Filter>
+    </ClCompile>
+    <ClCompile Include="Buffer.cpp">
+      <Filter>Render\Structers\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource.cpp">
+      <Filter>Render\Structers\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture.cpp">
+      <Filter>Render\Structers\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderTarget.cpp">
+      <Filter>Render\Structers\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Scissor.cpp">
+      <Filter>Render\RenderState</Filter>
+    </ClCompile>
+    <ClCompile Include="ViewPort.cpp">
+      <Filter>Render\RenderState</Filter>
+    </ClCompile>
+    <ClCompile Include="DepthStencilState.cpp">
+      <Filter>Render\RenderState</Filter>
+    </ClCompile>
+    <ClCompile Include="BlendState.cpp">
+      <Filter>Render\RenderState</Filter>
+    </ClCompile>
+    <ClCompile Include="RasterizerState.cpp">
+      <Filter>Render\RenderState</Filter>
+    </ClCompile>
+    <ClCompile Include="CubeRenderTarget.cpp">
+      <Filter>Render\Structers\Resource</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
