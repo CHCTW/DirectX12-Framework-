@@ -26,7 +26,10 @@ A framework for learning DirectX12 and demonstrate graphics techniques
 
 BRDF : Use Physics Basic Rendering to lit the scene and demostrate how different material looks like
 Shadow Map : Use one simple shadow map to demostrate the shadow for spot light
+![image](https://user-images.githubusercontent.com/30221942/30352344-4a35736c-97d4-11e7-8c1f-98f25c6e53c2.png)
+
 OmniDirection Shadow Map : use cube mapping to demostrate the shadow for point light
+![image](https://user-images.githubusercontent.com/30221942/30352408-8f94b22e-97d4-11e7-8b75-ea4108bdb5eb.png)
 
 ### 3. Direcx12 Framework : This project is included by all the Unitests and Graphics Techniques. It is the core of this framework. It only generate lib file.
 ### 4. Graphics Utility : This project is included by part Unitests and Graphics Techniques. It contains some helper structer like spot light, Transform, Camera.... It only generate lib file.
