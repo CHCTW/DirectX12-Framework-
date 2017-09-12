@@ -285,7 +285,7 @@ void loadAsset()
 	Ground.mBufferData[1].mMaterial.mMetallic = 0.8;
 
 	Ground.mPosition[2].setScale(50, 1, 50);
-	Ground.mPosition[2].setPosition(0, 50, 0);
+	Ground.mPosition[2].setPosition(0, 20, 0);
 	Ground.mPosition[2].CacNewTransform();
 	Ground.mBufferData[2].mMatrices = Ground.mPosition[2].getMatrices();
 	Ground.mBufferData[2].mMaterial.mAlbedo = glm::vec3(0.55, 0.55, 0.55);
