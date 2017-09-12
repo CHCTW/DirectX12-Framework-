@@ -2,6 +2,8 @@
 A framework for learning DirectX12 and demonstrate graphics techniques 
 ![image](https://user-images.githubusercontent.com/30221942/30350698-b44b46da-97cc-11e7-86af-c56de405dbae.png)
 
+## All Unitest and Graphic Techniques pojects files working space is incorrect. Right click the project file and select properties.Click Debugging and find Working Directory area. Change it to $(SolutionDir) .
+
 ## The framework sperate into sveral parts:
 
 ### 1. Unit Tests: This part has a lot of little projects to test or demostrate the basic funcionality of this framework. The contents are:
@@ -27,4 +29,4 @@ Shadow Map : Use one simple shadow map to demostrate the shadow for spot light
 OmniDirection Shadow Map : use cube mapping to demostrate the shadow for point light
 
 ### 3. Direcx12 Framework : This project is included by all the Unitests and Graphics Techniques. It is the core of this framework. It only generate lib file.
-### 3. Graphics Utility : This project is included by part Unitests and Graphics Techniques. It contains some helper structer like spot light, Transform, Camear.... It only generate lib file.
+### 3. Graphics Utility : This project is included by part Unitests and Graphics Techniques. It contains some helper structer like spot light, Transform, Camera.... It only generate lib file.
