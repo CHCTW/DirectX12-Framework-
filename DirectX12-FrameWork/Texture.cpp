@@ -297,6 +297,7 @@ void Texture::CreateTexture(ID3D12Device* device, DXGI_FORMAT format, UINT width
 
 	if ((usage&D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET)>0)
 	{
+		mClearVal.Format = format;
 		mClearVal.Color[0] = clear.Color[0];
 		mClearVal.Color[1] = clear.Color[1];
 		mClearVal.Color[2] = clear.Color[2];

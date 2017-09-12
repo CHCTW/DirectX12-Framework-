@@ -94,7 +94,7 @@ void loadAsset()
 
 
 
-	import.ReadFile("Assets/bunny.obj", aiProcessPreset_TargetRealtime_Fast);
+	import.ReadFile("Assets/sphere.obj", aiProcessPreset_TargetRealtime_Fast);
 	scene = import.GetScene();
 	mesh = scene->mMeshes[0];
 	mesh->HasPositions();
