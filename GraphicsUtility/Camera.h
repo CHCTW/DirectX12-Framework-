@@ -11,6 +11,8 @@ struct ViewProjection
 	glm::mat4x4 mView;
 	glm::mat4x4 mProjection;
 	glm::vec3 mPosition;
+	float padding;
+	glm::mat4x4 mProjInverse;
 };
 class Camera
 {
@@ -19,6 +21,9 @@ public:
 	{
 		mViewProjection.mView = glm::lookAt(mTarget, mPosition, mUp);
 		mViewProjection.mProjection = glm::perspective(mFOV*(3.14159f) / 180.0f, mRatio, mFront, mBack);
+		mViewProjection.mProjInverse = glm::inverse(mViewProjection.mProjection);
+
+		glm::mat4x4 test = mViewProjection.mProjection*mViewProjection.mProjInverse;
 	}
 	void setRatio(float ratio);
 	float mFOV;

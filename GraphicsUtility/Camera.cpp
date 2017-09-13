@@ -4,6 +4,7 @@ void Camera::updateViewProj()
 {
 	mViewProjection.mView = glm::lookAt(mTarget, mPosition, mUp);
 	mViewProjection.mProjection = glm::perspective(mFOV*(3.14159f) / 180.0f, mRatio, mFront, mBack);
+	mViewProjection.mProjInverse = glm::inverse(mViewProjection.mProjection);
 	mViewProjection.mPosition = mPosition;
 }
 
@@ -17,4 +18,5 @@ void Camera::setRatio(float ratio)
 {
 	mRatio = ratio;
 	mViewProjection.mProjection = glm::perspective(mFOV*(3.14159f) / 180.0f, mRatio, mFront, mBack);
+	mViewProjection.mProjInverse = glm::inverse(mViewProjection.mProjection);
 }
