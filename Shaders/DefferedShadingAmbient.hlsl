@@ -5,8 +5,8 @@ cbuffer SceneConstantBuffer : register(b0)
 	float4x4 proj;
 	float3 eye;
 	float padding;
+	float4x4 viewinverse;
 	float4x4 projinverse;
-//	float4x4 viewinverse;
 };
 struct PSInput
 {
@@ -72,29 +72,31 @@ float4 PSMain(PSInput input) : SV_TARGET
 	projcoord.z = depth;
 	projcoord.w = 1.0f;
 	float4 pos = mul(projinverse,projcoord);
-	pos.xyz = pos.xyz / pos.w; 
+//	pos.xyz = pos.xyz / pos.w;
+	pos = mul(viewinverse, pos);
+	pos.xyz = pos.xyz / pos.w;
 
-	return pos;
+//	return pos;
 
 
-	float4 lightpostion = (10, 10, 10, 1);
-	lightpostion = mul(view, lightpostion);
+	float4 lightpostion = float4(0.0f, 100.0f, 0.0, 1.0);
+//	lightpostion = mul(view, lightpostion);
 
-	lightpostion.xyz = lightpostion.xyz / lightpostion.w;
+//	lightpostion.xyz = lightpostion.xyz / lightpostion.w;
 
 	float3 F0 = float3(0.04, 0.04, 0.04);
 	F0 = lerp(F0, albedo, float3(metallic, metallic, metallic)); // use metalic value to get F
 
 	float3 N = normalize(normal);
-	float3 V = normalize(-pos.xyz);
-	float3 L = normalize(lightpostion.xyz - pos.xyz);
+	float3 V = normalize(eye-pos.xyz);
+	float3 L = normalize(lightpostion .xyz- pos.xyz);
 	float3 H = normalize(L + V);
 	float LH = max(dot(L, H), 0.0f);
 	float NL = max(dot(L, N), 0.0f);
 	float NV = max(dot(N, V), 0.0f);
 	float HV = max(dot(H, V), 0.0f);
 
-
+//	return float4(pos.xyz, 1.0);
 
 	float3 F = Fresnel(F0, HV);
 	float D = Distribution(N, H, roughness);
@@ -110,7 +112,7 @@ float4 PSMain(PSInput input) : SV_TARGET
 
 	float3 ambient = float3(0.0005f, 0.0005, 0.0005)*albedo;
 
-	float3 final = ambient + (diff + spec)*NL;
+	float3 final = ambient;
 	final = final / (1 + final); // tone mapping
 	final = pow(final, 1.0f / 2.2f);
 //	pos.xyz = pos.xyz / 100;

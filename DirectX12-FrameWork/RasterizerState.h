@@ -3,10 +3,10 @@
 class RasterizerState
 {
 public:
-	RasterizerState()
+	RasterizerState(D3D12_CULL_MODE state = D3D12_CULL_MODE_NONE)
 	{
 		mRasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-		mRasterizerState.CullMode = D3D12_CULL_MODE_NONE;
+		mRasterizerState.CullMode = state;
 	}
 	D3D12_RASTERIZER_DESC mRasterizerState;
 };

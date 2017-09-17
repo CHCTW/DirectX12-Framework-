@@ -13,6 +13,9 @@
 #include "Transform.h"
 #include "Material.h"
 #include "SpotLight.h"
+#include "PointLight.h"
+#include <array>
+#include <random>
 struct InstancedInformation
 {
 	Matrices mMatrices; // model and normal transfrom matrix;
@@ -40,7 +43,6 @@ Fence fence;
 HANDLE fenceEvet;
 UINT frameIndex;
 Buffer cameraBuffer;
-Buffer lightBuffer;
 RootSignature rootsig;
 ViewPort viewport;
 Scissor scissor;
@@ -68,9 +70,8 @@ bool press = false;
 
 ObjectData Spheres;
 
-const UINT rowcount = 10;
-const UINT collomcount = 5;
-UINT spherecount = rowcount*collomcount;
+
+UINT spherecount = 200;
 
 float radious = 5;
 float heightgap = 1.5;
@@ -96,8 +97,29 @@ Pipeline quadpipeline;
 RootSignature quadrootsig;
 Sampler sampler;
 
+ShaderSet localshader;
 ViewPort debugviewport;
+std::vector<PointLightData> lightlist;
+static unsigned int lightcount = 500;
+Buffer lightDataBuffer;
+Pipeline localLightpPipeline;
 
+std::default_random_engine generator;
+std::uniform_real_distribution<float> distributionXZ(-50.0, 50.0);
+std::uniform_real_distribution<float> distributionY(-3.0,0.0);
+std::uniform_real_distribution<float> distributionmaterial(0.3, 0.8);
+std::uniform_real_distribution<float> distributionscale(1.0, 5.0);
+
+
+std::uniform_real_distribution<float> distributionradius(5.0, 10.0);
+std::uniform_real_distribution<float> distributionlightY(0.0, 2.0);
+std::array<double, 3> intervals{ 0.1, 0.5, 0.9 };
+std::array<float, 3> weights{ 10.0, 0.0, 10.0 };
+std::piecewise_linear_distribution<double>
+distributionlightcolor(intervals.begin(), intervals.end(), weights.begin());
+
+//std::uniform_real_distribution<float> distributionlightcolor(0.3, 1.5);
+std::uniform_real_distribution<float> distributionmove(0.0, 0.1);
 
 void initializeRender()
 {
@@ -124,7 +146,7 @@ void initializeRender()
 
 	srvheap.ininitialize(render.mDevice, 1);
 
-	rootsig.mParameters.resize(3);
+	rootsig.mParameters.resize(2);
 	rootsig.mParameters[0].mType = PARAMETERTYPE_CBV;
 	rootsig.mParameters[0].mResCounts = 1;
 	rootsig.mParameters[0].mBindSlot = 0;
@@ -134,11 +156,6 @@ void initializeRender()
 	rootsig.mParameters[1].mResCounts = 1;
 	rootsig.mParameters[1].mBindSlot = 0;
 	rootsig.mParameters[1].mResource = &Spheres.mStructeredBuffer;
-	rootsig.mParameters[2].mType = PARAMETERTYPE_CBV;
-	rootsig.mParameters[2].mResCounts = 1;
-	rootsig.mParameters[2].mBindSlot = 1;
-	rootsig.mParameters[2].mResource = &lightBuffer;
-	rootsig.mParameters[2].mVisibility = D3D12_SHADER_VISIBILITY_ALL;
 	rootsig.initialize(render.mDevice);
 
 	quadrootsig.mParameters.resize(2);
@@ -164,7 +181,7 @@ void initializeRender()
 	shaderset.shaders[PS].load("Shaders/GBuffer.hlsl", "PSMain", PS);
 
 
-	pipeline.createGraphicsPipeline(render.mDevice, rootsig, shaderset, gBufferFormat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(), VERTEX_LAYOUT_TYPE_SPLIT_ALL);
+	pipeline.createGraphicsPipeline(render.mDevice, rootsig, shaderset, gBufferFormat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(D3D12_CULL_MODE_FRONT), VERTEX_LAYOUT_TYPE_SPLIT_ALL);
 
 
 	quadshader.shaders[VS].load("Shaders/FullScreenQuad.hlsl", "VSMain", VS);
@@ -172,7 +189,7 @@ void initializeRender()
 
 	quadpipeline.createGraphicsPipeline(render.mDevice, quadrootsig, quadshader, retformat, DepthStencilState::DepthStencilState(), BlendState::BlendState(), RasterizerState::RasterizerState(), VERTEX_LAYOUT_TYPE_NONE_SPLIT);
 
-	defferedrootsig.mParameters.resize(5);
+	defferedrootsig.mParameters.resize(6);
 	defferedrootsig.mParameters[0].mType = PARAMETERTYPE_CBV;
 	defferedrootsig.mParameters[0].mResCounts = 1;
 	defferedrootsig.mParameters[0].mBindSlot = 0;
@@ -193,14 +210,31 @@ void initializeRender()
 	defferedrootsig.mParameters[4].mResCounts = 1;
 	defferedrootsig.mParameters[4].mBindSlot = 0;
 	defferedrootsig.mParameters[4].mSampler = &sampler;
+	defferedrootsig.mParameters[5].mType = PARAMETERTYPE_SRV;
+	defferedrootsig.mParameters[5].mResCounts = 1;
+	defferedrootsig.mParameters[5].mBindSlot = 3;
+	defferedrootsig.mParameters[5].mResource = &lightDataBuffer;
+	defferedrootsig.mParameters[5].mVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+
+
 
 	defferedrootsig.initialize(render.mDevice);
 
 
-	defferedshader.shaders[VS].load("Shaders/DefferedShading.hlsl", "VSMain", VS);
-	defferedshader.shaders[PS].load("Shaders/DefferedShading.hlsl", "PSMain", PS);
+	defferedshader.shaders[VS].load("Shaders/DefferedShadingAmbient.hlsl", "VSMain", VS);
+	defferedshader.shaders[PS].load("Shaders/DefferedShadingAmbient.hlsl", "PSMain", PS);
 
 	defferedpipeline.createGraphicsPipeline(render.mDevice, defferedrootsig, defferedshader, retformat, DepthStencilState::DepthStencilState(), BlendState::BlendState(false), RasterizerState::RasterizerState());
+
+
+
+	localshader.shaders[VS].load("Shaders/DefferedShadingLocalLight.hlsl", "VSMain", VS);
+	localshader.shaders[PS].load("Shaders/DefferedShadingLocalLight.hlsl", "PSMain", PS);
+
+	localLightpPipeline.createGraphicsPipeline(render.mDevice, defferedrootsig, localshader, retformat, DepthStencilState::DepthStencilState(), BlendState::BlendState(true), RasterizerState::RasterizerState(D3D12_CULL_MODE_BACK));
+
+
 
 	viewport.setup(0.0f, 0.0f, (float)windows.mWidth, (float)windows.mHeight);
 	scissor.setup(0, windows.mWidth, 0, windows.mHeight);
@@ -222,8 +256,7 @@ void loadAsset()
 	cameraBuffer.createConstantBuffer(render.mDevice, srvheap, sizeof(ViewProjection));
 	cameraBuffer.maptoCpu();
 
-	lightBuffer.createConstantBuffer(render.mDevice, srvheap, sizeof(SpotLightData));
-	lightBuffer.maptoCpu();
+
 
 	light.setRadius(200);
 
@@ -289,7 +322,7 @@ void loadAsset()
 
 	// load sphere data
 
-	import.ReadFile("Assets/bunny.obj", aiProcessPreset_TargetRealtime_Fast);
+	import.ReadFile("Assets/sphere.obj", aiProcessPreset_TargetRealtime_Fast);
 	scene = import.GetScene();
 	mesh = scene->mMeshes[0];
 
@@ -321,23 +354,42 @@ void loadAsset()
 
 	Spheres.mStructeredBuffer.createStructeredBuffer(render.mDevice, srvheap, sizeof(InstancedInformation), Spheres.mNum, STRUCTERED_BUFFER_TYPE_READ);
 
-	radian = 2 * 3.14159f / rowcount;
-	float rough = 1.0f / (rowcount - 1);
-	float metalic = 1.0f / (collomcount - 1);
 	for (int i = 0; i < Spheres.mNum; ++i)
 	{
-		int height = i / rowcount;
-		int rowpos = i % rowcount;
-		Spheres.mPosition[i].setPosition(radious*cos(i*radian), heightgap*height, radious*sin(i*radian));
+		//int height = i / rowcount;
+		//int rowpos = i % rowcount;
+		Spheres.mPosition[i].setPosition(distributionXZ(generator), distributionY(generator), distributionXZ(generator));
+		float s = distributionscale(generator);
+		Spheres.mPosition[i].setScale(s, s, s);
 		//Spheres.mPosition[i].setAngle(-90, 0, 0);
 		Spheres.mPosition[i].CacNewTransform();
 		Spheres.mBufferData[i].mMatrices = Spheres.mPosition[i].getMatrices();
-		Spheres.mBufferData[i].mMaterial.mAlbedo = glm::vec3(1.0, 0.0, 0.0);
-		Spheres.mBufferData[i].mMaterial.mRoughness = (rowpos)*rough;
-		Spheres.mBufferData[i].mMaterial.mMetallic = height*metalic;
+		Spheres.mBufferData[i].mMaterial.mAlbedo = glm::vec3(distributionmaterial(generator), distributionmaterial(generator), distributionmaterial(generator));
+	//	Spheres.mBufferData[i].mMaterial.mAlbedo = glm::vec3(0.6);
+//		Spheres.mBufferData[i].mMaterial.mAlbedo = glm::vec3(distributionlightcolor(generator), distributionlightcolor(generator), distributionlightcolor(generator));
+		Spheres.mBufferData[i].mMaterial.mRoughness = distributionmaterial(generator);
+		Spheres.mBufferData[i].mMaterial.mMetallic = distributionmaterial(generator);
+
+	//	Spheres.mBufferData[i].mMaterial.mMetallic = 0.0f;
 
 	}
 
+
+
+
+	lightDataBuffer.createStructeredBuffer(render.mDevice, srvheap, sizeof(PointLightData), lightcount, STRUCTERED_BUFFER_TYPE_READ);
+
+	lightlist.resize(lightcount);
+
+
+	PointLight light;
+	for (int i = 0; i < lightcount; ++i)
+	{
+		light.setRadius(distributionradius(generator));
+		light.setColor(distributionlightcolor(generator), distributionlightcolor(generator), distributionlightcolor(generator));
+		light.setPosition(distributionXZ(generator), distributionlightY(generator),distributionXZ(generator));
+		lightlist[i] = *light.getLightData();
+	}
 
 
 
@@ -357,6 +409,9 @@ void loadAsset()
 	cmdlist.resourceBarrier(Ground.mIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
 	cmdlist.resourceBarrier(Ground.mStructeredBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
 
+	cmdlist.resourceBarrier(lightDataBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
+
+
 
 	cmdlist.updateBufferData(Spheres.mVertexBufferData, mesh->mVertices, mesh->mNumVertices * 3 * sizeof(float));
 	cmdlist.updateBufferData(Spheres.mIndexBuffer, indexdata.data(), mesh->mNumFaces * 3 * sizeof(unsigned int));
@@ -373,6 +428,9 @@ void loadAsset()
 	cmdlist.updateBufferData(Ground.mNormalBuffer, ground->mNormals, ground->mNumVertices * 3 * sizeof(float));
 	cmdlist.updateBufferData(Ground.mStructeredBuffer, Ground.mBufferData.data(), Ground.mNum * sizeof(InstancedInformation));
 
+	cmdlist.updateBufferData(lightDataBuffer, lightlist.data(), lightlist.size() * sizeof(PointLightData));
+
+
 	cmdlist.resourceBarrier(Spheres.mVertexBufferData.mResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 	cmdlist.resourceBarrier(Spheres.mNormalBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 	cmdlist.resourceBarrier(Spheres.mIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
@@ -387,6 +445,9 @@ void loadAsset()
 	cmdlist.resourceBarrier(Ground.mNormalBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 	cmdlist.resourceBarrier(Ground.mIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
 	cmdlist.resourceBarrier(Ground.mStructeredBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
+
+	cmdlist.resourceBarrier(lightDataBuffer, D3D12_RESOURCE_STATE_COPY_DEST,D3D12_RESOURCE_STATE_GENERIC_READ);
+
 
 	cmdlist.renderTargetBarrier(GBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ);
 	cmdlist.depthBufferBarrier(GBuffer, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_GENERIC_READ);
@@ -408,6 +469,10 @@ void loadAsset()
 
 void releaseRender()
 {
+
+	localLightpPipeline.release();
+	lightDataBuffer.release();
+
 	defferedrootsig.realease();
 	defferedpipeline.release();
 	quadpipeline.release();
@@ -422,7 +487,6 @@ void releaseRender()
 	Ground.mVertexBufferData.release();
 	Ground.mStructeredBuffer.release();
 	Ground.mIndexBuffer.release();
-	lightBuffer.release();
 	Buddha.mNormalBuffer.release();
 	Buddha.mVertexBufferData.release();
 	Buddha.mStructeredBuffer.release();
@@ -449,20 +513,35 @@ void update()
 	cameraBuffer.updateBufferfromCpu(camera.getMatrix(), sizeof(ViewProjection));
 
 
-	light.update();
-	lightBuffer.updateBufferfromCpu(light.getLightData(), sizeof(SpotLightData));
+
 	//radian = 2 * 3.14159f / Spheres.mNum;
 	rotationoffset += rotationspeed;
-	for (int i = 0; i < Spheres.mNum; ++i)
-	{
-		int height = i / rowcount;
-		int rowpos = i % rowcount;
-		Spheres.mPosition[i].setPosition(radious*cos(rowpos*radian + rotationoffset), heightgap*height - (collomcount*heightgap) / 2, radious*sin(rowpos*radian + rotationoffset));
+	//for (int i = 0; i < Spheres.mNum; ++i)
+	//{
+	//	int height = i / rowcount;
+	//	int rowpos = i % rowcount;
+	//	Spheres.mPosition[i].setPosition(radious*cos(rowpos*radian + rotationoffset), heightgap*height - (collomcount*heightgap) / 2, radious*sin(rowpos*radian + rotationoffset));
 
-		//	Spheres.mPosition[i].setPosition(rowpos*1.5, height, 5);
-		//Spheres.mPosition[i].setAngle(0, (rowpos*radian+ rotationoffset)/3.14159*180, 0);
-		Spheres.mPosition[i].CacNewTransform();
-		Spheres.mBufferData[i].mMatrices = Spheres.mPosition[i].getMatrices();
+	//	//	Spheres.mPosition[i].setPosition(rowpos*1.5, height, 5);
+	//	//Spheres.mPosition[i].setAngle(0, (rowpos*radian+ rotationoffset)/3.14159*180, 0);
+	//	Spheres.mPosition[i].CacNewTransform();
+	//	Spheres.mBufferData[i].mMatrices = Spheres.mPosition[i].getMatrices();
+	//}
+
+
+	for (int i = 0; i < lightcount; ++i)
+	{
+
+		lightlist[i].mPosition.x+= distributionmove(generator);
+		
+
+		if (lightlist[i].mPosition.x >= 60)
+		{
+			lightlist[i].mPosition.x = -60;
+			lightlist[i].mColor.r = distributionmaterial(generator);
+			lightlist[i].mColor.g = distributionmaterial(generator);
+			lightlist[i].mColor.b = distributionmaterial(generator);
+		}
 	}
 
 }
@@ -474,7 +553,13 @@ void onrender()
 	cmdlist.reset(pipeline);
 
 	cmdlist.resourceBarrier(Spheres.mStructeredBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
+
+
+	cmdlist.resourceBarrier(lightDataBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
 	cmdlist.updateBufferData(Spheres.mStructeredBuffer, Spheres.mBufferData.data(), Spheres.mNum * sizeof(InstancedInformation));
+	cmdlist.updateBufferData(lightDataBuffer, lightlist.data(), lightlist.size() * sizeof(PointLightData));
+
+	cmdlist.resourceBarrier(lightDataBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
 	cmdlist.resourceBarrier(Spheres.mStructeredBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
 
 	cmdlist.bindDescriptorHeaps(&srvheap, &samplerheap);
@@ -523,6 +608,11 @@ void onrender()
 		cmdlist.bindGraphicsRootSigature(defferedrootsig);
 		cmdlist.bindPipeline(defferedpipeline);
 		cmdlist.drawInstance(3, 1, 0, 0);
+
+		cmdlist.bindPipeline(localLightpPipeline);
+		cmdlist.bindIndexBuffer(Spheres.mIndexBuffer);
+		cmdlist.bindVertexBuffers(Spheres.mVertexBufferData, Spheres.mNormalBuffer);
+		cmdlist.drawIndexedInstanced(Spheres.indexCount, lightcount, 0, 0);
 
 	}
 	{ // debug pass

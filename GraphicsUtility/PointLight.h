@@ -14,6 +14,7 @@ struct PointLightData
 	glm::vec4 mAttenuation;
 	float mRadius;
 	float mBack;
+	glm::vec2 padding;
 };
 
 class PointLight
@@ -41,6 +42,7 @@ public:
 	void addAngle(float spint, float tilt);
 	void addZoom(float zoom);
 	void update();
+	void setPosition(float x,float y,float z);
 	void setRadius(float r);
 	void setColor(float r, float g, float b);
 	PointLightData const * getLightData();

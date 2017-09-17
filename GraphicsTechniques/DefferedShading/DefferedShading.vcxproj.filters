@@ -29,7 +29,10 @@
     <FxCompile Include="..\..\Shaders\FullScreenQuad.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
-    <FxCompile Include="..\..\Shaders\DefferedShading.hlsl">
+    <FxCompile Include="..\..\Shaders\DefferedShadingAmbient.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Shaders\DefferedShadingLocalLight.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
   </ItemGroup>

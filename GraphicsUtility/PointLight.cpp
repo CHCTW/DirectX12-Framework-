@@ -71,3 +71,9 @@ PointLightData const * PointLight::getLightData()
 {
 	return &mLightData;
 }
+
+void PointLight::setPosition(float x, float y, float z)
+{
+	mLightData.mPosition = glm::vec4(x, y, z, 1.0);
+}
+

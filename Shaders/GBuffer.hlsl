@@ -14,25 +14,17 @@ cbuffer SceneConstantBuffer : register(b0)
 	float4x4 proj;
 	float3 eye;
 	float padding;
-	float4x4 projinv;
 };
 
 
-cbuffer SpotLightData : register(b1)
-{
-	float4x4 lightview;
-	float4x4 lightproj;
-	float4 lightpostion;
-	float4 lightcolor;
-	float4 lightattenuation;
-	float lightradius;
-};
+
 StructuredBuffer<InstancedInformation> instances: register(t0);
 
 struct PSInput
 {
 	float4 position : SV_POSITION;
 	float3 normal : NORMAL;
+	float3 pos: POS;
 	uint id : ID;
 };
 PSInput VSMain(float3 position : POSITION, float3 normal : NORMAL, uint instanceid : SV_InstanceID)
@@ -40,6 +32,7 @@ PSInput VSMain(float3 position : POSITION, float3 normal : NORMAL, uint instance
 	PSInput result;
 
 	result.position = mul(instances[instanceid].model, float4(position, 1.0f));
+	result.pos = result.position.xyz;
 	result.position = mul(view, result.position);
 	result.position = mul(proj,result.position);
 	
@@ -61,6 +54,8 @@ PSOut PSMain(PSInput input) : SV_TARGET
 	float3 albedo = instances[input.id].albedo;
 	float ao = 1.0f;
 	res.NorMet.xyz = input.normal;
+
+//	res.NorMet.xyz = input.pos;
 	res.NorMet.w = metallic;
 
 	res.AlbRou.xyz = albedo;
