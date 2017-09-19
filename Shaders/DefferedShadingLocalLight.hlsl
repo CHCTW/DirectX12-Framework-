@@ -132,13 +132,13 @@ float4 PSMain(PSInput input) : SV_TARGET
 
     float att = 1.0 - (dist / LocalLightData[input.id].lightradius) * (dist / LocalLightData[input.id].lightradius); // old attenuation doesn't work... it will generate hard edge
     if (dist > LocalLightData[input.id].lightradius)
-        att = 0;
+        discard;
   //  att = att * att;
     //return float4(att, att, att, 1.0);
 
-    float3 final = (diff + spec) * NL * LocalLightData[input.id].lightcolor.xyz*att;
- //   final = final / (1 + final); // tone mapping
- //  final = pow(final, 1.0f / 2.2f);
+    float3 final = (diff + spec) * NL * LocalLightData[input.id].lightcolor.xyz*att ;
+    //final = final / (1 + final); // tone mapping
+   // final = pow(final, 1.0f / 2.2f) * att;
 //	pos.xyz = pos.xyz / 100;
 //	pos.xyz = normalize(pos.xyz);
     return float4(final, 1.0);

@@ -104,8 +104,8 @@ static unsigned int lightcount = 500;
 Buffer lightDataBuffer;
 Pipeline localLightpPipeline;
 
-std::default_random_engine generator;
-std::uniform_real_distribution<float> distributionXZ(-50.0, 50.0);
+std::default_random_engine generator(1);
+std::uniform_real_distribution<float> distributionXZ(-55.0, 55.0);
 std::uniform_real_distribution<float> distributionY(-3.0,0.0);
 std::uniform_real_distribution<float> distributionmaterial(0.3, 0.8);
 std::uniform_real_distribution<float> distributionscale(1.0, 5.0);
@@ -113,8 +113,8 @@ std::uniform_real_distribution<float> distributionscale(1.0, 5.0);
 
 std::uniform_real_distribution<float> distributionradius(5.0, 10.0);
 std::uniform_real_distribution<float> distributionlightY(0.0, 2.0);
-std::array<double, 3> intervals{ 0.1, 0.5, 0.9 };
-std::array<float, 3> weights{ 10.0, 0.0, 10.0 };
+std::array<double, 3> intervals{ 0.1, 0.5, 1.0 };
+std::array<float, 3> weights{ 100.0, 0.0, 100.0 };
 std::piecewise_linear_distribution<double>
 distributionlightcolor(intervals.begin(), intervals.end(), weights.begin());
 
@@ -260,7 +260,7 @@ void loadAsset()
 
 	light.setRadius(200);
 
-	buddhaimport.ReadFile("Assets/buddha.obj", aiProcessPreset_TargetRealtime_Fast);
+	buddhaimport.ReadFile("Assets/buddha.obj", aiProcessPreset_TargetRealtime_Quality);
 
 	aiMesh* buddha = buddhaimport.GetScene()->mMeshes[0];
 	Buddha.mVertexBufferData.createVertexBuffer(render.mDevice, buddha->mNumVertices * 3 * sizeof(float), 3 * sizeof(float));
@@ -279,9 +279,9 @@ void loadAsset()
 	Buddha.mBufferData.resize(Buddha.mNum);
 	Buddha.mPosition.resize(Buddha.mNum);
 	Buddha.mStructeredBuffer.createStructeredBuffer(render.mDevice, srvheap, sizeof(InstancedInformation), Buddha.mNum, STRUCTERED_BUFFER_TYPE_READ);
-	Buddha.mPosition[0].setAngle(-90, 0, 0);
-	Buddha.mPosition[0].setScale(5, 5, 5);
-	//Buddha.mPosition[0].setPosition(0, 0, 5);
+	Buddha.mPosition[0].setAngle(0, 0, 0);
+	Buddha.mPosition[0].setScale(1, 1, 1);
+	Buddha.mPosition[0].setPosition(0, -5, 0);
 	Buddha.mPosition[0].CacNewTransform();
 	Buddha.mBufferData[0].mMatrices = Buddha.mPosition[0].getMatrices();
 	Buddha.mBufferData[0].mMaterial.mAlbedo = glm::vec3(1.00, 0.71, 0.29);
@@ -312,9 +312,9 @@ void loadAsset()
 	Ground.mPosition[0].setPosition(0, -5, 0);
 	Ground.mPosition[0].CacNewTransform();
 	Ground.mBufferData[0].mMatrices = Ground.mPosition[0].getMatrices();
-	Ground.mBufferData[0].mMaterial.mAlbedo = glm::vec3(0.55, 0.55, 0.55);
-	Ground.mBufferData[0].mMaterial.mRoughness = 0.8;
-	Ground.mBufferData[0].mMaterial.mMetallic = 0.8;
+	Ground.mBufferData[0].mMaterial.mAlbedo = glm::vec3(0.4, 0.4, 0.1);
+	Ground.mBufferData[0].mMaterial.mRoughness = 0.4;
+	Ground.mBufferData[0].mMaterial.mMetallic = 0.1;
 
 
 
@@ -365,12 +365,12 @@ void loadAsset()
 		Spheres.mPosition[i].CacNewTransform();
 		Spheres.mBufferData[i].mMatrices = Spheres.mPosition[i].getMatrices();
 		Spheres.mBufferData[i].mMaterial.mAlbedo = glm::vec3(distributionmaterial(generator), distributionmaterial(generator), distributionmaterial(generator));
-	//	Spheres.mBufferData[i].mMaterial.mAlbedo = glm::vec3(0.6);
+//		Spheres.mBufferData[i].mMaterial.mAlbedo = glm::vec3(1.00, 0.71, 0.29);
 //		Spheres.mBufferData[i].mMaterial.mAlbedo = glm::vec3(distributionlightcolor(generator), distributionlightcolor(generator), distributionlightcolor(generator));
 		Spheres.mBufferData[i].mMaterial.mRoughness = distributionmaterial(generator);
 		Spheres.mBufferData[i].mMaterial.mMetallic = distributionmaterial(generator);
+		//Spheres.mBufferData[i].mMaterial.mMetallic = 1.0f;
 
-	//	Spheres.mBufferData[i].mMaterial.mMetallic = 0.0f;
 
 	}
 
@@ -387,7 +387,10 @@ void loadAsset()
 	{
 		light.setRadius(distributionradius(generator));
 		light.setColor(distributionlightcolor(generator), distributionlightcolor(generator), distributionlightcolor(generator));
-		light.setPosition(distributionXZ(generator), distributionlightY(generator),distributionXZ(generator));
+
+
+	//	light.setColor(1.0, 1.0, 1.0);
+		light.setPosition(distributionXZ(generator), 3,distributionXZ(generator));
 		lightlist[i] = *light.getLightData();
 	}
 
@@ -538,9 +541,9 @@ void update()
 		if (lightlist[i].mPosition.x >= 60)
 		{
 			lightlist[i].mPosition.x = -60;
-			lightlist[i].mColor.r = distributionmaterial(generator);
-			lightlist[i].mColor.g = distributionmaterial(generator);
-			lightlist[i].mColor.b = distributionmaterial(generator);
+		//	lightlist[i].mColor.r = distributionlightcolor(generator);
+		//	lightlist[i].mColor.g = distributionlightcolor(generator);
+		//	lightlist[i].mColor.b = distributionlightcolor(generator);
 		}
 	}
 

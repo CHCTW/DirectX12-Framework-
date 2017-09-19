@@ -15,8 +15,9 @@ PSInput VSMain(float3 position : POSITION, float3 normal : NORMAL)
 {
 	PSInput result;
 	result.normal = position.xyz;
-	result.position = mul(view,float4(position*400,1.0f)); 
+	result.position = mul(view,float4(position*18000,1.0f)); 
 	result.position = mul(proj,result.position);
+    result.position.z = result.position.w;
 //	result.normal = normal;
 
 	return result;

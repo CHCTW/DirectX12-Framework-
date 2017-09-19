@@ -64,6 +64,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BRDF", "GraphicsTechniques\
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "10 - GammaCorrection", "UnitTests\10 - GammaCorrection\10 - GammaCorrection.vcxproj", "{FFDBE972-5D8F-4F2D-8E03-343FBCB23B13}"
+	ProjectSection(ProjectDependencies) = postProject
+		{62932349-890C-4D8C-A0E3-BB9885B98500} = {62932349-890C-4D8C-A0E3-BB9885B98500}
+		{3114F873-50B8-4BE1-8A70-12B0FFE7E8C8} = {3114F873-50B8-4BE1-8A70-12B0FFE7E8C8}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "11 - SkyBox", "UnitTests\11 - SkyBox\11 - SkyBox.vcxproj", "{A6D1D0BA-3AD3-44AC-A84A-01EFE3A55162}"
 	ProjectSection(ProjectDependencies) = postProject

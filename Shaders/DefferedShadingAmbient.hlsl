@@ -110,7 +110,7 @@ float4 PSMain(PSInput input) : SV_TARGET
 	float3 diff = Kd*albedo / PI;
 
 
-	float3 ambient = float3(0.0005f, 0.0005, 0.0005)*albedo;
+	float3 ambient = float3(0.005f, 0.005, 0.005)*albedo;
 
 	float3 final = ambient;
 	final = final / (1 + final); // tone mapping

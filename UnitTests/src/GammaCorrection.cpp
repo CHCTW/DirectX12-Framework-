@@ -31,7 +31,7 @@ Sampler sampler;
 void initializeRender()
 {
 	render.initialize();
-	RenderTargetFormat rtformat(DXGI_FORMAT_R16G16B16A16_FLOAT); 
+	RenderTargetFormat rtformat; 
 	render.createSwapChain(windows, swapChainCount, rtformat);
 	cmdalloc.initialize(render.mDevice);
 	cmdlist.initial(render.mDevice, cmdalloc);

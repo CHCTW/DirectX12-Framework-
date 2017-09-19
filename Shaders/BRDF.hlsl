@@ -89,12 +89,14 @@ float4 PSMain(PSInput input) : SV_TARGET
 	
 	float roughness = instances[input.id].roughness;
 	float metallic = instances[input.id].metallic;
-	float3 albedo = instances[input.id].albedo;
+    float3 albedo = pow(instances[input.id].albedo, 2.2);
 	float ao = 1.0f;
 
 
 	float3 F0 = float3(0.04, 0.04, 0.04);
 	F0 = lerp(F0, albedo, float3(metallic, metallic, metallic)); // use metalic value to get F
+
+
 
 	float3 N = normalize(input.normal);  
 	float3 V = normalize(eye-input.wposition);
@@ -118,8 +120,8 @@ float4 PSMain(PSInput input) : SV_TARGET
 
 	float dist = length(lightpostion.xyz - input.wposition);
 	float att = 1.0f / (1 + lightattenuation.y*dist + dist*dist*lightattenuation.z);
-	if (dist > lightradius*2)
-		att = 0;
+//	if (dist > lightradius*2)
+//		att = 0;
 	float3 ambient =  float3(0.0005f,0.0005,0.0005)*albedo * float3(ao,ao,ao);
 
 	float3 final = ambient + (diff + spec)*NL*lightcolor.xyz*att;

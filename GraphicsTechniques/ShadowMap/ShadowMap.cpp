@@ -211,7 +211,7 @@ void loadAsset()
 	light.mZoom = 25;
 	light.addAngle(0.0, 45);
 
-	buddhaimport.ReadFile("Assets/buddha.obj", aiProcessPreset_TargetRealtime_Fast);
+	buddhaimport.ReadFile("Assets/buddha.obj", aiProcessPreset_TargetRealtime_Quality);
 
 	aiMesh* buddha = buddhaimport.GetScene()->mMeshes[0];
 	Buddha.mVertexBufferData.createVertexBuffer(render.mDevice, buddha->mNumVertices * 3 * sizeof(float), 3 * sizeof(float));
@@ -230,9 +230,9 @@ void loadAsset()
 	Buddha.mBufferData.resize(Buddha.mNum);
 	Buddha.mPosition.resize(Buddha.mNum);
 	Buddha.mStructeredBuffer.createStructeredBuffer(render.mDevice, srvheap, sizeof(InstancedInformation), Buddha.mNum, STRUCTERED_BUFFER_TYPE_READ);
-	Buddha.mPosition[0].setAngle(-90, 0, 0);
-	Buddha.mPosition[0].setScale(5, 5, 5);
-	//Buddha.mPosition[0].setPosition(0, 0, 5);
+	Buddha.mPosition[0].setAngle(0, 0, 0);
+	Buddha.mPosition[0].setScale(1, 1, 1);
+	Buddha.mPosition[0].setPosition(0, -5, 0);
 	Buddha.mPosition[0].CacNewTransform();
 	Buddha.mBufferData[0].mMatrices = Buddha.mPosition[0].getMatrices();
 	Buddha.mBufferData[0].mMaterial.mAlbedo = glm::vec3(1.00, 0.71, 0.29);
