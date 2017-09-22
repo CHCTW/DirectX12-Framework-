@@ -149,6 +149,7 @@
     <ClInclude Include="DepthStencilState.h" />
     <ClInclude Include="DescriptorHeap.h" />
     <ClInclude Include="Fence.h" />
+    <ClInclude Include="Image.h" />
     <ClInclude Include="Pipeline.h" />
     <ClInclude Include="RasterizerState.h" />
     <ClInclude Include="Render.h" />
@@ -174,6 +175,7 @@
     <ClCompile Include="DepthStencilState.cpp" />
     <ClCompile Include="DescriptorHeap.cpp" />
     <ClCompile Include="Fence.cpp" />
+    <ClCompile Include="Image.cpp" />
     <ClCompile Include="Pipeline.cpp" />
     <ClCompile Include="RasterizerState.cpp" />
     <ClCompile Include="Render.cpp" />

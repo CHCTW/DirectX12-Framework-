@@ -20,7 +20,7 @@ bool CubeRenderTarget::createCubeRenderTargets(ID3D12Device* device, UINT width,
 	{
 		mDepthBuffer.resize(1);
 		mDepthStencilClearValue.DepthStencil.Depth = 1.0f;
-		mDepthBuffer[0].CreateTexture(device, depthforamt, width, height, 1, true, flag| D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, mDepthStencilClearValue, D3D12_RESOURCE_DIMENSION_TEXTURE2D, 1, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+		mDepthBuffer[0].CreateTexture(device, depthforamt, width, height, 1, true, 1, flag| D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, mDepthStencilClearValue, D3D12_RESOURCE_DIMENSION_TEXTURE2D, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 		mDepthBuffer[0].addSahderResorceView(srvuavheap);
 
 
@@ -42,7 +42,7 @@ bool CubeRenderTarget::createCubeRenderTargets(ID3D12Device* device, UINT width,
 	{
 		mRenderBuffer.resize(1);
 		mRenderTargetClearValue = { 0.0,0.0,0.0,0.0 };
-		mRenderBuffer[0].CreateTexture(device, renderforamt, width, height, 1, true, flag | D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, mRenderTargetClearValue, D3D12_RESOURCE_DIMENSION_TEXTURE2D, 1, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		mRenderBuffer[0].CreateTexture(device, renderforamt, width, height, 1, true, 1, flag | D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, mRenderTargetClearValue, D3D12_RESOURCE_DIMENSION_TEXTURE2D,  D3D12_RESOURCE_STATE_RENDER_TARGET);
 		//mRenderBuffers[0].addRenderTargetView(heap);
 		mRenderBuffer[0].addSahderResorceView(srvuavheap);
 		if (flag & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS)
@@ -74,7 +74,7 @@ bool CubeRenderTarget::createCubeRenderTargets(ID3D12Device* device, UINT width,
 	{
 		mDepthBuffer.resize(1);
 		mDepthStencilClearValue.DepthStencil.Depth = 1.0f;
-		mDepthBuffer[0].CreateTexture(device, depthforamt, width, height, 1, true, depthflag | D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, mDepthStencilClearValue, D3D12_RESOURCE_DIMENSION_TEXTURE2D, 1, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+		mDepthBuffer[0].CreateTexture(device, depthforamt, width, height, 1, true, 1, depthflag | D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, mDepthStencilClearValue, D3D12_RESOURCE_DIMENSION_TEXTURE2D, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 		mDepthBuffer[0].addSahderResorceView(srvuavheap);
 
 
@@ -96,7 +96,7 @@ bool CubeRenderTarget::createCubeRenderTargets(ID3D12Device* device, UINT width,
 	{
 		mRenderBuffer.resize(1);
 		mRenderTargetClearValue = { 0.0,0.0,0.0,0.0 };
-		mRenderBuffer[0].CreateTexture(device, renderforamt, width, height, 1, true, renderflag | D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, mRenderTargetClearValue, D3D12_RESOURCE_DIMENSION_TEXTURE2D, 1, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		mRenderBuffer[0].CreateTexture(device, renderforamt, width, height, 1, true, 1, renderflag | D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, mRenderTargetClearValue, D3D12_RESOURCE_DIMENSION_TEXTURE2D, D3D12_RESOURCE_STATE_RENDER_TARGET);
 		//mRenderBuffers[0].addRenderTargetView(srvuavheap);
 		mRenderBuffer[0].addSahderResorceView(srvuavheap);
 		if (renderflag & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS)

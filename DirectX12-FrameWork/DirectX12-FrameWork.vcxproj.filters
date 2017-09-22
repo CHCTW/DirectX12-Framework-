@@ -105,6 +105,9 @@
     <ClInclude Include="CubeRenderTarget.h">
       <Filter>Render\Structers\Resource</Filter>
     </ClInclude>
+    <ClInclude Include="Image.h">
+      <Filter>Render\Structers\Resource</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -168,6 +171,9 @@
       <Filter>Render\RenderState</Filter>
     </ClCompile>
     <ClCompile Include="CubeRenderTarget.cpp">
+      <Filter>Render\Structers\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Image.cpp">
       <Filter>Render\Structers\Resource</Filter>
     </ClCompile>
   </ItemGroup>

@@ -100,7 +100,7 @@ Sampler sampler;
 ShaderSet localshader;
 ViewPort debugviewport;
 std::vector<PointLightData> lightlist;
-static unsigned int lightcount = 500;
+static unsigned int lightcount = 250;
 Buffer lightDataBuffer;
 Pipeline localLightpPipeline;
 
@@ -112,9 +112,9 @@ std::uniform_real_distribution<float> distributionscale(1.0, 5.0);
 
 
 std::uniform_real_distribution<float> distributionradius(5.0, 10.0);
-std::uniform_real_distribution<float> distributionlightY(0.0, 2.0);
-std::array<double, 3> intervals{ 0.1, 0.5, 1.0 };
-std::array<float, 3> weights{ 100.0, 0.0, 100.0 };
+std::uniform_real_distribution<float> distributionlightY(1.0, 2.0);
+std::array<double, 3> intervals{ 0.1, 10, 20.0 };
+std::array<float, 3> weights{ 0.0, 50.0, 100.0 };
 std::piecewise_linear_distribution<double>
 distributionlightcolor(intervals.begin(), intervals.end(), weights.begin());
 
@@ -280,7 +280,7 @@ void loadAsset()
 	Buddha.mPosition.resize(Buddha.mNum);
 	Buddha.mStructeredBuffer.createStructeredBuffer(render.mDevice, srvheap, sizeof(InstancedInformation), Buddha.mNum, STRUCTERED_BUFFER_TYPE_READ);
 	Buddha.mPosition[0].setAngle(0, 0, 0);
-	Buddha.mPosition[0].setScale(1, 1, 1);
+	Buddha.mPosition[0].setScale(1.5, 1.5, 1.5);
 	Buddha.mPosition[0].setPosition(0, -5, 0);
 	Buddha.mPosition[0].CacNewTransform();
 	Buddha.mBufferData[0].mMatrices = Buddha.mPosition[0].getMatrices();
@@ -365,7 +365,7 @@ void loadAsset()
 		Spheres.mPosition[i].CacNewTransform();
 		Spheres.mBufferData[i].mMatrices = Spheres.mPosition[i].getMatrices();
 		Spheres.mBufferData[i].mMaterial.mAlbedo = glm::vec3(distributionmaterial(generator), distributionmaterial(generator), distributionmaterial(generator));
-//		Spheres.mBufferData[i].mMaterial.mAlbedo = glm::vec3(1.00, 0.71, 0.29);
+		//Spheres.mBufferData[i].mMaterial.mAlbedo = glm::vec3(0.55, 0.55, 0.55);
 //		Spheres.mBufferData[i].mMaterial.mAlbedo = glm::vec3(distributionlightcolor(generator), distributionlightcolor(generator), distributionlightcolor(generator));
 		Spheres.mBufferData[i].mMaterial.mRoughness = distributionmaterial(generator);
 		Spheres.mBufferData[i].mMaterial.mMetallic = distributionmaterial(generator);
@@ -389,7 +389,7 @@ void loadAsset()
 		light.setColor(distributionlightcolor(generator), distributionlightcolor(generator), distributionlightcolor(generator));
 
 
-	//	light.setColor(1.0, 1.0, 1.0);
+	//	light.setColor(0, 0.0, 200.0);
 		light.setPosition(distributionXZ(generator), 3,distributionXZ(generator));
 		lightlist[i] = *light.getLightData();
 	}

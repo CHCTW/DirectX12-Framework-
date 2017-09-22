@@ -25,6 +25,7 @@ PSInput VSMain(float3 position : POSITION, float3 normal : NORMAL)
 
 float4 PSMain(PSInput input) : SV_TARGET
 {
-	return cube.Sample(g_sampler,input.normal);
+//    return cube.Sample(g_sampler, input.normal);
+    return pow(cube.Sample(g_sampler, input.normal) / (1 + cube.Sample(g_sampler, input.normal)), (1 / 2.2f));
 	//return float4(input.normal,1.0f);
 }

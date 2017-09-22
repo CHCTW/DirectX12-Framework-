@@ -8,7 +8,7 @@ bool RenderTarget::createRenderTargets(ID3D12Device* device, UINT width, UINT he
 	mRenderBuffers.resize(mFormat.mNumofRenderTargets);
 	for (int i = 0; i < mFormat.mNumofRenderTargets; ++i)  // create and add views for textures 
 	{
-		mRenderBuffers[i].CreateTexture(device, mFormat.mRenderTargetFormat[i], width, height, 1, false, mFormat.mRenderTargetflags, mFormat.mRenderTargetClearValue[i], D3D12_RESOURCE_DIMENSION_TEXTURE2D, 1, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		mRenderBuffers[i].CreateTexture(device, mFormat.mRenderTargetFormat[i], width, height, 1, false, 1, mFormat.mRenderTargetflags, mFormat.mRenderTargetClearValue[i], D3D12_RESOURCE_DIMENSION_TEXTURE2D, D3D12_RESOURCE_STATE_RENDER_TARGET);
 		mRenderBuffers[i].addRenderTargetView(rtvheap);
 		mRenderBuffers[i].addSahderResorceView(cbvsrvuavheap);
 		if (mFormat.mRenderTargetflags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS)
@@ -17,7 +17,7 @@ bool RenderTarget::createRenderTargets(ID3D12Device* device, UINT width, UINT he
 	if (mFormat.mDepth)
 	{
 		mDepthBuffer.resize(1);
-		mDepthBuffer[0].CreateTexture(device, mFormat.mDepthStencilFormat, width, height, 1,false, mFormat.mDepthStencilflags, mFormat.mDepthStencilClearValue,  D3D12_RESOURCE_DIMENSION_TEXTURE2D, 1, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+		mDepthBuffer[0].CreateTexture(device, mFormat.mDepthStencilFormat, width, height, 1,false, 1, mFormat.mDepthStencilflags, mFormat.mDepthStencilClearValue,  D3D12_RESOURCE_DIMENSION_TEXTURE2D, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 		mDepthBuffer[0].addDepgthStencilView(dsvheap);
 		mDepthBuffer[0].addSahderResorceView(cbvsrvuavheap);
 		if (mFormat.mDepthStencilflags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS)// haven't find the formart that can support uav+dsv
@@ -44,7 +44,7 @@ bool RenderTarget::createRenderTargets(ID3D12Device* device, UINT width, UINT he
 		
 		for (int i = 0; i < mFormat.mNumofRenderTargets; ++i)  // create and add views for textures 
 		{
-			mRenderBuffers[i].CreateTexture(device, mFormat.mRenderTargetFormat[i], width, height,1 ,false, mFormat.mRenderTargetflags, mFormat.mRenderTargetClearValue[i], D3D12_RESOURCE_DIMENSION_TEXTURE2D, 1, D3D12_RESOURCE_STATE_RENDER_TARGET);
+			mRenderBuffers[i].CreateTexture(device, mFormat.mRenderTargetFormat[i], width, height,1 ,false, 1, mFormat.mRenderTargetflags, mFormat.mRenderTargetClearValue[i], D3D12_RESOURCE_DIMENSION_TEXTURE2D, D3D12_RESOURCE_STATE_RENDER_TARGET);
 			mRenderBuffers[i].addRenderTargetView(heap);
 			mRenderBuffers[i].addSahderResorceView(cbvsrvuavheap);
 			if (mFormat.mRenderTargetflags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) 
@@ -54,7 +54,7 @@ bool RenderTarget::createRenderTargets(ID3D12Device* device, UINT width, UINT he
 	else
 	{
 		mDepthBuffer.resize(1);
-		mDepthBuffer[0].CreateTexture(device, mFormat.mDepthStencilFormat, width, height,1 , false, mFormat.mDepthStencilflags, mFormat.mDepthStencilClearValue, D3D12_RESOURCE_DIMENSION_TEXTURE2D, 1, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+		mDepthBuffer[0].CreateTexture(device, mFormat.mDepthStencilFormat, width, height,1 , false, 1,  mFormat.mDepthStencilflags, mFormat.mDepthStencilClearValue, D3D12_RESOURCE_DIMENSION_TEXTURE2D, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 		mDepthBuffer[0].addDepgthStencilView(heap);
 		mDepthBuffer[0].addSahderResorceView(cbvsrvuavheap);
 		if (mFormat.mDepthStencilflags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) // haven't find the formart that can support uav+dsv

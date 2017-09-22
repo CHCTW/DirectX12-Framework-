@@ -221,11 +221,46 @@ bool CommandList::updateTextureData(Texture& texture, void const * data)
 {
 	if (!texture.mResource || !texture.mUploadBuffer)
 		return false;
-	D3D12_SUBRESOURCE_DATA Data = {};
-	Data.pData = data;
-	Data.RowPitch = texture.textureDesc.Width * texture.mByteSize;
-	Data.SlicePitch = Data.RowPitch * texture.textureDesc.Height;
-	UpdateSubresources(mDx12CommandList, texture.mResource, texture.mUploadBuffer, 0, 0, 1, &Data);
+	//D3D12_SUBRESOURCE_DATA Data = {};
+	//Data.pData = data;
+	//Data.RowPitch = texture.textureDesc.Width * texture.mByteSize;
+	//Data.SlicePitch = Data.RowPitch * texture.textureDesc.Height;
+	//UpdateSubresources(mDx12CommandList, texture.mResource, texture.mUploadBuffer, 0, 0, 1, &Data);
+
+
+
+
+	D3D12_SUBRESOURCE_DATA *Data = new D3D12_SUBRESOURCE_DATA[texture.textureDesc.MipLevels];
+
+	texture.textureDesc.MipLevels;
+
+	unsigned w, h, total;
+	w = texture.textureDesc.Width;
+	h = texture.textureDesc.Height;
+	total = 0;
+
+
+
+	//D3D12_SUBRESOURCE_DATA *Data = new D3D12_SUBRESOURCE_DATA[ texture.textureDesc.MipLevels];
+
+		for (int j = 0; j < texture.textureDesc.MipLevels; j++)
+		{
+			Data[j].pData = (const char *)data + total;
+			Data[j].RowPitch = w * texture.mByteSize;
+			Data[j].SlicePitch = h*Data[j].RowPitch;
+			total += (w*h*texture.mByteSize);
+			w = w / 2;
+			h = h / 2;
+		}
+	UpdateSubresources(mDx12CommandList, texture.mResource, texture.mUploadBuffer, 0, 0, texture.textureDesc.MipLevels, Data);
+
+
+	delete[]Data;
+
+
+
+
+
 	return true;
 
 }
@@ -234,16 +269,35 @@ bool CommandList::updateTextureCubeData(Texture& texture, void  const ** data)
 	if (!texture.mResource || !texture.mUploadBuffer || !texture.mCubeMap)
 		return false;
 
-	D3D12_SUBRESOURCE_DATA Data[6];
+	texture.textureDesc.MipLevels;
+
+	unsigned w, h, total;
+	w = texture.textureDesc.Width;
+	h = texture.textureDesc.Height;
+	total = 0;
+
+
+	
+	D3D12_SUBRESOURCE_DATA *Data = new D3D12_SUBRESOURCE_DATA[6* texture.textureDesc.MipLevels];
 	for (int i = 0; i < 6; ++i)
 	{
-		Data[i].pData = data[i];
-		Data[i].RowPitch = texture.textureDesc.Width * texture.mByteSize;
-		Data[i].SlicePitch = Data[i].RowPitch * texture.textureDesc.Height;
+		w = texture.textureDesc.Width;
+		h = texture.textureDesc.Height;
+		total = 0;
+		for (int j = 0; j < texture.textureDesc.MipLevels; j++)
+		{
+			Data[i*texture.textureDesc.MipLevels+j].pData = (const char *)data[i]+ total;
+			Data[i*texture.textureDesc.MipLevels + j].RowPitch = w * texture.mByteSize;
+			Data[i*texture.textureDesc.MipLevels + j].SlicePitch = h*Data[i*texture.textureDesc.MipLevels + j].RowPitch;
+			total += (w*h*texture.mByteSize);
+			w = w / 2;
+			h = h / 2;
+		}
 	}
-	UpdateSubresources(mDx12CommandList, texture.mResource, texture.mUploadBuffer, 0, 0, 6, Data);
+	UpdateSubresources(mDx12CommandList, texture.mResource, texture.mUploadBuffer, 0, 0, 6 * texture.textureDesc.MipLevels, Data);
 //	int i = UpdateSubresources(mDx12CommandList, texture.mResource, texture.mUploadBuffer, 0, 0, 6, Data);
 //	++i;
+	delete[]Data;
 	return true;
 }
 void CommandList::setViewPort(ViewPort& viewport)

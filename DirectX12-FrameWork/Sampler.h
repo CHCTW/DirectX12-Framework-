@@ -5,7 +5,7 @@ class DescriptorHeap;
 class Sampler
 {
 public:
-	Sampler(D3D12_FILTER filter = D3D12_FILTER_MIN_MAG_MIP_POINT,  // due to pass too many parameters, should use inline to prevent a lot of copy
+	Sampler(D3D12_FILTER filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR,  // due to pass too many parameters, should use inline to prevent a lot of copy
 		D3D12_TEXTURE_ADDRESS_MODE u = D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
 		D3D12_TEXTURE_ADDRESS_MODE v = D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
 		D3D12_TEXTURE_ADDRESS_MODE w = D3D12_TEXTURE_ADDRESS_MODE_CLAMP,

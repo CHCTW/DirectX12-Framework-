@@ -218,7 +218,9 @@ void loadAsset()
 	lightBuffer.createConstantBuffer(render.mDevice, srvheap, sizeof(PointLightData));
 	lightBuffer.maptoCpu();
 
-	light.setRadius(5000);
+
+	light.setColor(50, 50, 50);
+	light.setRadius(150);
 
 	buddhaimport.ReadFile("Assets/buddha.obj", aiProcessPreset_TargetRealtime_Quality);
 

@@ -119,9 +119,14 @@ float4 PSMain(PSInput input) : SV_TARGET
 	float3 diff = Kd*albedo / PI;
 
 	float dist = length(lightpostion.xyz - input.wposition);
-	float att = 1.0f / (1 + lightattenuation.y*dist + dist*dist*lightattenuation.z);
-//	if (dist > lightradius*2)
-//		att = 0;
+	//float att = 1.0f / (1 + lightattenuation.y*dist + dist*dist*lightattenuation.z);
+
+
+    float t = pow(dist / lightradius, 4);
+    float att = saturate(pow(1 - t, 2)) / (dist * dist + 1);
+
+	if (dist > lightradius)
+		att = 0;
 	float3 ambient =  float3(0.0005f,0.0005,0.0005)*albedo * float3(ao,ao,ao);
 
 	float3 final = ambient + (diff + spec)*NL*lightcolor.xyz*att;

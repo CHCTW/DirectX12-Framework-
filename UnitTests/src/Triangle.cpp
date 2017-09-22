@@ -4,8 +4,7 @@
 #include "Window.h"
 #include "Render.h"
 #include "StructureHeaders.h"
-
-#define STB_IMAGE_IMPLEMENTATION
+#include "Image.h"
 #include <stb\stb_image.h>
 using namespace std;
 Render render;
@@ -78,10 +77,14 @@ void loadAsset()
 
 
 	int width, height, bpp;
-	unsigned char* rgb = stbi_load("Assets/Textures/front.jpg", &width, &height, &bpp, 4);
+	//unsigned char* rgb = stbi_load("Assets/Textures/GravelPlaza_REF.hdr", &width, &height, &bpp, 4);
 
-	texture.CreateTexture(render.mDevice, DXGI_FORMAT_R8G8B8A8_UNORM, width, height);
+
+	Image img;
+	img.load("Assets/Textures/front.jpg");
+	texture.CreateTexture(render.mDevice, DXGI_FORMAT_R8G8B8A8_UNORM, img.mWidth, img.mHeight);
 	texture.addSahderResorceView(srvheap);
+	
 
 	
 
@@ -99,7 +102,7 @@ void loadAsset()
 	cmdlist.resourceBarrier(vertexBuffer.mResource, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
 	cmdlist.resourceBarrier(texture.mResource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
 	cmdlist.updateBufferData(vertexBuffer, tridata, 3 * 4 * sizeof(float));
-	cmdlist.updateTextureData(texture, rgb);
+	cmdlist.updateTextureData(texture, img.mData);
 	cmdlist.resourceBarrier(vertexBuffer.mResource, D3D12_RESOURCE_STATE_COPY_DEST,D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 	cmdlist.resourceBarrier(texture.mResource, D3D12_RESOURCE_STATE_COPY_DEST,D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	cmdlist.close();
@@ -113,7 +116,7 @@ void loadAsset()
 		fence.mDx12Fence->SetEventOnCompletion(fenval, fenceEvet);
 		WaitForSingleObject(fenceEvet, INFINITE);
 	}
-	stbi_image_free(rgb);
+//	stbi_image_free(rgb);
 }
 
 void releaseRender()

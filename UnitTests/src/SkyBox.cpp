@@ -112,19 +112,29 @@ void loadAsset()
 //	unsigned char* rgb = stbi_load("Assets/Textures/front.jpg", &width, &height, &bpp, 4);
 	unsigned char* skyboxdata[6];
 
-	skyboxdata[0] = stbi_load("Assets/Textures/right.jpg", &width, &height, &bpp, 4);
-	skyboxdata[1] = stbi_load("Assets/Textures/left.jpg", &width, &height, &bpp, 4);
-	skyboxdata[2] = stbi_load("Assets/Textures/top.jpg", &width, &height, &bpp, 4);
-	skyboxdata[3] = stbi_load("Assets/Textures/bottom.jpg", &width, &height, &bpp, 4);
-	skyboxdata[4] = stbi_load("Assets/Textures/back.jpg", &width, &height, &bpp, 4);
-	skyboxdata[5] = stbi_load("Assets/Textures/front.jpg", &width, &height, &bpp, 4);
+	skyboxdata[0] = stbi_load("Assets/Textures/pano_1.hdr", &width, &height, &bpp, 4);
+	skyboxdata[1] = stbi_load("Assets/Textures/pano_3.hdr", &width, &height, &bpp, 4);
+	skyboxdata[2] = stbi_load("Assets/Textures/pano_4.hdr", &width, &height, &bpp, 4);
+	skyboxdata[3] = stbi_load("Assets/Textures/pano_5.hdr", &width, &height, &bpp, 4);
+	skyboxdata[4] = stbi_load("Assets/Textures/pano_0.hdr", &width, &height, &bpp, 4);
+	skyboxdata[5] = stbi_load("Assets/Textures/pano_2.hdr", &width, &height, &bpp, 4);
+
+
+
+	//img[0].load("Assets/Textures/right.jpg", 10);
+	//img[1].load("Assets/Textures/left.jpg", 10);
+	//img[2].load("Assets/Textures/top.jpg", 10);
+	//img[3].load("Assets/Textures/bottom.jpg", 10);
+	//img[4].load("Assets/Textures/back.jpg", 10);
+	//img[5].load("Assets/Textures/front.jpg", 10);
+
 
 	skyBox.CreateTexture(render.mDevice, DXGI_FORMAT_R8G8B8A8_UNORM, width, height, 6, true);
 	skyBox.addSahderResorceView(srvheap);
 
 
 
-	import.ReadFile("Assets/sphere.obj", aiProcessPreset_TargetRealtime_Fast);
+	import.ReadFile("Assets/cube.obj", aiProcessPreset_TargetRealtime_Fast);
 	scene = import.GetScene();
 	mesh = scene->mMeshes[0];
 	mesh->HasPositions();

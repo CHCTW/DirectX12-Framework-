@@ -285,8 +285,7 @@ Texture::Texture(): mByteSize(0), mCubeMap(false)
 }
 
 
-void Texture::CreateTexture(ID3D12Device* device, DXGI_FORMAT format, UINT width, UINT height, UINT arraySize, bool isCubeMap, D3D12_RESOURCE_FLAGS usage, ClearValue& clear, D3D12_RESOURCE_DIMENSION dem,
-	UINT mipLevel, D3D12_RESOURCE_STATES state)
+void Texture::CreateTexture(ID3D12Device* device, DXGI_FORMAT format, UINT width, UINT height, UINT arraySize, bool isCubeMap, UINT mipLevel, D3D12_RESOURCE_FLAGS usage, ClearValue& clear, D3D12_RESOURCE_DIMENSION dem, D3D12_RESOURCE_STATES state)
 {
 	textureDesc = {};
 	mByteSize = getSize(format);
@@ -351,7 +350,7 @@ void Texture::CreateTexture(ID3D12Device* device, DXGI_FORMAT format, UINT width
 		tempclear,
 		IID_PPV_ARGS(&mResource)));
 	mState = state;
-	const UINT64 uploadBufferSize = GetRequiredIntermediateSize(mResource, 0, textureDesc.DepthOrArraySize);
+	const UINT64 uploadBufferSize = GetRequiredIntermediateSize(mResource, 0, textureDesc.DepthOrArraySize*textureDesc.MipLevels);
 
 //	textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 	CD3DX12_RESOURCE_DESC textdesc = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);

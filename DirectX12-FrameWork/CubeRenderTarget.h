@@ -16,8 +16,8 @@ class CubeRenderTarget
 
 public:
 
-	bool createCubeRenderTargets(ID3D12Device* device, UINT width, UINT height, CubeRenderTargetType type, DescriptorHeap& heap, DescriptorHeap& srvuavheap, D3D12_RESOURCE_FLAGS flag = D3D12_RESOURCE_FLAG_NONE, DXGI_FORMAT renderforamt = DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT depthforamt = DXGI_FORMAT_R32_TYPELESS);
-	bool createCubeRenderTargets(ID3D12Device* device, UINT width, UINT height, CubeRenderTargetType type, DescriptorHeap& rtvheap, DescriptorHeap& dsvheap, DescriptorHeap& srvuavheap, D3D12_RESOURCE_FLAGS renderflag = D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_FLAGS depthflag = D3D12_RESOURCE_FLAG_NONE, DXGI_FORMAT renderforamt = DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT depthforamt = DXGI_FORMAT_R32_TYPELESS);
+	bool createCubeRenderTargets(ID3D12Device* device, UINT width, UINT height, CubeRenderTargetType type, DescriptorHeap& heap, DescriptorHeap& srvuavheap, D3D12_RESOURCE_FLAGS flag = D3D12_RESOURCE_FLAG_NONE, DXGI_FORMAT renderforamt = DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT depthforamt = DXGI_FORMAT_R32_TYPELESS);
+	bool createCubeRenderTargets(ID3D12Device* device, UINT width, UINT height, CubeRenderTargetType type, DescriptorHeap& rtvheap, DescriptorHeap& dsvheap, DescriptorHeap& srvuavheap, D3D12_RESOURCE_FLAGS renderflag = D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_FLAGS depthflag = D3D12_RESOURCE_FLAG_NONE, DXGI_FORMAT renderforamt = DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT depthforamt = DXGI_FORMAT_R32_TYPELESS);
 	//	bool mDepth;
 //	bool createRenderTargets(ID3D12Device* device, UINT width, UINT height, RenderTargetFormat& format, DescriptorHeap& rtvheap, DescriptorHeap& dsvheap, DescriptorHeap& cbvsrvuavheap);
 //	bool createRenderTargets(ID3D12Device* device, UINT width, UINT height, RenderTargetFormat& format, DescriptorHeap& heap, DescriptorHeap& cbvsrvuavheap);

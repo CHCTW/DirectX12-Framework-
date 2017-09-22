@@ -11,8 +11,8 @@ class Texture : public Resource
 {
 public:
 	Texture();
-	void CreateTexture(ID3D12Device* device, DXGI_FORMAT format,UINT width, UINT height, UINT arraySize = 1,bool isCubeMap = false, D3D12_RESOURCE_FLAGS usage = D3D12_RESOURCE_FLAG_NONE,ClearValue& clear = DefaultClearValue,D3D12_RESOURCE_DIMENSION dem = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
-		UINT mipLevel = 1, D3D12_RESOURCE_STATES state= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	void CreateTexture(ID3D12Device* device, DXGI_FORMAT format,UINT width, UINT height, UINT arraySize = 1,bool isCubeMap = false, UINT mipLevel = 1, D3D12_RESOURCE_FLAGS usage = D3D12_RESOURCE_FLAG_NONE,ClearValue& clear = DefaultClearValue,D3D12_RESOURCE_DIMENSION dem = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+	 D3D12_RESOURCE_STATES state= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	
 	void addSahderResorceView(DescriptorHeap& heap);

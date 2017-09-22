@@ -130,7 +130,7 @@ bool Render::createSwapChain(Window &window, UINT  count, RenderTargetFormat &fo
 		if (format.mDepth) 
 		{
 			mSwapChainRenderTarget[i].mDepthBuffer.resize(1);
-			mSwapChainRenderTarget[i].mDepthBuffer[0].CreateTexture(mDevice, format.mDepthStencilFormat, window.mWidth, window.mHeight, 1, false,D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, depthclear, D3D12_RESOURCE_DIMENSION_TEXTURE2D,1, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+			mSwapChainRenderTarget[i].mDepthBuffer[0].CreateTexture(mDevice, format.mDepthStencilFormat, window.mWidth, window.mHeight, 1, false, 1,D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, depthclear, D3D12_RESOURCE_DIMENSION_TEXTURE2D, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 			mSwapChainRenderTarget[i].mDepthBuffer[0].addDepgthStencilView(mDSVDescriptorHeap);
 		}
 		if (FAILED(hr))

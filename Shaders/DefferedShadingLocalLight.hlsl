@@ -101,6 +101,12 @@ float4 PSMain(PSInput input) : SV_TARGET
     float4 lightpostion = LocalLightData[input.id].lightposition;
 
 
+    
+    float dist = length(lightpostion.xyz - pos.xyz);
+    if (dist >= LocalLightData[input.id].lightradius)
+        discard;
+
+
     float3 F0 = float3(0.04, 0.04, 0.04);
     F0 = lerp(F0, albedo, float3(metallic, metallic, metallic)); // use metalic value to get F
 
@@ -127,21 +133,24 @@ float4 PSMain(PSInput input) : SV_TARGET
     float3 diff = Kd * albedo / PI;
 
 
-    float dist = length(lightpostion.xyz - pos.xyz);
+ //   float dp = dist/(1 - dist / LocalLightData[input.id].lightradius * dist / LocalLightData[input.id].lightradius);
+
+ //   float att = 1 / pow((dist / LocalLightData[input.id].lightradius + 1), 2);
  //   float att = 1.0f / (1 + LocalLightData[input.id].lightattenuation.y * dist + dist * dist * LocalLightData[input.id].lightattenuation.z);
 
-    float att = 1.0 - (dist / LocalLightData[input.id].lightradius) * (dist / LocalLightData[input.id].lightradius); // old attenuation doesn't work... it will generate hard edge
-    if (dist > LocalLightData[input.id].lightradius)
-        discard;
+    float t = pow(dist / LocalLightData[input.id].lightradius,4);
+    float att = saturate(pow(1 - t, 2)) / (dist*dist+1); // old attenuation doesn't work... it will generate hard edge
+
   //  att = att * att;
     //return float4(att, att, att, 1.0);
 
-    float3 final = (diff + spec) * NL * LocalLightData[input.id].lightcolor.xyz*att ;
-    //final = final / (1 + final); // tone mapping
-   // final = pow(final, 1.0f / 2.2f) * att;
+    float3 final = (diff + spec) * NL * LocalLightData[input.id].lightcolor.xyz * att;
+    final = final / (1 + final); // tone mapping
+    final = pow(final, 1.0f / 2.2f) ;
 //	pos.xyz = pos.xyz / 100;
 //	pos.xyz = normalize(pos.xyz);
-    return float4(final, 1.0);
+    return float4(final , 1.0);
+//    return float4(0.03,0.03,0.03, 1.0);
 
 
   //  return float4(NorMettexture.Sample(g_sampler, uv).rgb,1.0);

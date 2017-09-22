@@ -56,6 +56,7 @@ float3 Fresnel(float3 F0,float costheta)
 
 float Distribution(float3 N, float3 H, float roughness)
 {
+    roughness = roughness;
 	float a = roughness*roughness;
 	float a2 = a*a;
 	float NdotH = max(dot(N, H), 0.0);
@@ -154,7 +155,17 @@ float4 PSMain(PSInput input) : SV_TARGET
 	float3 diff = Kd*albedo / PI;
 
 	float dist = length(lightpostion.xyz - input.wposition);
-	float att = 1.0f / (1 + lightattenuation.y*dist + dist*dist*lightattenuation.z);
+
+
+    
+    float t = pow(dist / lightradius, 4);
+    float att = saturate(pow(1 - t, 2)) / (dist * dist + 1);
+
+    if (dist > lightradius)
+        att = 0;
+
+
+//	float att = 1.0f / (1 + lightattenuation.y*dist + dist*dist*lightattenuation.z);
 //	if (dist > lightradius*2)
 //		att = 0;
 	float3 ambient =  float3(0.0005f,0.0005,0.0005)*albedo * float3(ao,ao,ao);
@@ -168,15 +179,18 @@ float4 PSMain(PSInput input) : SV_TARGET
 
 	float3 absdir = abs(lightpostion.xyz - input.wposition);
 
-	float3 final = ambient + (diff + spec)*NL*lightcolor.xyz*att*(1-test);
+    float3 final = ambient + (diff + spec) * NL * lightcolor.xyz * (1 - test)*att;
 	final = final / (1 + final); // tone mapping
 	final = pow(final, 1.0f / 2.2f);
 
+
+   // if (roughness == 0.0f)
+    //    return float4(1.0, 1.0, 1.0, 1.0);
 	//if(absdir.y>absdir.x &&absdir.y>absdir.z)
 	//	return float4( 1.0f,0.0,0.0,1.0)*lightdepth*lightdepth*lightdepth*lightdepth;
 	
 //	return 
 
 //	return float4(1-test, 1-test, 1-test, 1-test);
-	return float4(final,1.0f);
+        return float4(final, 1.0f);
 }
