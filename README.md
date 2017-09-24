@@ -1,6 +1,6 @@
 # DirectX12-Framework-
 A framework for learning DirectX12 and demonstrate graphics techniques 
-![image](https://user-images.githubusercontent.com/30221942/30350698-b44b46da-97cc-11e7-86af-c56de405dbae.png)
+![image](https://user-images.githubusercontent.com/30221942/30778454-2ceaa09c-a08b-11e7-9b5c-1215392cc16b.png)
 
 ## All Unitest and Graphic Techniques pojects files working space is incorrect. Right click the project file and select properties.Click Debugging and find Working Directory area. Change it to $(SolutionDir) .
 
@@ -25,11 +25,13 @@ A framework for learning DirectX12 and demonstrate graphics techniques
 ### 2. Graphics Techniques: Projects in this part is for demostaring some graphcis techniques(lighting, deffered shading...)
 
 BRDF : Use Physics Basic Rendering to lit the scene and demostrate how different material looks like
+![image](https://user-images.githubusercontent.com/30221942/30778441-e20eee2a-a08a-11e7-8c28-bbb204175746.png)
 Shadow Map : Use one simple shadow map to demostrate the shadow for spot light
-![image](https://user-images.githubusercontent.com/30221942/30352344-4a35736c-97d4-11e7-8c1f-98f25c6e53c2.png)
-
+![image](https://user-images.githubusercontent.com/30221942/30778472-b55a28e4-a08b-11e7-837f-89b9eabced1b.png)
 OmniDirection Shadow Map : use cube mapping to demostrate the shadow for point light
-![image](https://user-images.githubusercontent.com/30221942/30352408-8f94b22e-97d4-11e7-8b75-ea4108bdb5eb.png)
+![image](https://user-images.githubusercontent.com/30221942/30778465-6dd2e682-a08b-11e7-932d-416469c74cad.png)
+Deferred Shading : Draw all parameters that is need for lighting caculation to two render targets first. In next pass, calculate the lighting result by accessing the data from two render targets and depth buffer and draw on the screen. This demo aslo desmotrate use lighting volume can draw large number of lights in the scene.
+![image](https://user-images.githubusercontent.com/30221942/30778454-2ceaa09c-a08b-11e7-9b5c-1215392cc16b.png)
 
 ### 3. Direcx12 Framework : This project is included by all the Unitests and Graphics Techniques. It is the core of this framework. It only generate lib file.
 ### 4. Graphics Utility : This project is included by part Unitests and Graphics Techniques. It contains some helper structer like spot light, Transform, Camera.... It only generate lib file.
