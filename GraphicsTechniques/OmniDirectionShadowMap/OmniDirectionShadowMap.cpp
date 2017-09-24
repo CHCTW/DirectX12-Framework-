@@ -170,7 +170,7 @@ void initializeRender()
 	shaderset.shaders[PS].load("Shaders/BRDFCubeShadow.hlsl", "PSMain", PS);
 
 
-	pipeline.createGraphicsPipeline(render.mDevice, rootsig, shaderset, retformat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(), VERTEX_LAYOUT_TYPE_SPLIT_ALL);
+	pipeline.createGraphicsPipeline(render.mDevice, rootsig, shaderset, retformat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(D3D12_CULL_MODE_FRONT), VERTEX_LAYOUT_TYPE_SPLIT_ALL);
 
 	viewport.setup(0.0f, 0.0f, (float)windows.mWidth, (float)windows.mHeight);
 	scissor.setup(0, windows.mWidth, 0, windows.mHeight);
@@ -202,7 +202,7 @@ void initializeRender()
 	shadowshaderset.shaders[VS].load("Shaders/CubeShadowMap.hlsl", "VSMain", VS);
 	//shadowshaderset.shaders[PS].load("Shaders/ShadowMap.hlsl", "PSMain", PS);
 	RenderTargetFormat shadowformat(0, nullptr, true);
-	shadowPipeline.createGraphicsPipeline(render.mDevice, shadowRootsig, shadowshaderset, shadowformat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(), VERTEX_LAYOUT_TYPE_SPLIT_ALL);
+	shadowPipeline.createGraphicsPipeline(render.mDevice, shadowRootsig, shadowshaderset, shadowformat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(D3D12_CULL_MODE_FRONT), VERTEX_LAYOUT_TYPE_SPLIT_ALL);
 
 }
 
@@ -251,7 +251,7 @@ void loadAsset()
 	Buddha.mBufferData[0].mMaterial.mMetallic = 1.0;
 
 
-	groundimport.ReadFile("Assets/cube.obj", aiProcessPreset_TargetRealtime_Fast);
+	groundimport.ReadFile("Assets/insidecube.obj", aiProcessPreset_TargetRealtime_Fast);
 	aiMesh* ground = groundimport.GetScene()->mMeshes[0];
 	Ground.mVertexBufferData.createVertexBuffer(render.mDevice, ground->mNumVertices * 3 * sizeof(float), 3 * sizeof(float));
 	Ground.mNormalBuffer.createVertexBuffer(render.mDevice, ground->mNumVertices * 3 * sizeof(float), 3 * sizeof(float));
@@ -265,34 +265,19 @@ void loadAsset()
 	}
 	Ground.mIndexBuffer.createIndexBuffer(render.mDevice, sizeof(unsigned int) * ground->mNumFaces * 3);
 	Ground.indexCount = ground->mNumFaces * 3;
-	Ground.mNum = 3;
+	Ground.mNum = 1;
 	Ground.mBufferData.resize(Ground.mNum);
 	Ground.mPosition.resize(Ground.mNum);
 	Ground.mStructeredBuffer.createStructeredBuffer(render.mDevice, srvheap, sizeof(InstancedInformation), Ground.mNum, STRUCTERED_BUFFER_TYPE_READ);
 	//Ground.mPosition[0].setAngle(-90, 0, 0);
-	Ground.mPosition[0].setScale(50, 1, 50);
-	Ground.mPosition[0].setPosition(0, -5, 0);
+	Ground.mPosition[0].setScale(25, 25, 25);
+	Ground.mPosition[0].setPosition(0, 0, 0);
 	Ground.mPosition[0].CacNewTransform();
 	Ground.mBufferData[0].mMatrices = Ground.mPosition[0].getMatrices();
 	Ground.mBufferData[0].mMaterial.mAlbedo = glm::vec3(0.55, 0.55, 0.55);
 	Ground.mBufferData[0].mMaterial.mRoughness = 0.8;
 	Ground.mBufferData[0].mMaterial.mMetallic = 0.8;
 
-	Ground.mPosition[1].setScale(50, 20, 1);
-	Ground.mPosition[1].setPosition(0, 10, -50);
-	Ground.mPosition[1].CacNewTransform();
-	Ground.mBufferData[1].mMatrices = Ground.mPosition[1].getMatrices();
-	Ground.mBufferData[1].mMaterial.mAlbedo = glm::vec3(0.55, 0.55, 0.55);
-	Ground.mBufferData[1].mMaterial.mRoughness = 0.8;
-	Ground.mBufferData[1].mMaterial.mMetallic = 0.8;
-
-	Ground.mPosition[2].setScale(50, 1, 50);
-	Ground.mPosition[2].setPosition(0, 20, 0);
-	Ground.mPosition[2].CacNewTransform();
-	Ground.mBufferData[2].mMatrices = Ground.mPosition[2].getMatrices();
-	Ground.mBufferData[2].mMaterial.mAlbedo = glm::vec3(0.55, 0.55, 0.55);
-	Ground.mBufferData[2].mMaterial.mRoughness = 0.8;
-	Ground.mBufferData[2].mMaterial.mMetallic = 0.8;
 
 
 	// load sphere data

@@ -174,7 +174,7 @@ void loadAsset()
 	Buddha.mBufferData[0].mMaterial.mMetallic = 1.0;
 
 
-	groundimport.ReadFile("Assets/cube.obj", aiProcessPreset_TargetRealtime_Fast);
+	groundimport.ReadFile("Assets/insidecube.obj", aiProcessPreset_TargetRealtime_Fast);
 	aiMesh* ground = groundimport.GetScene()->mMeshes[0];
 	Ground.mVertexBufferData.createVertexBuffer(render.mDevice, ground->mNumVertices * 3 * sizeof(float), 3 * sizeof(float));
 	Ground.mNormalBuffer.createVertexBuffer(render.mDevice, ground->mNumVertices * 3 * sizeof(float), 3 * sizeof(float));
@@ -193,8 +193,8 @@ void loadAsset()
 	Ground.mPosition.resize(Ground.mNum);
 	Ground.mStructeredBuffer.createStructeredBuffer(render.mDevice, srvheap, sizeof(InstancedInformation), Ground.mNum, STRUCTERED_BUFFER_TYPE_READ);
 	//Ground.mPosition[0].setAngle(-90, 0, 0);
-	Ground.mPosition[0].setScale(250, 1, 250);
-	Ground.mPosition[0].setPosition(0, -5, 0);
+	Ground.mPosition[0].setScale(10, 10, 10);
+	Ground.mPosition[0].setPosition(0, 0, 0);
 	Ground.mPosition[0].CacNewTransform();
 	Ground.mBufferData[0].mMatrices = Ground.mPosition[0].getMatrices();
 	Ground.mBufferData[0].mMaterial.mAlbedo = glm::vec3(0.55, 0.55, 0.55);
