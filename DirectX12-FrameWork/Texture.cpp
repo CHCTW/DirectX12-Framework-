@@ -381,9 +381,17 @@ void Texture::addSahderResorceView(DescriptorHeap& heap)
 
 	// need to decide the deimesnion depends on the real dimesion of texture
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	if(mCubeMap)
-		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+
 	srvDesc.Texture2D.MipLevels = textureDesc.MipLevels;
+	if (mCubeMap)
+	{
+		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+		srvDesc.TextureCube.MipLevels = textureDesc.MipLevels;
+		srvDesc.TextureCube.MostDetailedMip = 0;
+		//srvDesc.TextureCube.ResourceMinLODClamp = 0;
+	}
+
+
 	mSRV = heap.addResource(SRV, mResource, &srvDesc, nullptr);
 }
 

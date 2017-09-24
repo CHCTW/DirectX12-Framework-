@@ -87,7 +87,7 @@ float GeometrySmith(float NV, float NL, float roughness)
 float ShadowTest(float3 pos)
 {
 	float3 shadowcood = lightpostion.xyz - pos;
-	float lightdepth = ShadowMap.Sample(Sampler, shadowcood).r;
+	float lightdepth = ShadowMap.SampleLevel(Sampler, shadowcood,0).r;
 	float pixdepth;
 	shadowcood = pos - lightpostion.xyz ;
 	float3 absdir = abs(shadowcood); // face choosing 

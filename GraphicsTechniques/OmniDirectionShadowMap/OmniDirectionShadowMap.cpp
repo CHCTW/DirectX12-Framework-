@@ -131,7 +131,7 @@ void initializeRender()
 	shadowViewport.setup(0.0f, 0.0f, (float)cubeWidth, (float)cubeHeight);
 	shadowScissor.setup(0.0f, (float)cubeWidth, 0.0f, (float)cubeHeight);
 
-	cubeShadowMap.createCubeRenderTargets(render.mDevice, cubeWidth, cubeHeight, CUBE_RENDERTAERGET_TYPE_DEPTH, dsvheap, srvheap);
+	cubeShadowMap.createCubeRenderTargets(render.mDevice, cubeWidth, cubeHeight,1, CUBE_RENDERTAERGET_TYPE_DEPTH, dsvheap, srvheap);
 
 
 	sampler.createSampler(samplerheap);
@@ -219,7 +219,7 @@ void loadAsset()
 	lightBuffer.maptoCpu();
 
 
-	light.setColor(50, 50, 50);
+	light.setColor(500, 500, 500);
 	light.setRadius(150);
 
 	buddhaimport.ReadFile("Assets/buddha.obj", aiProcessPreset_TargetRealtime_Quality);
@@ -499,8 +499,9 @@ void onrender()
 		for (int face = 0; face < 6; face++)
 		{
 
-			cmdlist.bindCubeRenderTarget(cubeShadowMap, face);
-			cmdlist.clearcubeDepthStencil(cubeShadowMap, face);
+			cmdlist.bindCubeRenderTarget(cubeShadowMap, face,0);
+			cmdlist.clearcubeDepthStencil(cubeShadowMap, face,0);
+			///cmdlist.clearcubeDepthStencil(cubeShadowMap, face, 1);
 			cmdlist.bindGraphicsConstant(2, &face);
 
 			cmdlist.bindGraphicsResource(1, Spheres.mStructeredBuffer);

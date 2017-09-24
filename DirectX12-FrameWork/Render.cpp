@@ -1,6 +1,14 @@
 #include "Render.h"
 #include "Window.h"
 #include "stdafx.h"
+
+
+//WCHAR* downSampleShader = "";
+
+
+
+
+static Pipeline DownSamplePipeline;
 Render::Render():mDevice(NULL), mCommandQueue(NULL), mSwapChainAccout(0),
 mDxgiFactory(NULL), mDxgiAdaptor(NULL), mSwapChain(NULL), mSwapChainRenderTarget(NULL)
 {
@@ -78,6 +86,14 @@ bool Render::initialize()
 
 	if (!mDSVDescriptorHeap.ininitialize(mDevice, 10, D3D12_DESCRIPTOR_HEAP_TYPE_DSV))
 		return false;
+
+
+
+	// create pipelien for generate  mipmpaps
+
+	ShaderSet downsampleshader;
+//	downsampleshader.shaders[CS].load()
+
 
 	return true;
 }

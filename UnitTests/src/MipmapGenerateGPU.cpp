@@ -115,7 +115,7 @@ void loadAsset()
 	cameraBuffer.createConstantBuffer(render.mDevice, srvheap, sizeof(ViewProjection));
 	cameraBuffer.maptoCpu();
 
-	IrradianceMap.createCubeRenderTargets(render.mDevice, mapWidth, mapHeight,1, CUBE_RENDERTAERGET_TYPE_RENDERTARGET, rtvheap, srvheap, D3D12_RESOURCE_FLAG_NONE, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	IrradianceMap.createCubeRenderTargets(render.mDevice, mapWidth, mapHeight, 1, CUBE_RENDERTAERGET_TYPE_RENDERTARGET, rtvheap, srvheap, D3D12_RESOURCE_FLAG_NONE, DXGI_FORMAT_R32G32B32A32_FLOAT);
 
 
 	int width, height, bpp;
@@ -158,8 +158,8 @@ void loadAsset()
 	//img[5].load("Assets/Textures/front.jpg", 10);
 
 
-//	skyBox.CreateTexture(render.mDevice, DXGI_FORMAT_R8G8B8A8_UNORM, img[0].mWidth, img[0].mHeight, 6, true);
-	skyBox.CreateTexture(render.mDevice, DXGI_FORMAT_R32G32B32A32_FLOAT, img[0].mWidth, img[0].mHeight, 6, true,5);
+	//	skyBox.CreateTexture(render.mDevice, DXGI_FORMAT_R8G8B8A8_UNORM, img[0].mWidth, img[0].mHeight, 6, true);
+	skyBox.CreateTexture(render.mDevice, DXGI_FORMAT_R32G32B32A32_FLOAT, img[0].mWidth, img[0].mHeight, 6, true, 5);
 
 	skyBox.addSahderResorceView(srvheap);
 
@@ -231,9 +231,9 @@ void loadAsset()
 void generateIrrMap()
 {
 
-//	RootSignature irradiancerootsig;
+	//	RootSignature irradiancerootsig;
 
-//	irradiancerootsig.mParameters.resize(3);
+	//	irradiancerootsig.mParameters.resize(3);
 
 
 	ShaderSet irrshaders;
@@ -245,14 +245,14 @@ void generateIrrMap()
 	RenderTargetFormat retformat(DXGI_FORMAT_R32G32B32A32_FLOAT);
 
 	IrraidancePipeline.createGraphicsPipeline(render.mDevice, rootsig, irrshaders, retformat, DepthStencilState::DepthStencilState(), BlendState::BlendState(), RasterizerState::RasterizerState(), VERTEX_LAYOUT_TYPE_SPLIT_ALL);
-	
+
 	ViewPort tempviewport;
 	Scissor tempscissor;
 	tempviewport.setup(0.0f, 0.0f, (float)mapWidth, (float)mapHeight);
 	tempscissor.setup(0, mapWidth, 0, mapHeight);
 
 
-	
+
 	Camera views[6];
 	views[0].setTarget(-1.0, 0.0, 0.0);
 	views[0].setUp(0.0, -1.0, 0.0);
@@ -291,7 +291,7 @@ void generateIrrMap()
 		cmdlist.reset(IrraidancePipeline);
 
 		cmdlist.cubeRenderTargetBarrier(IrradianceMap, D3D12_RESOURCE_STATE_GENERIC_READ
-		,D3D12_RESOURCE_STATE_RENDER_TARGET);
+			, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
 		cmdlist.setViewPort(tempviewport);
 		cmdlist.setScissor(tempscissor);
@@ -318,7 +318,7 @@ void generateIrrMap()
 			WaitForSingleObject(fenceEvet, INFINITE);
 		}
 
-	
+
 	}
 	IrraidancePipeline.release();
 
@@ -358,9 +358,9 @@ void update()
 	cmdlist.bindGraphicsRootSigature(rootsig);
 	cmdlist.setViewPort(viewport);
 	cmdlist.setScissor(scissor);
-	if(irr)
+	if (irr)
 		cmdlist.bindGraphicsResource(1, IrradianceMap.mRenderBuffer[0]);
-	else 
+	else
 		cmdlist.bindGraphicsResource(1, skyBox);
 	cmdlist.renderTargetBarrier(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	cmdlist.bindRenderTarget(render.mSwapChainRenderTarget[frameIndex]);
@@ -427,12 +427,12 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 int main()
 {
 	int testnumber = 3;
-	windows.initialize(1600, 900, "Irradiance Map");
+	windows.initialize(1600, 900, "Mipmap Generate GPU");
 	windows.openWindow();
 	glfwSetCursorPosCallback(windows.mWindow, cursor_pos_callback);
 	glfwSetMouseButtonCallback(windows.mWindow, mouse_button_callback);
 	glfwSetScrollCallback(windows.mWindow, scroll_callback);
-		glfwSetKeyCallback(windows.mWindow, key_callback);
+	glfwSetKeyCallback(windows.mWindow, key_callback);
 
 	int limit = 10000;
 	int count = 0;

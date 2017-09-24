@@ -112,14 +112,18 @@ void CommandList::bindRenderTarget(RenderTarget & rt)
 	mDx12CommandList->OMSetRenderTargets(rt.mRenderBuffers.size(), cpus, false, nullptr);
 }
 
-void CommandList::bindCubeRenderTarget(CubeRenderTarget & crt, UINT face)
+void CommandList::bindCubeRenderTarget(CubeRenderTarget & crt, UINT face,UINT level)
 {
-	if (crt.mType & (CUBE_RENDERTAERGET_TYPE_DEPTH))
+	if (crt.mType == (CUBE_RENDERTAERGET_TYPE_DEPTH| CUBE_RENDERTAERGET_TYPE_RENDERTARGET))
 	{
-		mDx12CommandList->OMSetRenderTargets(crt.mRenderBuffer.size(), &(crt.mFaceRTV[face].Cpu), false, &crt.mFaceDSV[face].Cpu);
+		mDx12CommandList->OMSetRenderTargets(1, &(crt.mFaceRTV[face][level].Cpu), false, &crt.mFaceDSV[face][level].Cpu);
+	}
+	else if (crt.mType == (CUBE_RENDERTAERGET_TYPE_DEPTH))
+	{
+		mDx12CommandList->OMSetRenderTargets(0, nullptr, false, &crt.mFaceDSV[face][level].Cpu);
 	}
 	else
-		mDx12CommandList->OMSetRenderTargets(crt.mRenderBuffer.size(), &(crt.mFaceRTV[face].Cpu), false, nullptr);
+		mDx12CommandList->OMSetRenderTargets(1, &(crt.mFaceRTV[face][level].Cpu), false, nullptr);
 }
 
 void CommandList::clearRenderTarget(RenderTarget &rt, const float *color)
@@ -154,19 +158,19 @@ void CommandList::clearDepthStencil(RenderTarget &rt, D3D12_CLEAR_FLAGS flag, fl
 	}
 }
 
-void CommandList::clearcubeRenderTarget(CubeRenderTarget &crt, UINT face)
+void CommandList::clearcubeRenderTarget(CubeRenderTarget &crt, UINT face, UINT level)
 {
 	if (crt.mType & (CUBE_RENDERTAERGET_TYPE_RENDERTARGET))
 	{
-		mDx12CommandList->ClearRenderTargetView(crt.mFaceRTV[face].Cpu, crt.mRenderTargetClearValue.Color, 0, NULL);
+		mDx12CommandList->ClearRenderTargetView(crt.mFaceRTV[face][level].Cpu, crt.mRenderTargetClearValue.Color, 0, NULL);
 	}
 
 }
-void CommandList::clearcubeDepthStencil(CubeRenderTarget &crt, UINT face, D3D12_CLEAR_FLAGS flag, float depth, UINT stencil)
+void CommandList::clearcubeDepthStencil(CubeRenderTarget &crt, UINT face, UINT level, D3D12_CLEAR_FLAGS flag, float depth, UINT stencil)
 {
 	if (crt.mType & (CUBE_RENDERTAERGET_TYPE_DEPTH))
 	{
-		mDx12CommandList->ClearDepthStencilView(crt.mFaceDSV[face].Cpu, flag, depth, stencil, 0, nullptr);
+		mDx12CommandList->ClearDepthStencilView(crt.mFaceDSV[face][level].Cpu, flag, depth, stencil, 0, nullptr);
 	}
 }
 
