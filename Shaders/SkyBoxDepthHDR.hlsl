@@ -47,7 +47,7 @@ float4 PSMain(PSInput input) : SV_TARGET
 //    return float4(d/50, d/50, d/50, 1.0);
     if (depth.Sample(g_sampler,coord).r<1.0)
         discard;
-        return pow(cube.Sample(g_sampler, input.normal) / (1 + cube.Sample(g_sampler, input.normal)), (1 / 2.2f));
+        return pow(cube.SampleLevel(g_sampler, input.normal,0.0) / (1 + cube.SampleLevel(g_sampler, input.normal,0.0)), (1 / 2.2f));
 
 	//return float4(input.normal,1.0f);
 }

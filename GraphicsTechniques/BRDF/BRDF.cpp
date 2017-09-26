@@ -62,7 +62,7 @@ float curyoffet;
 bool press = false;
 
 
-ObjectData Spheres;
+ObjectData Bunnys;
 
 const UINT rowcount = 10;
 const UINT collomcount = 5;
@@ -108,7 +108,7 @@ void initializeRender()
 	rootsig.mParameters[1].mType = PARAMETERTYPE_SRV;
 	rootsig.mParameters[1].mResCounts = 1;
 	rootsig.mParameters[1].mBindSlot = 0;
-	rootsig.mParameters[1].mResource = &Spheres.mStructeredBuffer;
+	rootsig.mParameters[1].mResource = &Bunnys.mStructeredBuffer;
 	rootsig.mParameters[2].mType = PARAMETERTYPE_CBV;
 	rootsig.mParameters[2].mResCounts = 1;
 	rootsig.mParameters[2].mBindSlot = 1;
@@ -213,14 +213,14 @@ void loadAsset()
 	
 	UINT verticnum = mesh->mNumVertices;
 
-	if (!Spheres.mVertexBufferData.createVertexBuffer(render.mDevice, mesh->mNumVertices * 3 * sizeof(float), 3 * sizeof(float)))
+	if (!Bunnys.mVertexBufferData.createVertexBuffer(render.mDevice, mesh->mNumVertices * 3 * sizeof(float), 3 * sizeof(float)))
 	{
 		cout << "Fail for create" << endl;
 	}
-	Spheres.mNormalBuffer.createVertexBuffer(render.mDevice, mesh->mNumVertices * 3 * sizeof(float), 3 * sizeof(float));
+	Bunnys.mNormalBuffer.createVertexBuffer(render.mDevice, mesh->mNumVertices * 3 * sizeof(float), 3 * sizeof(float));
 
 
-	Spheres.mIndexBuffer.createIndexBuffer(render.mDevice, sizeof(unsigned int) * 3 * mesh->mNumFaces);
+	Bunnys.mIndexBuffer.createIndexBuffer(render.mDevice, sizeof(unsigned int) * 3 * mesh->mNumFaces);
 
 	std::vector<unsigned int> indexdata;
 	indexdata.resize(mesh->mNumFaces * 3);
@@ -232,27 +232,27 @@ void loadAsset()
 	}
 
 	// initialize spheres position data
-	Spheres.mNum = spherecount;
-	Spheres.indexCount = mesh->mNumFaces * 3;
-	Spheres.mBufferData.resize(Spheres.mNum);
-	Spheres.mPosition.resize(Spheres.mNum);
+	Bunnys.mNum = spherecount;
+	Bunnys.indexCount = mesh->mNumFaces * 3;
+	Bunnys.mBufferData.resize(Bunnys.mNum);
+	Bunnys.mPosition.resize(Bunnys.mNum);
 
-	Spheres.mStructeredBuffer.createStructeredBuffer(render.mDevice, srvheap, sizeof(InstancedInformation), Spheres.mNum, STRUCTERED_BUFFER_TYPE_READ);
+	Bunnys.mStructeredBuffer.createStructeredBuffer(render.mDevice, srvheap, sizeof(InstancedInformation), Bunnys.mNum, STRUCTERED_BUFFER_TYPE_READ);
 
 	radian = 2*3.14159f/ rowcount;
 	float rough = 1.0f / (rowcount-1);
 	float metalic = 1.0f / (collomcount-1);
-	for (int i = 0; i < Spheres.mNum; ++i)
+	for (int i = 0; i < Bunnys.mNum; ++i)
 	{
 		int height = i / rowcount;
 		int rowpos = i % rowcount;
-		Spheres.mPosition[i].setPosition(radious*cos(i*radian),heightgap*height, radious*sin(i*radian));
-		//Spheres.mPosition[i].setAngle(-90, 0, 0);
-		Spheres.mPosition[i].CacNewTransform();
-		Spheres.mBufferData[i].mMatrices = Spheres.mPosition[i].getMatrices();
-		Spheres.mBufferData[i].mMaterial.mAlbedo = glm::vec3(1.0, 0.0, 0.0);
-		Spheres.mBufferData[i].mMaterial.mRoughness = (rowpos)*rough;
-		Spheres.mBufferData[i].mMaterial.mMetallic = height*metalic;
+		Bunnys.mPosition[i].setPosition(radious*cos(i*radian),heightgap*height, radious*sin(i*radian));
+		//Bunnys.mPosition[i].setAngle(-90, 0, 0);
+		Bunnys.mPosition[i].CacNewTransform();
+		Bunnys.mBufferData[i].mMatrices = Bunnys.mPosition[i].getMatrices();
+		Bunnys.mBufferData[i].mMaterial.mAlbedo = glm::vec3(1.0, 0.0, 0.0);
+		Bunnys.mBufferData[i].mMaterial.mRoughness = (rowpos)*rough;
+		Bunnys.mBufferData[i].mMaterial.mMetallic = height*metalic;
 
 	}
 
@@ -261,10 +261,10 @@ void loadAsset()
 
 	cmdalloc.reset();
 	cmdlist.reset(Pipeline());
-	cmdlist.resourceBarrier(Spheres.mVertexBufferData.mResource, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceBarrier(Spheres.mNormalBuffer.mResource, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceBarrier(Spheres.mIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceBarrier(Spheres.mStructeredBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceBarrier(Bunnys.mVertexBufferData.mResource, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceBarrier(Bunnys.mNormalBuffer.mResource, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceBarrier(Bunnys.mIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceBarrier(Bunnys.mStructeredBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
 	cmdlist.resourceBarrier(Buddha.mVertexBufferData.mResource, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
 	cmdlist.resourceBarrier(Buddha.mNormalBuffer.mResource, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
 	cmdlist.resourceBarrier(Buddha.mIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
@@ -276,10 +276,10 @@ void loadAsset()
 	cmdlist.resourceBarrier(Ground.mStructeredBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
 
 
-	cmdlist.updateBufferData(Spheres.mVertexBufferData, mesh->mVertices, mesh->mNumVertices * 3 * sizeof(float));
-	cmdlist.updateBufferData(Spheres.mIndexBuffer, indexdata.data(), mesh->mNumFaces * 3 * sizeof(unsigned int));
-	cmdlist.updateBufferData(Spheres.mNormalBuffer, mesh->mNormals, mesh->mNumVertices * 3 * sizeof(float));
-	cmdlist.updateBufferData(Spheres.mStructeredBuffer, Spheres.mBufferData.data(), Spheres.mNum * sizeof(InstancedInformation));
+	cmdlist.updateBufferData(Bunnys.mVertexBufferData, mesh->mVertices, mesh->mNumVertices * 3 * sizeof(float));
+	cmdlist.updateBufferData(Bunnys.mIndexBuffer, indexdata.data(), mesh->mNumFaces * 3 * sizeof(unsigned int));
+	cmdlist.updateBufferData(Bunnys.mNormalBuffer, mesh->mNormals, mesh->mNumVertices * 3 * sizeof(float));
+	cmdlist.updateBufferData(Bunnys.mStructeredBuffer, Bunnys.mBufferData.data(), Bunnys.mNum * sizeof(InstancedInformation));
 
 	cmdlist.updateBufferData(Buddha.mVertexBufferData, buddha->mVertices, buddha->mNumVertices * 3 * sizeof(float));
 	cmdlist.updateBufferData(Buddha.mIndexBuffer, buddhaindexdata.data(), buddha->mNumFaces * 3 * sizeof(unsigned int));
@@ -291,10 +291,10 @@ void loadAsset()
 	cmdlist.updateBufferData(Ground.mNormalBuffer, ground->mNormals, ground->mNumVertices * 3 * sizeof(float));
 	cmdlist.updateBufferData(Ground.mStructeredBuffer, Ground.mBufferData.data(), Ground.mNum * sizeof(InstancedInformation));
 
-	cmdlist.resourceBarrier(Spheres.mVertexBufferData.mResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceBarrier(Spheres.mNormalBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceBarrier(Spheres.mIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
-	cmdlist.resourceBarrier(Spheres.mStructeredBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
+	cmdlist.resourceBarrier(Bunnys.mVertexBufferData.mResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist.resourceBarrier(Bunnys.mNormalBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist.resourceBarrier(Bunnys.mIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+	cmdlist.resourceBarrier(Bunnys.mStructeredBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
 
 	cmdlist.resourceBarrier(Buddha.mVertexBufferData.mResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 	cmdlist.resourceBarrier(Buddha.mNormalBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
@@ -333,15 +333,15 @@ void releaseRender()
 	Buddha.mVertexBufferData.release();
 	Buddha.mStructeredBuffer.release();
 	Buddha.mIndexBuffer.release();
-	Spheres.mStructeredBuffer.release();
+	Bunnys.mStructeredBuffer.release();
 	import.FreeScene();
 	cameraBuffer.release();
-	Spheres.mIndexBuffer.release();
-	Spheres.mVertexBufferData.release();
+	Bunnys.mIndexBuffer.release();
+	Bunnys.mVertexBufferData.release();
 	srvheap.release();
 	pipeline.release();
 	rootsig.realease();
-	Spheres.mNormalBuffer.release();
+	Bunnys.mNormalBuffer.release();
 	fence.release();
 	cmdlist.release();
 	cmdalloc.release();
@@ -357,18 +357,18 @@ void update()
 
 	light.update();
 	lightBuffer.updateBufferfromCpu(light.getLightData(), sizeof(SpotLightData));
-	//radian = 2 * 3.14159f / Spheres.mNum;
+	//radian = 2 * 3.14159f / Bunnys.mNum;
 	rotationoffset += rotationspeed;
-	for (int i = 0; i < Spheres.mNum; ++i)
+	for (int i = 0; i < Bunnys.mNum; ++i)
 	{
 		int height = i / rowcount;
 		int rowpos = i % rowcount;
-		Spheres.mPosition[i].setPosition(radious*cos(rowpos*radian+ rotationoffset), heightgap*height - (collomcount*heightgap)/2, radious*sin(rowpos*radian +rotationoffset));
+		Bunnys.mPosition[i].setPosition(radious*cos(rowpos*radian+ rotationoffset), heightgap*height - (collomcount*heightgap)/2, radious*sin(rowpos*radian +rotationoffset));
 
-	//	Spheres.mPosition[i].setPosition(rowpos*1.5, height, 5);
-		//Spheres.mPosition[i].setAngle(0, (rowpos*radian+ rotationoffset)/3.14159*180, 0);
-		Spheres.mPosition[i].CacNewTransform();
-		Spheres.mBufferData[i].mMatrices = Spheres.mPosition[i].getMatrices();
+	//	Bunnys.mPosition[i].setPosition(rowpos*1.5, height, 5);
+		//Bunnys.mPosition[i].setAngle(0, (rowpos*radian+ rotationoffset)/3.14159*180, 0);
+		Bunnys.mPosition[i].CacNewTransform();
+		Bunnys.mBufferData[i].mMatrices = Bunnys.mPosition[i].getMatrices();
 	}
 
 }
@@ -383,9 +383,9 @@ void onrender()
 
 
 
-	cmdlist.resourceBarrier(Spheres.mStructeredBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.updateBufferData(Spheres.mStructeredBuffer, Spheres.mBufferData.data(), Spheres.mNum * sizeof(InstancedInformation));
-	cmdlist.resourceBarrier(Spheres.mStructeredBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
+	cmdlist.resourceBarrier(Bunnys.mStructeredBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.updateBufferData(Bunnys.mStructeredBuffer, Bunnys.mBufferData.data(), Bunnys.mNum * sizeof(InstancedInformation));
+	cmdlist.resourceBarrier(Bunnys.mStructeredBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
 
 
 
@@ -408,9 +408,9 @@ void onrender()
 	cmdlist.clearDepthStencil(render.mSwapChainRenderTarget[frameIndex]);
 	cmdlist.setTopolgy(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	cmdlist.bindIndexBuffer(Spheres.mIndexBuffer);
-	cmdlist.bindVertexBuffers(Spheres.mVertexBufferData, Spheres.mNormalBuffer);
-	cmdlist.drawIndexedInstanced(Spheres.indexCount, Spheres.mNum, 0, 0);
+	cmdlist.bindIndexBuffer(Bunnys.mIndexBuffer);
+	cmdlist.bindVertexBuffers(Bunnys.mVertexBufferData, Bunnys.mNormalBuffer);
+	cmdlist.drawIndexedInstanced(Bunnys.indexCount, Bunnys.mNum, 0, 0);
 
 	cmdlist.bindGraphicsResource(1, Buddha.mStructeredBuffer);
 	cmdlist.bindIndexBuffer(Buddha.mIndexBuffer);

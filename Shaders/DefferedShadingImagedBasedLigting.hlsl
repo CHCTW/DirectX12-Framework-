@@ -16,6 +16,11 @@ struct PSInput
 Texture2D NorMettexture : register(t0);
 Texture2D AlbRoutexture : register(t1);
 Texture2D Depthtexture : register(t2);
+
+TextureCube Irradiance: register(t4);
+TextureCube Specular : register(t5);
+Texture2D BRDFIntergrate : register(t6);
+
 SamplerState g_sampler : register(s0);
 PSInput VSMain(uint id : SV_VertexID)
 {
@@ -93,19 +98,27 @@ float4 PSMain(PSInput input) : SV_TARGET
 	float3 H = normalize(L + V);
 
 	float HV = max(dot(H, V), 0.0f);
+    float NV = saturate(dot(N, V));
+    float3 R = 2 * dot(V, N) * N - V;
+
+
 
 //	return float4(pos.xyz, 1.0);
 
-	float3 F = Fresnel(F0, HV);
+    float3 F = F0+(max(float3(1.0 - roughness, 1.0 - roughness, 1.0 - roughness), F0) - F0) * pow(1.0 - NV, 5.0);
 
 
 
-	float3 Kd = 1 - F;  // diffuse color 
-	Kd = Kd * (1.0 - metallic);
-	float3 diff = Kd*albedo / PI;
+    float3 Ks = F0 + (max(float3(1.0 - roughness, 1.0 - roughness, 1.0 - roughness), F0) - F0) * pow(1.0 - NV, 5.0); // diffuse color 
+	float3 Kd = 1-Ks;
+    Kd *= 1.0 - metallic;
+    float3 diff = Kd*albedo * Irradiance.Sample(g_sampler, R).rgb;
 
+    float3 prefilcolor = Specular.SampleLevel(g_sampler, R, roughness *5.0f).rgb;
+    float2 BRDF = BRDFIntergrate.Sample(g_sampler, float2(NV, roughness)).rg;
+    float3 specular = prefilcolor * (F * BRDF.x + BRDF.y);
 
-	float3 ambient = float3(0.005f, 0.005, 0.005)*albedo;
+	float3 ambient = diff+specular;
 
 	float3 final = ambient;
 	final = final / (1 + final); // tone mapping

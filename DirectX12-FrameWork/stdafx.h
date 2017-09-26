@@ -156,7 +156,7 @@ const static char *Targetchars[SHADERTYPE_COUNT]
 {
 	"vs_5_0","ps_5_0","cs_5_0","gs_5_0","ds_5_0","hs_5_0"
 };
-static unsigned int HeapSizes[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES] = { 3000,10,30,30 };
+static unsigned int HeapSizes[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES] = { 3000,10,60,30 };
 static unsigned int HeapOffset[VIEW_COUNT] = {0,1000,2000,0,0};
 static FLOAT DefaultBorderColor[4] = { 0.0,0.0,0.0,0.0 };
 static ClearValue DefaultClearValue= {};
