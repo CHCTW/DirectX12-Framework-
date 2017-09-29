@@ -55,7 +55,7 @@ float4 PSMain(PSInput input) : SV_TARGET
         }
     }
 
-    float3 final = irradiance / ((float) raycount );
+    float3 final = PI*irradiance / ((float) raycount );
   //  final = final / (1 + final);
     return float4(final, 1.0);
 

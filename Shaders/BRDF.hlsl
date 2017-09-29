@@ -47,9 +47,10 @@ PSInput VSMain(float3 position : POSITION, float3 normal : NORMAL, uint instance
 	result.id = instanceid;
 	return result;
 }
-float3 Fresnel(float3 F0,float costheta)
+float3 Fresnel(float3 F0,float HV)
 {
-	return F0 + (1.0 - F0)*pow(1 - costheta, 5.0f);
+    return F0 + (1.0 - F0) * pow(2, (-5.55473 * HV - 6.98316) * HV);
+//	return F0 + (1.0 - F0)*pow(1 - HV, 5.0f);
 }
 
 
@@ -110,6 +111,8 @@ float4 PSMain(PSInput input) : SV_TARGET
 	float3 F = Fresnel(F0, HV);
 	float D = Distribution(N, H, roughness);
 	float3 G = GeometrySmith(NV, NL, roughness);
+   // return float4(F.y, F.y, F.y,1.0);
+
 
 	float3 spec = D*F*G/(4 * NV * NL + 0.001);
 
@@ -129,7 +132,7 @@ float4 PSMain(PSInput input) : SV_TARGET
 		att = 0;
 	float3 ambient =  float3(0.0005f,0.0005,0.0005)*albedo * float3(ao,ao,ao);
 
-	float3 final = ambient + (diff + spec)*NL*lightcolor.xyz*att;
+	float3 final = ambient + (diff +spec)*NL*lightcolor.xyz*att;
 	final = final / (1 + final); // tone mapping
 	final = pow(final, 1.0f / 2.2f);
 	return float4(final,1.0f);

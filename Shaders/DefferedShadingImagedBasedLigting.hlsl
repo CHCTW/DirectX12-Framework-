@@ -31,7 +31,9 @@ PSInput VSMain(uint id : SV_VertexID)
 }
 float3 Fresnel(float3 F0, float costheta)
 {
-	return F0 + (1.0 - F0)*pow(1 - costheta, 5.0f);
+    //return F0 + (1.0 - F0) * pow(2, (-5.55473 * costheta - 6.98316) * costheta); // unreal4's function largely 
+	return F0 + (1.0 - F0)*pow(1 - costheta, 5.0f); // in metal the frensel will become super white when NV close to 1
+                                                    // but it probally only show up when NV really close to 1
 }
 
 float Distribution(float3 N, float3 H, float roughness)
@@ -84,7 +86,7 @@ float4 PSMain(PSInput input) : SV_TARGET
 //	return pos;
 
 
-	float4 lightpostion = float4(0.0f, 100.0f, 0.0, 1.0);
+
 //	lightpostion = mul(view, lightpostion);
 
 //	lightpostion.xyz = lightpostion.xyz / lightpostion.w;
@@ -92,33 +94,38 @@ float4 PSMain(PSInput input) : SV_TARGET
 	float3 F0 = float3(0.04, 0.04, 0.04);
 	F0 = lerp(F0, albedo, float3(metallic, metallic, metallic)); // use metalic value to get F
 
+   // return float4(F0.z, F0.z, F0.z, 1.0);
+
+
 	float3 N = normalize(normal);
 	float3 V = normalize(eye-pos.xyz);
-	float3 L = normalize(lightpostion .xyz- pos.xyz);
-	float3 H = normalize(L + V);
 
-	float HV = max(dot(H, V), 0.0f);
+
+//	float HV = max(dot(H, V), 0.0f);
     float NV = saturate(dot(N, V));
     float3 R = 2 * dot(V, N) * N - V;
 
 
-
+  //  if (NV<0.1)
+   //     return float4(1.0, 1.0, 0.0, 0.0);
 //	return float4(pos.xyz, 1.0);
 
-    float3 F = F0+(max(float3(1.0 - roughness, 1.0 - roughness, 1.0 - roughness), F0) - F0) * pow(1.0 - NV, 5.0);
+    float3 F = F0 + (max(float3(1.0 - roughness, 1.0 - roughness, 1.0 - roughness), F0) - F0) * pow(1 - NV, 5.0f);
+ //  float3 F = Fresnel(F0, NV);
+   // return float4(F.z, F.z, F.z, 1.0);
 
 
-
-    float3 Ks = F0 + (max(float3(1.0 - roughness, 1.0 - roughness, 1.0 - roughness), F0) - F0) * pow(1.0 - NV, 5.0); // diffuse color 
+    float3 Ks = F; // diffuse color 
 	float3 Kd = 1-Ks;
-    Kd *= 1.0 - metallic;
-    float3 diff = Kd*albedo * Irradiance.Sample(g_sampler, R).rgb;
+
+    Kd *= 1.0 - metallic;  // metalic will absorb all refreaction and will never diffuse
+   
 
     float3 prefilcolor = Specular.SampleLevel(g_sampler, R, roughness *5.0f).rgb;
     float2 BRDF = BRDFIntergrate.Sample(g_sampler, float2(NV, roughness)).rg;
-    float3 specular = prefilcolor * (F * BRDF.x + BRDF.y);
-
-	float3 ambient = diff+specular;
+    float3 specular = prefilcolor * (Ks * BRDF.x + BRDF.y);
+    float3 diff = albedo * Irradiance.Sample(g_sampler, R).rgb;
+	float3 ambient = Kd*diff+specular;
 
 	float3 final = ambient;
 	final = final / (1 + final); // tone mapping

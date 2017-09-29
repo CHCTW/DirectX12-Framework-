@@ -491,13 +491,13 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	
 
 	if (key == GLFW_KEY_LEFT && action == GLFW_PRESS)
-		light.setColor(1.0,0.0,0.0);
+		light.setColor(100.0,0.0,0.0);
 	if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS)
-		light.setColor(0.0, 0.0, 1.0);
+		light.setColor(0.0, 0.0, 100.0);
 	if (key == GLFW_KEY_UP && action == GLFW_PRESS)
-		light.setColor(1.0, 1.0, 1.0);
+		light.setColor(100.0, 100.0, 100.0);
 	if (key == GLFW_KEY_DOWN && action == GLFW_PRESS)
-		light.setColor(0.0, 1.0, 0.0);
+		light.setColor(0.0, 100.0, 0.0);
 
 
 }

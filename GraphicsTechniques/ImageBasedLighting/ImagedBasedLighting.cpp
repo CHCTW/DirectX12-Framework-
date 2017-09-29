@@ -1,3 +1,10 @@
+/*
+Using the method from this tutorial:
+https://learnopengl.com/#!PBR/IBL/Diffuse-irradiance
+
+*/
+
+
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -374,7 +381,7 @@ void loadAsset()
 	Buddha.mPosition[0].CacNewTransform();
 	Buddha.mBufferData[0].mMatrices = Buddha.mPosition[0].getMatrices();
 	Buddha.mBufferData[0].mMaterial.mAlbedo = glm::vec3(1.00, 0.71, 0.29);
-	Buddha.mBufferData[0].mMaterial.mRoughness = 0.2;
+	Buddha.mBufferData[0].mMaterial.mRoughness = 1.0;
 	Buddha.mBufferData[0].mMaterial.mMetallic = 1.0;
 
 
@@ -402,8 +409,8 @@ void loadAsset()
 	Cube.mPosition[0].CacNewTransform();
 	Cube.mBufferData[0].mMatrices = Cube.mPosition[0].getMatrices();
 	Cube.mBufferData[0].mMaterial.mAlbedo = glm::vec3(0.4, 0.4, 0.4);
-	Cube.mBufferData[0].mMaterial.mRoughness = 0.2;
-	Cube.mBufferData[0].mMaterial.mMetallic = 1.0;
+	Cube.mBufferData[0].mMaterial.mRoughness = 0.1;
+	Cube.mBufferData[0].mMaterial.mMetallic = 0.0;
 
 
 
@@ -411,7 +418,7 @@ void loadAsset()
 
 	// load sphere data
 
-	import.ReadFile("Assets/sphere.obj", aiProcessPreset_TargetRealtime_Fast);
+	import.ReadFile("Assets/bunny.obj", aiProcessPreset_TargetRealtime_Fast);
 	scene = import.GetScene();
 	mesh = scene->mMeshes[0];
 
@@ -455,7 +462,7 @@ void loadAsset()
 		//Bunnys.mPosition[i].setAngle(-90, 0, 0);
 		Bunnys.mPosition[i].CacNewTransform();
 		Bunnys.mBufferData[i].mMatrices = Bunnys.mPosition[i].getMatrices();
-		Bunnys.mBufferData[i].mMaterial.mAlbedo = glm::vec3(1.00, 0.1, 0.1);
+		Bunnys.mBufferData[i].mMaterial.mAlbedo = glm::vec3(0.1, 0.01, 0.61);
 		Bunnys.mBufferData[i].mMaterial.mRoughness = (rowpos)*rough;
 		Bunnys.mBufferData[i].mMaterial.mMetallic = height*metalic;
 
@@ -1014,13 +1021,13 @@ void onrender()
 
 	}
 	{ // debug pass
-		cmdlist.bindGraphicsRootSigature(quadrootsig);
+	/*	cmdlist.bindGraphicsRootSigature(quadrootsig);
 		cmdlist.bindPipeline(quadpipeline);
 
 		debugviewport.setup(0.0f, 0.0f, (float)400, (float)400);
 		cmdlist.setViewPort(debugviewport);
 		cmdlist.bindGraphicsResource(0, BRDFIntergrateMap.mRenderBuffers[0]);
-		cmdlist.drawInstance(3, 1, 0, 0);
+		cmdlist.drawInstance(3, 1, 0, 0);*/
 		//debugviewport.setup(0.0f, (float)windows.mHeight / 4, (float)windows.mWidth / 4, (float)windows.mHeight / 4);
 		//cmdlist.setViewPort(debugviewport);
 		//cmdlist.bindGraphicsResource(0, GBuffer.mRenderBuffers[1]);
