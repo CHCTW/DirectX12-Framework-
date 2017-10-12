@@ -119,7 +119,7 @@ void initializeRender()
 	ParDrawShader.shaders[VS].load("Shaders/ParticleDraw.hlsl", "VSMain", VS);
 	ParDrawShader.shaders[PS].load("Shaders/ParticleDraw.hlsl", "PSMain", PS);
 
-	ParticleDraw.createGraphicsPipeline(render.mDevice, ParticleRootsig, ParDrawShader, retformat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(),VERTEX_LAYOUT_TYPE_NONE_SPLIT, D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT);
+	ParticleDraw.createGraphicsPipeline(render.mDevice, ParticleRootsig, ParDrawShader, retformat, DepthStencilState::DepthStencilState(), BlendState::BlendState(true), RasterizerState::RasterizerState(),VERTEX_LAYOUT_TYPE_NONE_SPLIT, D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT);
 
 
 	ShaderSet ParUpdateShader;
