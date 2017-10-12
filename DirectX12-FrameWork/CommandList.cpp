@@ -555,5 +555,5 @@ void CommandList::drawIndexedInstanced(UINT indexcount, UINT instancecount, UINT
 
 void CommandList::dispatch(UINT groupCountX, UINT groupCountY, UINT groupCountZ)
 {
-	mDx12CommandList->Dispatch(groupCountX, groupCountX, groupCountZ);
+	mDx12CommandList->Dispatch(groupCountX, groupCountY, groupCountZ);
 }
