@@ -20,7 +20,9 @@ A framework for learning DirectX12 and demonstrate graphics techniques
 10. Gamma Correction : Test for gamma correction
 11. Skybox : Test TextureCube
 12. Root Constants : Draw four triangles with four draw call and use root constant to decide the position and color
-
+13. MipmapGenerate : Generate mipmap in CPU
+14. IrradianceCubeMap : Take a HDR Cube map and generate Irradiance Cube Map
+15. GPUParticles : Use Compute shaders to generate and update 1000000 particles
 
 ### 2. Graphics Techniques: Projects in this part is for demostaring some graphcis techniques(lighting, deffered shading...)
 
@@ -32,6 +34,9 @@ OmniDirection Shadow Map : use cube mapping to demostrate the shadow for point l
 ![image](https://user-images.githubusercontent.com/30221942/30778465-6dd2e682-a08b-11e7-932d-416469c74cad.png)
 Deferred Shading : Draw all parameters that is need for lighting caculation to two render targets first. In next pass, calculate the lighting result by accessing the data from two render targets and depth buffer and draw on the screen. This demo aslo desmotrate use lighting volume can draw large number of lights in the scene.
 ![image](https://user-images.githubusercontent.com/30221942/30778454-2ceaa09c-a08b-11e7-9b5c-1215392cc16b.png)
+Imaged Based Lighting : Use enviroment map as light source. The method I used is from : https://learnopengl.com/#!PBR/IBL/Diffuse-irradiance
+
+
 
 ### 3. Direcx12 Framework : This project is included by all the Unitests and Graphics Techniques. It is the core of this framework. It only generate lib file.
 ### 4. Graphics Utility : This project is included by part Unitests and Graphics Techniques. It contains some helper structer like spot light, Transform, Camera.... It only generate lib file.
