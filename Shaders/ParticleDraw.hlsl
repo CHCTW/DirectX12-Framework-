@@ -9,6 +9,7 @@ struct VSOut
 {
     float4 pos : SV_POSITION;
     float3 color : COLOR;
+   
 };
 cbuffer Camera : register(b0)
 {
@@ -23,6 +24,7 @@ VSOut VSMain(uint id : SV_VertexID)
     output.pos = mul(view, p);
     output.pos = mul(proj, output.pos);
     output.color = Particles[id].Color;
+
     return output;
 }
 float4 PSMain(VSOut vsout) : SV_TARGET

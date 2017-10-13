@@ -58,6 +58,7 @@ Buffer sceneBuffer;
 RootSignature ParticleRootsig;
 Pipeline ParticleDraw;
 Pipeline ParticleUpdate;
+std::chrono::high_resolution_clock::time_point pre;
 void initializeRender()
 {
 
@@ -97,6 +98,7 @@ void initializeRender()
 	scissor.setup(0, windows.mWidth, 0, windows.mHeight);
 
 	camera.setRatio((float)windows.mWidth / (float)windows.mHeight);
+	camera.addZoom(10);
 	camera.updateViewProj();
 
 	ParticleRootsig.mParameters.resize(3);
@@ -230,6 +232,9 @@ void loadAsset()
 	}
 
 	InitPar.release();
+
+
+	pre = std::chrono::high_resolution_clock::now();
 	//	import.FreeScene();
 }
 
@@ -259,6 +264,16 @@ void releaseRender()
 
 void update()
 {
+
+	std::chrono::high_resolution_clock::time_point t = std::chrono::high_resolution_clock::now();
+
+	std::chrono::duration<float> delta = t - pre;
+	pre = t;
+
+//	cout << delta.count() << endl;
+	sceneData.delta = delta.count();
+	sceneBuffer.updateBufferfromCpu(&sceneData, sizeof(SceneData));
+
 	camera.updateViewProj();
 	cameraBuffer.updateBufferfromCpu(camera.getMatrix(), sizeof(ViewProjection));
 	frameIndex = render.getCurrentSwapChainIndex();

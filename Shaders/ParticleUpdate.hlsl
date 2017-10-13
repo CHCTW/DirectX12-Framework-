@@ -42,9 +42,9 @@ void CSMain(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID)
         if (PrevState[id.x].life > 10.0f)
         {
 
-            float ran = rand_1_05(float2(id.x, id.x));
-            float ran2 = rand_1_05(float2(id.x, id.x + 1));
-            float ran3 = rand_1_05(float2(id.x, id.x - 1));
+            float ran = rand_1_05(float2(id.x, tid.x));
+            float ran2 = rand_1_05(float2(id.x, tid.x + 1));
+            float ran3 = rand_1_05(float2(id.x, tid.x - 1));
   
 
             NextState[id.x].Pos = float3(ran3 - 0.5, 0, -1*(ran - 0.5));
@@ -57,15 +57,15 @@ void CSMain(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID)
         }
         else
         {
-            NextState[id.x].Pos = PrevState[id.x].Pos + PrevState[id.x].Vel * 0.01;
+            NextState[id.x].Pos = PrevState[id.x].Pos + PrevState[id.x].Vel *delta;
 
             float3 flat = NextState[id.x].Pos.xyz;
             flat.y = 0;
-            float3 force = normalize(flat) / length(NextState[id.x].Pos)*0.01;
+            float3 force = normalize(flat) / length(NextState[id.x].Pos);
 
-            NextState[id.x].Vel = PrevState[id.x].Vel - force;
+            NextState[id.x].Vel = PrevState[id.x].Vel - (force * delta)*0.5;
      //       NextState[id.x].Color = PrevState[id.x].Color;
-            NextState[id.x].life = PrevState[id.x].life + 0.001;
+            NextState[id.x].life = PrevState[id.x].life + delta;
             NextState[id.x].Color = float3(0.1, abs(NextState[id.x].Pos.y/5), 1 - NextState[id.x].life / 10);
 
 

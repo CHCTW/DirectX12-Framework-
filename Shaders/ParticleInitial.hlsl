@@ -48,10 +48,10 @@ void CSMain(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID)
 
 
         ParticleBuffer[id.x].Pos = float3(0, 0, 0);
-        ParticleBuffer[id.x].Vel = float3(xz.x-0.5, (ran2 + 0.3) * 3, xz.y-0.5);
+        ParticleBuffer[id.x].Vel = float3(0, 0,0);
         
         ParticleBuffer[id.x].life = ((float) id / (float)totalNum) * 10;
-        ParticleBuffer[id.x].Color = float3(0.1, ParticleBuffer[id.x].life / 10, 1-ParticleBuffer[id.x].life / 10);
+        ParticleBuffer[id.x].Color = float3(0.0, 0, 0);
     }
 
 }
