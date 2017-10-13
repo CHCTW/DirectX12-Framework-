@@ -23,6 +23,7 @@ A framework for learning DirectX12 and demonstrate graphics techniques
 13. MipmapGenerate : Generate mipmap in CPU
 14. IrradianceCubeMap : Take a HDR Cube map and generate Irradiance Cube Map
 15. GPUParticles : Use Compute shaders to generate and update 1000000 particles
+![image](https://user-images.githubusercontent.com/30221942/31530941-9f3a47a8-af98-11e7-9cc3-59843aa5a325.png)
 
 ### 2. Graphics Techniques: Projects in this part is for demostaring some graphcis techniques(lighting, deffered shading...)
 
