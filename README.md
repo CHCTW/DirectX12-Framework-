@@ -1,6 +1,6 @@
 # DirectX12-Framework-
 A framework for learning DirectX12 and demonstrate graphics techniques 
-![image](https://user-images.githubusercontent.com/30221942/30778454-2ceaa09c-a08b-11e7-9b5c-1215392cc16b.png)
+![image](https://user-images.githubusercontent.com/30221942/30882868-408c5a74-a2bf-11e7-98c6-b360ee58812c.png)
 
 ## All Unitest and Graphic Techniques pojects files working space is incorrect. Right click the project file and select properties.Click Debugging and find Working Directory area. Change it to $(SolutionDir) .
 
@@ -35,7 +35,7 @@ OmniDirection Shadow Map : use cube mapping to demostrate the shadow for point l
 Deferred Shading : Draw all parameters that is need for lighting caculation to two render targets first. In next pass, calculate the lighting result by accessing the data from two render targets and depth buffer and draw on the screen. This demo aslo desmotrate use lighting volume can draw large number of lights in the scene.
 ![image](https://user-images.githubusercontent.com/30221942/30778454-2ceaa09c-a08b-11e7-9b5c-1215392cc16b.png)
 Imaged Based Lighting : Use enviroment map as light source. The method I used is from : https://learnopengl.com/#!PBR/IBL/Diffuse-irradiance
-
+![image](https://user-images.githubusercontent.com/30221942/30882868-408c5a74-a2bf-11e7-98c6-b360ee58812c.png)
 
 
 ### 3. Direcx12 Framework : This project is included by all the Unitests and Graphics Techniques. It is the core of this framework. It only generate lib file.
