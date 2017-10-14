@@ -266,6 +266,8 @@ void update()
 {
 
 	std::chrono::high_resolution_clock::time_point t = std::chrono::high_resolution_clock::now();
+	
+
 
 	std::chrono::duration<float> delta = t - pre;
 	pre = t;
