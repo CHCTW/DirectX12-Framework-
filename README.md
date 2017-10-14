@@ -24,7 +24,8 @@ A framework for learning DirectX12 and demonstrate graphics techniques
 14. IrradianceCubeMap : Take a HDR Cube map and generate Irradiance Cube Map
 15. GPUParticles : Use Compute shaders to generate and update 1000000 particles
 ![image](https://user-images.githubusercontent.com/30221942/31530941-9f3a47a8-af98-11e7-9cc3-59843aa5a325.png)
-
+16. GeometryShader: Take normal model, for each triagnel do some movement base on time and generate a small spike for each triangle
+![image](https://user-images.githubusercontent.com/30221942/31573775-273d989c-b077-11e7-9298-bd2c6c52d0fd.png)
 ### 2. Graphics Techniques: Projects in this part is for demostaring some graphcis techniques(lighting, deffered shading...)
 
 BRDF : Use Physics Basic Rendering to lit the scene and demostrate how different material looks like
