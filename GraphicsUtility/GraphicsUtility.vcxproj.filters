@@ -54,6 +54,9 @@
     <ClInclude Include="Optical.h">
       <Filter>Camera</Filter>
     </ClInclude>
+    <ClInclude Include="QuadPatch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -79,6 +82,9 @@
     </ClCompile>
     <ClCompile Include="Optical.cpp">
       <Filter>Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="QuadPatch.cpp">
+      <Filter>Header Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

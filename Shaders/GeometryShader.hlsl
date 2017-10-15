@@ -202,70 +202,16 @@ void GSMain(triangle GSInput gin[3], inout TriangleStream<PSInput> stream)
 
 }
 
-float3 Fresnel(float3 F0,float HV)
-{
-    return F0 + (1.0 - F0) * pow(2, (-5.55473 * HV - 6.98316) * HV);
-//	return F0 + (1.0 - F0)*pow(1 - HV, 5.0f);
-}
-
-
-float Distribution(float3 N, float3 H, float roughness)
-{
-	float a = roughness*roughness;
-	float a2 = a*a;
-	float NdotH = max(dot(N, H), 0.0);
-	float NdotH2 = NdotH*NdotH;
-	float nom = a2;
-	float denom = (NdotH2 * (a2 - 1.0) + 1.0);
-	denom = PI * denom * denom;
-
-	return nom / denom;
-}
-float GeometrySchlickGGX(float NV, float roughness)
-{
-	float r = (roughness + 1.0);
-	float k = (r*r) / 8.0;
-
-	float nom = NV;
-	float denom = NV * (1.0 - k) + k;
-
-	return nom / denom;
-}
-float GeometrySmith(float NV, float NL, float roughness)
-{
-	float ggx2 = GeometrySchlickGGX(NV, roughness);
-	float ggx1 = GeometrySchlickGGX(NL, roughness);
-	return ggx1 * ggx2;
-}
 float4 PSMain(PSInput input) : SV_TARGET
 {
 
 //	float3 lightColor = float3(1.0,1.0,1.0);
 	
-	
-	float roughness = instances[input.id].roughness;
-	float metallic = instances[input.id].metallic;
-    float3 albedo = pow(instances[input.id].albedo, 2.2);
-	float ao = 1.0f;
-
-
-	float3 F0 = float3(0.04, 0.04, 0.04);
-	F0 = lerp(F0, albedo, float3(metallic, metallic, metallic)); // use metalic value to get F
 
 
 
 	float3 N = normalize(input.normal);  
-	float3 V = normalize(eye-input.wposition);
-	float3 L = normalize(lightpostion.xyz - input.wposition);
-	float3 H = normalize(L + V);
-	float LH = max(dot(L, H), 0.0f);
-	float NL = max(dot(L, N), 0.0f);
-	float NV = max(dot(N, V), 0.0f);
-	float HV = max(dot(H, V), 0.0f);
 
-	float3 F = Fresnel(F0, HV);
-	float D = Distribution(N, H, roughness);
-	float3 G = GeometrySmith(NV, NL, roughness);
    // return float4(F.y, F.y, F.y,1.0);
    // return float4(N, 1.0);
 
@@ -274,26 +220,5 @@ float4 PSMain(PSInput input) : SV_TARGET
 
     return float4(input.wposition.y*N.z, input.scale, sqrt(1.0 - input.scale)*N.z, 1.0);
 
-	float3 spec = D*F*G/(4 * NV * NL + 0.001);
 
-
-	float3 Kd = 1 - F;  // diffuse color 
-	Kd = Kd * (1.0 - metallic);
-	float3 diff = Kd*albedo / PI;
-
-	float dist = length(lightpostion.xyz - input.wposition);
-	//float att = 1.0f / (1 + lightattenuation.y*dist + dist*dist*lightattenuation.z);
-
-
-    float t = pow(dist / lightradius, 4);
-    float att = saturate(pow(1 - t, 2)) / (dist * dist + 1);
-
-	if (dist > lightradius)
-		att = 0;
-	float3 ambient =  float3(0.05f,0.05,0.05)*albedo * float3(ao,ao,ao);
-
-	float3 final = ambient + (diff +spec)*NL*lightcolor.xyz*att;
-	final = final / (1 + final); // tone mapping
-	final = pow(final, 1.0f / 2.2f);
-	return float4(final,1.0f);
 }

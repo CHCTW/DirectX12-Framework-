@@ -112,12 +112,12 @@ void loadAsset()
 //	unsigned char* rgb = stbi_load("Assets/Textures/front.jpg", &width, &height, &bpp, 4);
 	unsigned char* skyboxdata[6];
 
-	skyboxdata[0] = stbi_load("Assets/Textures/pano_1.hdr", &width, &height, &bpp, 4);
-	skyboxdata[1] = stbi_load("Assets/Textures/pano_3.hdr", &width, &height, &bpp, 4);
-	skyboxdata[2] = stbi_load("Assets/Textures/pano_4.hdr", &width, &height, &bpp, 4);
-	skyboxdata[3] = stbi_load("Assets/Textures/pano_5.hdr", &width, &height, &bpp, 4);
-	skyboxdata[4] = stbi_load("Assets/Textures/pano_0.hdr", &width, &height, &bpp, 4);
-	skyboxdata[5] = stbi_load("Assets/Textures/pano_2.hdr", &width, &height, &bpp, 4);
+	skyboxdata[0] = stbi_load("Assets/Textures/milk0003.hdr", &width, &height, &bpp, 4);
+	skyboxdata[1] = stbi_load("Assets/Textures/milk0001.hdr", &width, &height, &bpp, 4);
+	skyboxdata[2] = stbi_load("Assets/Textures/milk0005.hdr", &width, &height, &bpp, 4);
+	skyboxdata[3] = stbi_load("Assets/Textures/milk0004.hdr", &width, &height, &bpp, 4);
+	skyboxdata[4] = stbi_load("Assets/Textures/milk0006.hdr", &width, &height, &bpp, 4);
+	skyboxdata[5] = stbi_load("Assets/Textures/milk0002.hdr", &width, &height, &bpp, 4);
 
 
 

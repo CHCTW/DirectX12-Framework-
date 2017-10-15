@@ -332,10 +332,10 @@ void Texture::CreateTexture(ID3D12Device* device, DXGI_FORMAT format, UINT width
 	case D3D12_RESOURCE_DIMENSION_TEXTURE2D:
 		textureDesc.Width = width;
 		textureDesc.Height = height;
-		textureDesc.DepthOrArraySize = arraySize;
+		textureDesc.DepthOrArraySize = (UINT16)arraySize;
 		if (mCubeMap)
 		{
-			textureDesc.DepthOrArraySize = 6;
+			textureDesc.DepthOrArraySize = (UINT16)6;
 		}
 		textureDesc.MipLevels = mipLevel;
 		textureDesc.Format = format;
