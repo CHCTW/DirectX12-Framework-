@@ -132,7 +132,7 @@ void initializeRender()
 	ShaderSet test;
 	
 
-	pipeline.createGraphicsPipeline(render.mDevice, rootsig, shaderset, retformat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(D3D12_CULL_MODE_FRONT,D3D12_FILL_MODE_WIREFRAME), VERTEX_LAYOUT_TYPE_SPLIT_ALL, D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH);
+	pipeline.createGraphicsPipeline(render.mDevice, rootsig, shaderset, retformat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(D3D12_CULL_MODE_FRONT, D3D12_FILL_MODE_WIREFRAME), VERTEX_LAYOUT_TYPE_SPLIT_ALL, D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH);
 
 	viewport.setup(0.0f, 0.0f, (float)windows.mWidth, (float)windows.mHeight);
 	scissor.setup(0, windows.mWidth, 0, windows.mHeight);
@@ -150,8 +150,8 @@ void loadAsset()
 		-10.0f,0.0,10.0f,1.0f,1.0f,1.0f,
 		
 	};*/
-
-	patch.generatePatch(10, 10, 1, 1);
+	
+	patch.generatePatch(40, 40,40,40, SmoothBezier,PerlinGenerate,0,3,5,5);
 
 
 	PatchPos.createVertexBuffer(render.mDevice, patch.mPosition.size() * sizeof(float), sizeof(float) * 4);
@@ -189,7 +189,7 @@ void loadAsset()
 	Buddha.mStructeredBuffer.createStructeredBuffer(render.mDevice, srvheap, sizeof(InstancedInformation), Buddha.mNum, STRUCTERED_BUFFER_TYPE_READ);
 	Buddha.mPosition[0].setAngle(0, 0, 0);
 	Buddha.mPosition[0].setScale(1, 1, 1);
-	Buddha.mPosition[0].setPosition(0, 0, 0);
+	Buddha.mPosition[0].setPosition(0, -2, 0);
 	Buddha.mPosition[0].CacNewTransform();
 	Buddha.mBufferData[0].mMatrices = Buddha.mPosition[0].getMatrices();
 	Buddha.mBufferData[0].mMaterial.mAlbedo = glm::vec3(1.00, 0.71, 0.29);
@@ -447,7 +447,7 @@ void onrender()
 	const float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	cmdlist.clearRenderTarget(render.mSwapChainRenderTarget[frameIndex], clearColor);
 	cmdlist.clearDepthStencil(render.mSwapChainRenderTarget[frameIndex]);
-	cmdlist.setTopolgy(D3D_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST);
+	cmdlist.setTopolgy(D3D_PRIMITIVE_TOPOLOGY_16_CONTROL_POINT_PATCHLIST);
 
 
 	cmdlist.bindGraphicsResource(1, Buddha.mStructeredBuffer);
