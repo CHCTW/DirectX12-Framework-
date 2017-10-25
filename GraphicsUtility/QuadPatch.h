@@ -24,6 +24,7 @@ public:
 	std::vector<float> mPosition;
 	std::vector<float> mNormal;
 	std::vector<float> mUV;
+	std::vector<float> mTangent;
 	std::vector<unsigned int> mIndex;
 private:
 };

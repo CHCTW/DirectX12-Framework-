@@ -22,6 +22,10 @@ void QuadPatch::generatePatch(float width, float height, unsigned int widthres, 
 	float heightstart = -height / 2;
 	unsigned int index;
 
+	glm::vec3 normal(0, 1, 0);
+	glm::vec3 tangent(1, 0, 0);
+
+
 	siv::PerlinNoise noise;
 
 	for (unsigned int j = 0; j <= heightres; ++j) // for each row
@@ -31,14 +35,18 @@ void QuadPatch::generatePatch(float width, float height, unsigned int widthres, 
 		{
 			
 	//		cout << "     ";
-			glm::vec3 nor(0.0, 1.0, 0.0);
+		//	glm::vec3 nor(0.0, 1.0, 0.0);
 			for (int k = 0; k < 3; ++k)
-				mNormal.push_back(nor[k]);
-			glm::vec2 uv(i*(1.0 / widthres), j*(1.0 / heightres));
+			{
+				mNormal.push_back(normal[k]);
+				mTangent.push_back(tangent[k]);
+			}
+			glm::vec2 uv((float)i / widthres, (float)j / heightres);
+		//	cout << uv.x << endl;
 			for (int k = 0; k < 2; ++k)
 				mUV.push_back(uv[k]);
-			index = j*(widthres + 1) + i;
-			mIndex.push_back(index);
+
+
 
 
 
@@ -55,7 +63,7 @@ void QuadPatch::generatePatch(float width, float height, unsigned int widthres, 
 				//cout << (float)noise.noise(uv.x, uv.y) << endl;
 			}
 	//		cout << pos.y << endl;
-			for (int k = 0; k < 4; ++k)
+			for (int k = 0; k < 3; ++k)
 			{
 				mPosition.push_back(pos[k]);
 				//		cout << pos[k] << ",";
@@ -95,9 +103,12 @@ void QuadPatch::generatePatch(float width, float height, unsigned int widthres, 
 				mIndex.push_back(j*(widthres + 1) + i); // 0 top-left
 				mIndex.push_back((j + 1)*(widthres + 1) + i); // 2 bottom-left
 				mIndex.push_back(j*(widthres + 1) + i + 1); // 1 top-right
-				mIndex.push_back(j*(widthres + 1) + i + 1); // 1 top-right
+
+
+
 				mIndex.push_back((j + 1)*(widthres + 1) + i); // 2 bottom-left
 				mIndex.push_back((j + 1)*(widthres + 1) + i + 1); // 3 bottom-right
+				mIndex.push_back(j*(widthres + 1) + i + 1); // 1 top-right
 
 			}
 			else if (indexmode == SmoothBezier)  // generatre 16 points per patch

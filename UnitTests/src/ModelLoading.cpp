@@ -94,7 +94,7 @@ void loadAsset()
 
 
 
-	import.ReadFile("Assets/sphere.obj", aiProcessPreset_TargetRealtime_Fast);
+	import.ReadFile("Assets/sphere.obj", aiProcessPreset_TargetRealtime_Quality);
 	scene = import.GetScene();
 	mesh = scene->mMeshes[0];
 	mesh->HasPositions();
@@ -118,7 +118,8 @@ void loadAsset()
 		indexdata[i * 3 + 2] = mesh->mFaces[i].mIndices[2];
 	}
 
-
+	if (mesh->HasTangentsAndBitangents())
+		cout << "Has tangent" << endl;
 
 	cmdalloc.reset();
 	cmdlist.reset(Pipeline());
