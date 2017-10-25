@@ -494,7 +494,7 @@ void onrender()
 	cmdlist.setScissor(scissor);
 	cmdlist.renderTargetBarrier(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	cmdlist.bindRenderTarget(render.mSwapChainRenderTarget[frameIndex]);
-	const float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	const float clearColor[] = { 0.0f, 0.1f, 0.3f, 1.0f };
 	cmdlist.clearRenderTarget(render.mSwapChainRenderTarget[frameIndex], clearColor);
 	cmdlist.clearDepthStencil(render.mSwapChainRenderTarget[frameIndex]);
 	cmdlist.setTopolgy(D3D_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST);

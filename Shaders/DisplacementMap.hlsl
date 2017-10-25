@@ -205,61 +205,61 @@ float4 PSMain(DSOutput input) : SV_TARGET
 
 
 
+        float3 normal = normaltext.x * tan + normaltext.y * bitan + normaltext.z * normalobject;
 
-    float3 normal = normaltext.x * tan + normaltext.y * bitan + normaltext.z * normalobject;
-
-    float roughness = blockbase[3].Sample(loopsample, input.uv).r;
-    float metallic = 0.0;
-
-
-    float3 albedo = pow(blockbase[0].Sample(loopsample, input.uv), 2.2);
-    float ao = 1.0f;
+        float roughness = blockbase[3].Sample(loopsample, input.uv).r;
+        float metallic = 0.0;
 
 
-    float3 F0 = float3(0.04, 0.04, 0.04);
-    F0 = lerp(F0, albedo, float3(metallic, metallic, metallic)); // use metalic value to get F
+        float3 albedo = pow(blockbase[0].Sample(loopsample, input.uv), 2.2);
+        float ao = 1.0f;
+
+        
+    
+
+
+        float3 F0 = float3(0.04, 0.04, 0.04);
+        F0 = lerp(F0, albedo, float3(metallic, metallic, metallic)); // use metalic value to get F
 
 
 
-    float3 N = normalize(normal);
-    float3 V = normalize(eye - input.wposition);
-    float3 L = normalize(lightpostion.xyz - input.wposition);
-    float3 H = normalize(L + V);
-    float LH = max(dot(L, H), 0.0f);
-    float NL = max(dot(L, N), 0.0f);
-    float NV = max(dot(N, V), 0.0f);
-    float HV = max(dot(H, V), 0.0f);
+        float3 N = normalize(normal);
+        float3 V = normalize(eye - input.wposition);
+        float3 L = normalize(lightpostion.xyz - input.wposition);
+        float3 H = normalize(L + V);
+        float LH = max(dot(L, H), 0.0f);
+        float NL = max(dot(L, N), 0.0f);
+        float NV = max(dot(N, V), 0.0f);
+        float HV = max(dot(H, V), 0.0f);
 
-    float3 F = Fresnel(F0, HV);
-    float D = Distribution(N, H, roughness);
-    float3 G = GeometrySmith(NV, NL, roughness);
+        float3 F = Fresnel(F0, HV);
+        float D = Distribution(N, H, roughness);
+        float3 G = GeometrySmith(NV, NL, roughness);
    // return float4(F.y, F.y, F.y,1.0);
 
 
-    float3 spec = D * F * G / (4 * NV * NL + 0.001);
+        float3 spec = D * F * G / (4 * NV * NL + 0.001);
 
 
-    float3 Kd = 1 - F; // diffuse color 
-    Kd = Kd * (1.0 - metallic);
-    float3 diff = Kd * albedo / PI;
+        float3 Kd = 1 - F; // diffuse color 
+        Kd = Kd * (1.0 - metallic);
+        float3 diff = Kd * albedo / PI;
 
-    float dist = length(lightpostion.xyz - input.wposition);
+        float dist = length(lightpostion.xyz - input.wposition);
 	//float att = 1.0f / (1 + lightattenuation.y*dist + dist*dist*lightattenuation.z);
 
 
-    float t = pow(dist / lightradius, 4);
-    float att = saturate(pow(1 - t, 2)) / (dist * dist + 1);
+        float t = pow(dist / lightradius, 4);
+        float att = saturate(pow(1 - t, 2)) / (dist * dist + 1);
 
-    if (dist > lightradius)
-        att = 0;
-    float3 ambient = float3(0.0005f, 0.0005, 0.0005) * albedo * float3(ao, ao, ao);
+        if (dist > lightradius)
+            att = 0;
+        float3 ambient = float3(0.0005f, 0.0005, 0.0005) * albedo * float3(ao, ao, ao);
 
-    float3 final = ambient + (diff + spec) * NL * lightcolor.xyz * att;
-    final = final / (1 + final); // tone mapping
-    final = pow(final, 1.0f / 2.2f);
-    return float4(final, 1.0f);
-
-
+        float3 final = ambient + (diff + spec) * NL * lightcolor.xyz * att;
+        final = final / (1 + final); // tone mapping
+        final = pow(final, 1.0f / 2.2f);
+        return float4(final, 1.0f);
 
 
 
@@ -271,4 +271,6 @@ float4 PSMain(DSOutput input) : SV_TARGET
 
 
 
-}
+
+
+    }

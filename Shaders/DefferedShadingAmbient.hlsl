@@ -108,7 +108,7 @@ float4 PSMain(PSInput input) : SV_TARGET
 	float3 ambient = float3(0.005f, 0.005, 0.005)*albedo;
 
 	float3 final = ambient;
-	final = final / (1 + final); // tone mapping
+	//final = final / (1 + final); // tone mapping
 	final = pow(final, 1.0f / 2.2f);
 //	pos.xyz = pos.xyz / 100;
 //	pos.xyz = normalize(pos.xyz);

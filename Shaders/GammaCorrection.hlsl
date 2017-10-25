@@ -28,14 +28,14 @@ float4 PSMain(PSInput input) : SV_TARGET
 {
 //	return float4(input.uv,0.0f,0.0f);
 
-    int tempx = input.uv.x * 20;
-    input.uv.x = tempx / 20.0f;
+  //  int tempx = input.uv.x * 20;
+    input.uv.x = 0.5f;
 	float x = input.uv.x;
 	if (input.uv.y >= 0.5)
 	{
 		//x = x / (1 + x);
      
-		x = pow(x, 2.2f);
+		x = pow(x, 1.0/2.2f);
 	//	x = 0.1;
 	}
 	return float4(x,x,x,x);

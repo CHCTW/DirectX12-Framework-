@@ -71,7 +71,7 @@ bool press = false;
 ObjectData Spheres;
 
 
-UINT spherecount = 200;
+UINT spherecount = 100;
 
 float radious = 5;
 float heightgap = 1.5;
@@ -100,7 +100,7 @@ Sampler sampler;
 ShaderSet localshader;
 ViewPort debugviewport;
 std::vector<PointLightData> lightlist;
-static unsigned int lightcount = 250;
+static unsigned int lightcount = 60;
 Buffer lightDataBuffer;
 Pipeline localLightpPipeline;
 
@@ -111,10 +111,10 @@ std::uniform_real_distribution<float> distributionmaterial(0.3, 0.8);
 std::uniform_real_distribution<float> distributionscale(1.0, 5.0);
 
 
-std::uniform_real_distribution<float> distributionradius(5.0, 10.0);
+std::uniform_real_distribution<float> distributionradius(20.0, 40.0);
 std::uniform_real_distribution<float> distributionlightY(1.0, 2.0);
-std::array<double, 3> intervals{ 0.1, 10, 20.0 };
-std::array<float, 3> weights{ 0.0, 50.0, 100.0 };
+std::array<double, 3> intervals{ 0.0,100, 15000 };
+std::array<float, 3> weights{ 1500 ,0, 1500.0 };
 std::piecewise_linear_distribution<double>
 distributionlightcolor(intervals.begin(), intervals.end(), weights.begin());
 
@@ -312,8 +312,8 @@ void loadAsset()
 	Ground.mPosition[0].setPosition(0, -5, 0);
 	Ground.mPosition[0].CacNewTransform();
 	Ground.mBufferData[0].mMatrices = Ground.mPosition[0].getMatrices();
-	Ground.mBufferData[0].mMaterial.mAlbedo = glm::vec3(0.4, 0.4, 0.1);
-	Ground.mBufferData[0].mMaterial.mRoughness = 0.4;
+	Ground.mBufferData[0].mMaterial.mAlbedo = glm::vec3(0.4, 0.4, 0.4);
+	Ground.mBufferData[0].mMaterial.mRoughness = 0.8;
 	Ground.mBufferData[0].mMaterial.mMetallic = 0.1;
 
 
@@ -541,9 +541,9 @@ void update()
 		if (lightlist[i].mPosition.x >= 60)
 		{
 			lightlist[i].mPosition.x = -60;
-		//	lightlist[i].mColor.r = distributionlightcolor(generator);
-		//	lightlist[i].mColor.g = distributionlightcolor(generator);
-		//	lightlist[i].mColor.b = distributionlightcolor(generator);
+			lightlist[i].mColor.r = distributionlightcolor(generator);
+			lightlist[i].mColor.g = distributionlightcolor(generator);
+			lightlist[i].mColor.b = distributionlightcolor(generator);
 		}
 	}
 
