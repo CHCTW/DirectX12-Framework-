@@ -28,6 +28,10 @@ https://www.youtube.com/watch?v=uF2_494RuAI
 16. GeometryShader: Take normal model, for each triagnel do some movement base on time and generate a small spike for each triangle
 https://www.youtube.com/watch?v=IpE9jaEErks
 ![image](https://user-images.githubusercontent.com/30221942/31573775-273d989c-b077-11e7-9298-bd2c6c52d0fd.png)
+17. BezierPlane : Use Perlin noise to generate different control points and use Bezier curve and tessellation to generate more detail information. The tessellation factor is based on the distance to the camera.https://www.youtube.com/watch?v=HxNtCPt5gPw&feature=youtu.be
+![image](https://user-images.githubusercontent.com/30221942/31639809-9b22bff2-b28f-11e7-8f40-5b57fb8cab29.png)
+
+
 ### 2. Graphics Techniques: Projects in this part is for demostaring some graphcis techniques(lighting, deffered shading...)
 
 BRDF : Use Physics Basic Rendering to lit the scene and demostrate how different material looks like
