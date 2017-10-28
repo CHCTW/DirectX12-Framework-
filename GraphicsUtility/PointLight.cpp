@@ -12,21 +12,7 @@ void PointLight::addZoom(float zoom)
 }
 void PointLight::update()
 {
-	/*glm::mat4 v = glm::mat4(1.0);
-	mLightData.mView = glm::translate(v, glm::vec3(mOffset, -mZoom));
-	mLightData.mView = glm::rotate(mLightData.mView, (mAngle.y - 90.0f)*pi / 180, glm::vec3(1.0, 0.0, 0.0));
-	mLightData.mView = glm::rotate(mLightData.mView, mAngle.x*pi / 180, glm::vec3(0.0, 1.0, 0.0));
 
-
-	glm::mat4 temp;
-	temp[0][0] = 0;
-	temp[0][1] = 0;
-	temp[0][2] = 0;
-	temp[0][3] = 1;	
-	temp = glm::inverse(mLightData.mView) * temp;
-	mLightData.mPosition[0] = temp[0][0];
-	mLightData.mPosition[1] = temp[0][1];
-	mLightData.mPosition[2] = temp[0][2];*/
 
 
 	//glm::vec3 test;
@@ -54,14 +40,13 @@ void PointLight::update()
 }
 void PointLight::setRadius(float r)
 {
-	for (int i = 0; i < attenuationCount; i++)
-	{
-		if (r - LightAttenuations[i].x >= 0)
-		{
-			mLightData.mAttenuation = glm::vec4(LightAttenuations[i], 1.0);
-		}
-	}
 	mLightData.mRadius = r;
+	mLightData.mProjection = glm::perspective(mFOV*(3.14159f) / 180.0f, 1.0f, 0.1f, mLightData.mRadius);
+}
+
+void PointLight::setIntensity(float i)
+{
+	mLightData.mIntensity = i;
 }
 void PointLight::setColor(float r, float g, float b)
 {

@@ -13,9 +13,9 @@ cbuffer SpotLightData : register(b0)
 	float4x4 lightproj;
 	float4 lightpostion;
 	float4 lightcolor;
-	float4 lightattenuation;
 	float lightradius;
-	float far;
+    float lightintensity;
+	float2 padding;
 };
 StructuredBuffer<InstancedInformation> instances: register(t0);
 cbuffer RootConstant : register(b1)
@@ -25,13 +25,19 @@ cbuffer RootConstant : register(b1)
 struct PSInput
 {
 	float4 position : SV_POSITION;
+    float3 wposition : W_POSITION;
 };
 PSInput VSMain(float3 position : POSITION, uint instanceid : SV_InstanceID)
 {
 	PSInput result;
 
 	result.position = mul(instances[instanceid].model, float4(position, 1.0f));
+    result.wposition = result.position.xyz;
 	result.position = mul(lightview[face], result.position);
 	result.position = mul(lightproj,result.position);
 	return result;
+}
+float PSMain(PSInput input) : SV_Depth
+{
+    return length(input.wposition - lightpostion.xyz) / lightradius;
 }

@@ -57,6 +57,9 @@
     <ClInclude Include="QuadPatch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="DirectionLight.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -84,6 +87,9 @@
       <Filter>Camera</Filter>
     </ClCompile>
     <ClCompile Include="QuadPatch.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectionLight.cpp">
       <Filter>Header Files</Filter>
     </ClCompile>
   </ItemGroup>

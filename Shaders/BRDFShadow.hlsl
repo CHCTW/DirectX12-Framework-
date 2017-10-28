@@ -18,12 +18,14 @@ cbuffer SceneConstantBuffer : register(b0)
 
 cbuffer SpotLightData : register(b1)
 {
-	float4x4 lightview;
-	float4x4 lightproj;
-	float4 lightpostion;
-	float4 lightcolor;
-	float4 lightattenuation;
-	float lightradius;
+    float4x4 lightview;
+    float4x4 lightproj;
+    float4 lightpostion;
+    float4 lightcolor;
+    float lightradius;
+    float lightintensity;
+    float lightconeangle;
+    float padding;
 };
 StructuredBuffer<InstancedInformation> instances: register(t0);
 Texture2D ShadowMap : register(t1);
@@ -91,20 +93,43 @@ float ShadowTest(float3 pos)
 	float pixdepth = shadowcood.z;
 	shadowcood.xy = shadowcood.xy*0.5 + 0.5;
 	shadowcood.y = 1 - shadowcood.y;
+    uint3 dim;
+    ShadowMap.GetDimensions(0, dim.x, dim.y,dim.z);
+    float3 fdim = dim;
 
-	float dis = dot(shadowcood - float2(0.5, 0.5), shadowcood - float2(0.5, 0.5));
+    
+    float xOffset = 1.0f / fdim.x;
+    float yOffset = 1.0f / fdim.y;
+    float shadow = 0.0f;
+
+
+	float dis = dot(shadowcood.xy - float2(0.5, 0.5), shadowcood.xy - float2(0.5, 0.5));
 
 	if (shadowcood.w >= 0)
 	{
-	//	if (shadowcood.x > 0 && shadowcood.x < 1)
-		//	if (shadowcood.y > 0 && shadowcood.y  < 1)
-			if(dis<=0.25)
-			{
+
+
+        for (int y = -2; y <= 2; y++)
+        {
+            for (int x = -2; x <= 2; x++)
+            {
+                float lightdepth = ShadowMap.Sample(Sampler, shadowcood.xy + float2(xOffset*x,yOffset*y)).r;
+                if (pixdepth > lightdepth + 0.0001f)
+                {
+                    shadow += 1.0f;
+                }
+
+            }
+        }
+        return shadow / 25.0f;
+
+
+
 				if (pixdepth > ShadowMap.Sample(Sampler, shadowcood.xy).r+0.0001f)
 					return 1.0f;
 				//return ShadowMap.Sample(Sampler, shadowcood.xy / shadowcood.w*0.5f + 0.5f);
 				return 0.0f;
-			}
+
 	}
 	return 1.0f;
 }
@@ -144,14 +169,28 @@ float4 PSMain(PSInput input) : SV_TARGET
 	float3 diff = Kd*albedo / PI;
 
 	float dist = length(lightpostion.xyz - input.wposition);
-	float att = 1.0f / (1 + lightattenuation.y*dist + dist*dist*lightattenuation.z);
+
+    float3 plightspace = normalize(mul(lightview, float4(input.wposition.xyz, 1.0))); // get diredtion from light point to poision in light spcace;
+   // return float4(plightspace, 1.0);
+
+    float angle = dot(plightspace, float3(0, 0, -1));
+  //  return float4(angle, angle, angle, angle);
+    
+
+    float ta = 1-cos(saturate(angle - lightconeangle) / (1.0 - lightconeangle) * PI);
+
+
+    float t = pow(dist / lightradius, 4);
+    float att = pow(saturate(1 - t), 2) / (dist * dist + 1)*ta;
+
+
 //	if (dist > lightradius*2)
 //		att = 0;
 	float3 ambient =  float3(0.0005f,0.0005,0.0005)*albedo * float3(ao,ao,ao);
 
 	float test = ShadowTest(input.wposition);
 
-	float3 final = ambient + (diff + spec)*NL*lightcolor.xyz*att*(1-test);
+	float3 final = ambient + (diff + spec)*NL*lightcolor.xyz*att*(1-test)*lightintensity;
 	final = final / (1 + final); // tone mapping
 	final = pow(final, 1.0f / 2.2f);
 

@@ -31,14 +31,19 @@ void SpotLight::update()
 }
 void SpotLight::setRadius(float r)
 {
-	for (int i = 0; i < attenuationCount; i++)
-	{
-		if (r - LightAttenuations[i].x >= 0)
-		{
-			mLightData.mAttenuation = glm::vec4(LightAttenuations[i],1.0);
-		}
-	}
+
 	mLightData.mRadius = r;
+	mLightData.mProjection = glm::perspective(mFOV*(3.14159f) / 180.0f, 1.0f, 0.1f, mLightData.mRadius);
+}
+void SpotLight::setIntensity(float i)
+{
+	mLightData.mIntensity = i;
+}
+void SpotLight::setConeAngle(float degree)
+{
+	mLightData.mConeAngle = cos(degree*(3.14159f) / 360.0f);
+	mFOV = degree;
+	mLightData.mProjection = glm::perspective(mFOV*(3.14159f) / 180.0f, 1.0f, 0.1f, mLightData.mRadius);
 }
 void SpotLight::setColor(float r, float g, float b)
 {

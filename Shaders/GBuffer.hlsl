@@ -25,7 +25,7 @@ struct PSInput
 	float4 position : SV_POSITION;
 	float3 normal : NORMAL;
 	float3 pos: POS;
-	uint id : ID;
+	nointerpolation uint id : ID;
 };
 PSInput VSMain(float3 position : POSITION, float3 normal : NORMAL, uint instanceid : SV_InstanceID)
 {

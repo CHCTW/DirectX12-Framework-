@@ -22,9 +22,9 @@ cbuffer SpotLightData : register(b1)
 	float4x4 lightproj;
 	float4 lightpostion;
 	float4 lightcolor;
-	float4 lightattenuation;
 	float lightradius;
-	float far;
+    float lightintensity;
+    float2 padding;
 };
 StructuredBuffer<InstancedInformation> instances: register(t0);
 TextureCube ShadowMap : register(t1);
@@ -83,42 +83,41 @@ float GeometrySmith(float NV, float NL, float roughness)
 	float ggx1 = GeometrySchlickGGX(NL, roughness);
 	return ggx1 * ggx2;
 }
-
+static const uint samplecount = 20;
+static float3 pcfs[20] =
+{
+    float3(1, 1, 1), float3(1, -1, 1), float3(-1, -1, 1), float3(-1, 1, 1),
+   float3(1, 1, -1), float3(1, -1, -1), float3(-1, -1, -1), float3(-1, 1, -1),
+   float3(1, 1, 0), float3(1, -1, 0), float3(-1, -1, 0), float3(-1, 1, 0),
+   float3(1, 0, 1), float3(-1, 0, 1), float3(1, 0, -1), float3(-1, 0, -1),
+   float3(0, 1, 1), float3(0, -1, 1), float3(0, -1, -1), float3(0, 1, -1)
+};
 float ShadowTest(float3 pos)
 {
 	float3 shadowcood = lightpostion.xyz - pos;
 	float lightdepth = ShadowMap.SampleLevel(Sampler, shadowcood,0).r;
-	float pixdepth;
-	shadowcood = pos - lightpostion.xyz ;
-	float3 absdir = abs(shadowcood); // face choosing 
-	float4x4 faceview;  // should have more easy way to do this
+	float pixdepth = length(pos - lightpostion.xyz);
+    float shadow = 0.0f;
+    float diskradius = 0.1;
 
-	if (absdir.x > absdir.z &&absdir.x > absdir.y) // up or down
-	{
-		if (shadowcood.x > 0) // down
-			faceview = lightview[1];
-		else
-			faceview = lightview[0];
-	}
-	else if (absdir.y > absdir.z)
-	{
-		if (shadowcood.y > 0) // down
-			faceview = lightview[3];
-		else
-			faceview = lightview[2];
-	}
-	else if (shadowcood.z > 0) // down
-		faceview = lightview[5];
-	else
-		faceview = lightview[4];
 
-	float4 projcoord = mul(faceview, float4(pos, 1.0));
-	projcoord = mul(lightproj,projcoord);
-	pixdepth = projcoord.z / projcoord.w;
-	if (pixdepth > (lightdepth + 0.001f))
-		return 1.0f;
-	return 0.0f;
+    for (int i = 0; i < samplecount; ++i)
+    {
+        lightdepth = ShadowMap.SampleLevel(Sampler, shadowcood + pcfs[i] * diskradius, 0).r;
+                lightdepth *= lightradius; 
+                if (pixdepth > (lightdepth + 0.5f))
+                    shadow += 1.0;
+ 
+    }
+
+    return shadow / (float) samplecount;
+
+	//if (pixdepth > (lightdepth + 0.05f))
+	//	return 1.0f;
+	//return 0.0f;
 }
+
+
 float4 PSMain(PSInput input) : SV_TARGET
 {
 
@@ -159,10 +158,7 @@ float4 PSMain(PSInput input) : SV_TARGET
 
     
     float t = pow(dist / lightradius, 4);
-    float att = saturate(pow(1 - t, 2)) / (dist * dist + 1);
-
-    if (dist > lightradius)
-        att = 0;
+    float att = (pow(saturate(1 - t), 2)) / (dist * dist + 1);
 
 
 //	float att = 1.0f / (1 + lightattenuation.y*dist + dist*dist*lightattenuation.z);
@@ -179,7 +175,7 @@ float4 PSMain(PSInput input) : SV_TARGET
 
 	float3 absdir = abs(lightpostion.xyz - input.wposition);
 
-    float3 final = ambient + (diff + spec) * NL * lightcolor.xyz * (1 - test)*att;
+    float3 final = ambient + (diff + spec) * NL * lightcolor.xyz * (1 - test) * att * lightintensity;
 	final = final / (1 + final); // tone mapping
 	final = pow(final, 1.0f / 2.2f);
 

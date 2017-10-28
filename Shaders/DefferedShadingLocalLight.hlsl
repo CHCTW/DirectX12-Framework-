@@ -16,10 +16,9 @@ struct PointLightData
 	float4x4 lightproj;
 	float4 lightposition;
 	float4 lightcolor;
-	float4 lightattenuation;
-	float lightradius;
-	float back;
-	float2 padding;
+    float lightradius;
+    float lightintensity;
+    float2 padding;
 };
 
 Texture2D NorMettexture : register(t0);
@@ -30,7 +29,7 @@ SamplerState g_sampler : register(s0);
 struct PSInput
 {
 	float4 position : SV_POSITION;
-	uint id : ID;
+    nointerpolation uint id : ID;
 };
 PSInput VSMain(float3 position : POSITION, float3 normal : NORMAL, uint instanceid : SV_InstanceID)
 {
@@ -137,14 +136,14 @@ float4 PSMain(PSInput input) : SV_TARGET
  //   float att = 1.0f / (1 + LocalLightData[input.id].lightattenuation.y * dist + dist * dist * LocalLightData[input.id].lightattenuation.z);
 
     float t = pow(dist / LocalLightData[input.id].lightradius,4);
-    float att = pow(pow(saturate(1 - t), 2) / (dist * dist + 1), 2.2); // old attenuation doesn't work... it will generate hard edge
+    float att = pow(saturate(1 - t), 2) / (dist * dist + 1); // old attenuation doesn't work... it will generate hard edge
 
 
     //return float4(att*1000, att*1000, att*1000, 1.0);
   //  att = att * att;
     //return float4(att, att, att, 1.0);
 
-    float3 final = (diff + spec) * NL * LocalLightData[input.id].lightcolor.xyz * att;
+    float3 final = (diff + spec) * NL * LocalLightData[input.id].lightcolor.xyz * att * LocalLightData[input.id].lightintensity;
     
     final = final / (1 + final); // tone mapping
     final = pow(final, 1/2.2f);

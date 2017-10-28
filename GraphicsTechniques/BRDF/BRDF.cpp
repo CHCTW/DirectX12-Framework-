@@ -142,8 +142,10 @@ void loadAsset()
 	lightBuffer.createConstantBuffer(render.mDevice, srvheap, sizeof(SpotLightData));
 	lightBuffer.maptoCpu();
 
-	light.setRadius(100);
-	light.setColor(100, 100, 100);
+	light.setIntensity(50);
+	light.setRadius(50);
+	light.setConeAngle(60.0);
+	light.setColor(1, 1, 1);
 
 	buddhaimport.ReadFile("Assets/buddha.obj", aiProcessPreset_TargetRealtime_Quality);
 	
@@ -491,13 +493,13 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	
 
 	if (key == GLFW_KEY_LEFT && action == GLFW_PRESS)
-		light.setColor(100.0,0.0,0.0);
+		light.setColor(1.0,0.0,0.0);
 	if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS)
-		light.setColor(0.0, 0.0, 100.0);
+		light.setColor(0.0, 0.0, 1.0);
 	if (key == GLFW_KEY_UP && action == GLFW_PRESS)
-		light.setColor(100.0, 100.0, 100.0);
+		light.setColor(1.0, 1.0, 1.0);
 	if (key == GLFW_KEY_DOWN && action == GLFW_PRESS)
-		light.setColor(0.0, 100.0, 0.0);
+		light.setColor(0.0, 1.0, 0.0);
 
 
 }

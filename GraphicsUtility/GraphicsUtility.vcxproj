@@ -138,6 +138,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="DirectionLight.h" />
     <ClInclude Include="Optical.h" />
     <ClInclude Include="PointLight.h" />
     <ClInclude Include="QuadPatch.h" />
@@ -151,6 +152,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="DirectionLight.cpp" />
     <ClCompile Include="Optical.cpp" />
     <ClCompile Include="PointLight.cpp" />
     <ClCompile Include="QuadPatch.cpp" />

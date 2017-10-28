@@ -370,7 +370,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 int main()
 {
 	int testnumber = 3;
-	windows.initialize(1600, 900, "GPUParticles");
+	windows.initialize(1280, 720, "GPUParticles");
 	windows.openWindow();
 	glfwSetCursorPosCallback(windows.mWindow, cursor_pos_callback);
 	glfwSetMouseButtonCallback(windows.mWindow, mouse_button_callback);

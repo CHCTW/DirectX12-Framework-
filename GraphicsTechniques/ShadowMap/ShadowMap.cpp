@@ -84,8 +84,8 @@ SpotLight light;
 RenderTarget shadowMap;
 ViewPort shadowViewport;
 Scissor shadowScissor;
-const UINT shadowmapWidth = 512;
-const UINT shadowmapHeight = 512;
+const UINT shadowmapWidth = 1024;
+const UINT shadowmapHeight = 1024;
 DescriptorHeap dsvheap;
 ShaderSet shadowshaderset;
 Pipeline shadowPipeline;
@@ -207,7 +207,9 @@ void loadAsset()
 	lightBuffer.createConstantBuffer(render.mDevice, srvheap, sizeof(SpotLightData));
 	lightBuffer.maptoCpu();
 
-	light.setRadius(1500);
+	light.setRadius(50);
+	light.setIntensity(450);
+	light.setConeAngle(50);
 	light.mZoom = 25;
 	light.addAngle(0.0, 45);
 

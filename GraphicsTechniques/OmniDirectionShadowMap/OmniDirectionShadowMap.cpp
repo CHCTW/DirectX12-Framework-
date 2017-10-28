@@ -98,8 +98,8 @@ Sampler sampler(D3D12_FILTER_MIN_MAG_MIP_POINT,  // due to pass too many paramet
 	bordercolor);
 
 CubeRenderTarget cubeShadowMap;
-const UINT cubeWidth = 512;
-const UINT cubeHeight = 512;
+const UINT cubeWidth = 256;
+const UINT cubeHeight = 256;
 
 
 void initializeRender()
@@ -186,7 +186,7 @@ void initializeRender()
 	shadowRootsig.mParameters[0].mResCounts = 1;
 	shadowRootsig.mParameters[0].mBindSlot = 0;
 	shadowRootsig.mParameters[0].mResource = &lightBuffer;
-	shadowRootsig.mParameters[0].mVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+	shadowRootsig.mParameters[0].mVisibility = D3D12_SHADER_VISIBILITY_ALL;
 	shadowRootsig.mParameters[1].mType = PARAMETERTYPE_SRV;
 	shadowRootsig.mParameters[1].mResCounts = 1;
 	shadowRootsig.mParameters[1].mBindSlot = 0;
@@ -200,7 +200,7 @@ void initializeRender()
 
 
 	shadowshaderset.shaders[VS].load("Shaders/CubeShadowMap.hlsl", "VSMain", VS);
-	//shadowshaderset.shaders[PS].load("Shaders/ShadowMap.hlsl", "PSMain", PS);
+	shadowshaderset.shaders[PS].load("Shaders/CubeShadowMap.hlsl", "PSMain", PS);
 	RenderTargetFormat shadowformat(0, nullptr, true);
 	shadowPipeline.createGraphicsPipeline(render.mDevice, shadowRootsig, shadowshaderset, shadowformat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(D3D12_CULL_MODE_FRONT), VERTEX_LAYOUT_TYPE_SPLIT_ALL);
 
@@ -219,8 +219,10 @@ void loadAsset()
 	lightBuffer.maptoCpu();
 
 
-	light.setColor(500, 500, 500);
-	light.setRadius(150);
+	light.setColor(1, 1, 1);
+	light.setIntensity(50);
+	light.setRadius(40);
+	light.mZoom = 0;
 
 	buddhaimport.ReadFile("Assets/buddha.obj", aiProcessPreset_TargetRealtime_Quality);
 
@@ -270,7 +272,7 @@ void loadAsset()
 	Ground.mPosition.resize(Ground.mNum);
 	Ground.mStructeredBuffer.createStructeredBuffer(render.mDevice, srvheap, sizeof(InstancedInformation), Ground.mNum, STRUCTERED_BUFFER_TYPE_READ);
 	//Ground.mPosition[0].setAngle(-90, 0, 0);
-	Ground.mPosition[0].setScale(25, 25, 25);
+	Ground.mPosition[0].setScale(10, 10, 10);
 	Ground.mPosition[0].setPosition(0, 0, 0);
 	Ground.mPosition[0].CacNewTransform();
 	Ground.mBufferData[0].mMatrices = Ground.mPosition[0].getMatrices();
@@ -494,10 +496,10 @@ void onrender()
 			cmdlist.bindVertexBuffers(Spheres.mVertexBufferData, Spheres.mNormalBuffer);
 			cmdlist.drawIndexedInstanced(Spheres.indexCount, Spheres.mNum, 0, 0);
 
-			cmdlist.bindGraphicsResource(1, Buddha.mStructeredBuffer);
-			cmdlist.bindIndexBuffer(Buddha.mIndexBuffer);
-			cmdlist.bindVertexBuffers(Buddha.mVertexBufferData, Buddha.mNormalBuffer);
-			cmdlist.drawIndexedInstanced(Buddha.indexCount, Buddha.mNum, 0, 0);
+			//cmdlist.bindGraphicsResource(1, Buddha.mStructeredBuffer);
+			//cmdlist.bindIndexBuffer(Buddha.mIndexBuffer);
+			//cmdlist.bindVertexBuffers(Buddha.mVertexBufferData, Buddha.mNormalBuffer);
+			//cmdlist.drawIndexedInstanced(Buddha.indexCount, Buddha.mNum, 0, 0);
 
 
 			cmdlist.bindGraphicsResource(1, Ground.mStructeredBuffer);
@@ -527,10 +529,10 @@ void onrender()
 	cmdlist.bindVertexBuffers(Spheres.mVertexBufferData, Spheres.mNormalBuffer);
 	cmdlist.drawIndexedInstanced(Spheres.indexCount, Spheres.mNum, 0, 0);
 
-	cmdlist.bindGraphicsResource(1, Buddha.mStructeredBuffer);
-	cmdlist.bindIndexBuffer(Buddha.mIndexBuffer);
-	cmdlist.bindVertexBuffers(Buddha.mVertexBufferData, Buddha.mNormalBuffer);
-	cmdlist.drawIndexedInstanced(Buddha.indexCount, Buddha.mNum, 0, 0);
+	//cmdlist.bindGraphicsResource(1, Buddha.mStructeredBuffer);
+	//cmdlist.bindIndexBuffer(Buddha.mIndexBuffer);
+	//cmdlist.bindVertexBuffers(Buddha.mVertexBufferData, Buddha.mNormalBuffer);
+	//cmdlist.drawIndexedInstanced(Buddha.indexCount, Buddha.mNum, 0, 0);
 
 	cmdlist.bindGraphicsResource(1, Ground.mStructeredBuffer);
 	cmdlist.bindIndexBuffer(Ground.mIndexBuffer);

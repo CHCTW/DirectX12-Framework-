@@ -100,7 +100,7 @@ Sampler sampler;
 ShaderSet localshader;
 ViewPort debugviewport;
 std::vector<PointLightData> lightlist;
-static unsigned int lightcount = 60;
+static unsigned int lightcount = 20;
 Buffer lightDataBuffer;
 Pipeline localLightpPipeline;
 
@@ -113,7 +113,7 @@ std::uniform_real_distribution<float> distributionscale(1.0, 5.0);
 
 std::uniform_real_distribution<float> distributionradius(20.0, 40.0);
 std::uniform_real_distribution<float> distributionlightY(1.0, 2.0);
-std::array<double, 3> intervals{ 0.0,100, 15000 };
+std::array<double, 3> intervals{ 0.0,0.0, 1.0 };
 std::array<float, 3> weights{ 1500 ,0, 1500.0 };
 std::piecewise_linear_distribution<double>
 distributionlightcolor(intervals.begin(), intervals.end(), weights.begin());
@@ -387,7 +387,7 @@ void loadAsset()
 	{
 		light.setRadius(distributionradius(generator));
 		light.setColor(distributionlightcolor(generator), distributionlightcolor(generator), distributionlightcolor(generator));
-
+		light.setIntensity(20);
 
 	//	light.setColor(0, 0.0, 200.0);
 		light.setPosition(distributionXZ(generator), 3,distributionXZ(generator));
