@@ -337,19 +337,24 @@ void CommandList::bindGraphicsRootSigature(RootSignature& rootsig,bool bindresou
 				{
 					mDx12CommandList->SetGraphicsRootDescriptorTable(i, rootsig.mParameters[i].mResource->mCBV.Gpu);
 				}
-
+				else
+					mDx12CommandList->SetGraphicsRootConstantBufferView(i, rootsig.mParameters[i].mResource->GpuAddress);
 				break;
 			case PARAMETERTYPE_SRV:
 				if (rootsig.mParameters[i].mTable)
 				{
 					mDx12CommandList->SetGraphicsRootDescriptorTable(i, rootsig.mParameters[i].mResource->mSRV.Gpu);
 				}
+				else
+					mDx12CommandList->SetGraphicsRootShaderResourceView(i, rootsig.mParameters[i].mResource->GpuAddress);
 				break;
 			case PARAMETERTYPE_UAV:
 				if (rootsig.mParameters[i].mTable)
 				{
 					mDx12CommandList->SetGraphicsRootDescriptorTable(i, rootsig.mParameters[i].mResource->mUAV.Gpu);
 				}
+				else
+					mDx12CommandList->SetGraphicsRootUnorderedAccessView(i, rootsig.mParameters[i].mResource->GpuAddress);
 				break;
 			case PARAMETERTYPE_SAMPLER:
 				mDx12CommandList->SetGraphicsRootDescriptorTable(i, rootsig.mParameters[i].mSampler->mSampler.Gpu);
@@ -382,20 +387,24 @@ void CommandList::bindGraphicsResource(UINT rootindex, Resource& res)
 		{
 			mDx12CommandList->SetGraphicsRootDescriptorTable(rootindex, res.mCBV.Gpu);
 		}
-
+		else
+			mDx12CommandList->SetGraphicsRootConstantBufferView(rootindex, res.GpuAddress);
 		break;
 	case PARAMETERTYPE_SRV:
 		if (rootsig.mParameters[rootindex].mTable)
 		{
 			mDx12CommandList->SetGraphicsRootDescriptorTable(rootindex, res.mSRV.Gpu);
 		}
-
+		else
+			mDx12CommandList->SetGraphicsRootShaderResourceView(rootindex, res.GpuAddress);
 		break;
 	case PARAMETERTYPE_UAV:
 		if (rootsig.mParameters[rootindex].mTable)
 		{
 			mDx12CommandList->SetGraphicsRootDescriptorTable(rootindex, res.mUAV.Gpu);
 		}
+		else
+			mDx12CommandList->SetGraphicsRootUnorderedAccessView(rootindex, res.GpuAddress);
 		break;
 	default:
 		break;
@@ -452,20 +461,24 @@ void CommandList::bindComputeRootSigature(RootSignature& rootsig, bool bindresou
 				{
 					mDx12CommandList->SetComputeRootDescriptorTable(i, rootsig.mParameters[i].mResource->mCBV.Gpu);
 				}
-
+				else
+					mDx12CommandList->SetComputeRootConstantBufferView(i, rootsig.mParameters[i].mResource->GpuAddress);
 				break;
 			case PARAMETERTYPE_SRV:
 				if (rootsig.mParameters[i].mTable)
 				{
 					mDx12CommandList->SetComputeRootDescriptorTable(i, rootsig.mParameters[i].mResource->mSRV.Gpu);
 				}
-
+				else
+					mDx12CommandList->SetComputeRootShaderResourceView(i, rootsig.mParameters[i].mResource->GpuAddress);
 				break;
 			case PARAMETERTYPE_UAV:
 				if (rootsig.mParameters[i].mTable)
 				{
 					mDx12CommandList->SetComputeRootDescriptorTable(i, rootsig.mParameters[i].mResource->mUAV.Gpu);
 				}
+				else
+					mDx12CommandList->SetComputeRootUnorderedAccessView(i, rootsig.mParameters[i].mResource->GpuAddress);
 				break;
 			case PARAMETERTYPE_SAMPLER:
 				mDx12CommandList->SetComputeRootDescriptorTable(i, rootsig.mParameters[i].mSampler->mSampler.Gpu);
@@ -494,20 +507,24 @@ void CommandList::bindComputeResource(UINT rootindex, Resource& res)
 		{
 			mDx12CommandList->SetComputeRootDescriptorTable(rootindex, res.mCBV.Gpu);
 		}
-
+		else
+			mDx12CommandList->SetComputeRootConstantBufferView(rootindex, res.GpuAddress);
 		break;
 	case PARAMETERTYPE_SRV:
 		if (rootsig.mParameters[rootindex].mTable)
 		{
 			mDx12CommandList->SetComputeRootDescriptorTable(rootindex, res.mSRV.Gpu);
 		}
-
+		else
+			mDx12CommandList->SetComputeRootShaderResourceView(rootindex, res.GpuAddress);
 		break;
 	case PARAMETERTYPE_UAV:
 		if (rootsig.mParameters[rootindex].mTable)
 		{
 			mDx12CommandList->SetComputeRootDescriptorTable(rootindex, res.mUAV.Gpu);
 		}
+		else
+			mDx12CommandList->SetComputeRootUnorderedAccessView(rootindex, res.GpuAddress);
 		break;
 	default:
 		break;

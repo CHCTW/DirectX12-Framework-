@@ -355,6 +355,7 @@ void Texture::CreateTexture(ID3D12Device* device, DXGI_FORMAT format, UINT width
 		tempclear,
 		IID_PPV_ARGS(&mResource)));
 	mState = state;
+	//GpuAddress = mResource->GetGPUVirtualAddress();  because only buffer can read with out descriptor, so texture can't use gpuvirtualadress. Intereseting stuff
 	const UINT64 uploadBufferSize = GetRequiredIntermediateSize(mResource, 0, textureDesc.DepthOrArraySize*textureDesc.MipLevels);
 
 //	textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;

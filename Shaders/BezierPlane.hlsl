@@ -342,7 +342,7 @@ float4 PSMain(DSOutput input) : SV_TARGET
     normal = normalize(cross(normalize(tangent), normalize(bitangent)));
   //  return float4(normal, 1.0);
 
-    float roughness = 0.1;
+    float roughness = 0.2;
     float metallic = 0.9;
     float3 albedo = pow(normalize(input.wposition)*0.5+0.5, 2.2);
     float ao = 1.0f;

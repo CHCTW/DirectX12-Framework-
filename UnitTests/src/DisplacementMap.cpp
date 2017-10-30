@@ -121,6 +121,7 @@ void initializeRender()
 
 	rootsig.mParameters.resize(6);
 	rootsig.mParameters[0].mType = PARAMETERTYPE_CBV;
+	rootsig.mParameters[0].mTable = false;
 	rootsig.mParameters[0].mResCounts = 1;
 	rootsig.mParameters[0].mBindSlot = 0;
 	rootsig.mParameters[0].mResource = &cameraBuffer;
