@@ -136,7 +136,7 @@ float4 PSMain(PSInput input) : SV_TARGET
  //   float att = 1.0f / (1 + LocalLightData[input.id].lightattenuation.y * dist + dist * dist * LocalLightData[input.id].lightattenuation.z);
 
     float t = pow(dist / LocalLightData[input.id].lightradius,4);
-    float att = pow(saturate(1 - t), 2) / (dist * dist + 1); // old attenuation doesn't work... it will generate hard edge
+    float att = 1-cos(pow(saturate(1 - t), 2) / (dist * dist + 1)*PI); // old attenuation doesn't work... it will generate hard edge
 
 
     //return float4(att*1000, att*1000, att*1000, 1.0);

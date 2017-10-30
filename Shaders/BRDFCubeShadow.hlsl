@@ -27,7 +27,7 @@ cbuffer SpotLightData : register(b1)
     float2 padding;
 };
 StructuredBuffer<InstancedInformation> instances: register(t0);
-TextureCube ShadowMap : register(t1);
+TextureCube ShadowMap[2] : register(t1);
 SamplerState Sampler : register(s0);
 struct PSInput
 {
@@ -95,22 +95,22 @@ static float3 pcfs[20] =
 float ShadowTest(float3 pos)
 {
 	float3 shadowcood = lightpostion.xyz - pos;
-	float lightdepth = ShadowMap.SampleLevel(Sampler, shadowcood,0).r;
+	float lightdepth = ShadowMap[0].SampleLevel(Sampler, shadowcood,0).r;
 	float pixdepth = length(pos - lightpostion.xyz);
     float shadow = 0.0f;
     float diskradius = 0.1;
 
-
     for (int i = 0; i < samplecount; ++i)
     {
-        lightdepth = ShadowMap.SampleLevel(Sampler, shadowcood + pcfs[i] * diskradius, 0).r;
-                lightdepth *= lightradius; 
-                if (pixdepth > (lightdepth + 0.5f))
-                    shadow += 1.0;
- 
+        lightdepth = ShadowMap[0].SampleLevel(Sampler, shadowcood + pcfs[i] * diskradius, 0).r;
+        lightdepth *= lightradius;
+        if (pixdepth > (lightdepth + 0.5f))
+            shadow += 1.0;
+
+
     }
 
-    return shadow / (float) samplecount;
+    return 1 - (shadow / (float) samplecount);
 
 	//if (pixdepth > (lightdepth + 0.05f))
 	//	return 1.0f;
@@ -175,7 +175,7 @@ float4 PSMain(PSInput input) : SV_TARGET
 
 	float3 absdir = abs(lightpostion.xyz - input.wposition);
 
-    float3 final = ambient + (diff + spec) * NL * lightcolor.xyz * (1 - test) * att * lightintensity;
+    float3 final = ambient + (diff + spec) * NL * lightcolor.xyz * test * att * lightintensity;
 	final = final / (1 + final); // tone mapping
 	final = pow(final, 1.0f / 2.2f);
 

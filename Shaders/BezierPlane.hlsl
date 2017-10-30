@@ -18,12 +18,14 @@ cbuffer SceneConstantBuffer : register(b0)
 
 cbuffer SpotLightData : register(b1)
 {
-	float4x4 lightview;
-	float4x4 lightproj;
-	float4 lightpostion;
-	float4 lightcolor;
-	float4 lightattenuation;
-	float lightradius;
+    float4x4 lightview;
+    float4x4 lightproj;
+    float4 lightpostion;
+    float4 lightcolor;
+    float lightradius;
+    float lightintensity;
+    float lightconeangle;
+    float padding;
 };
 StructuredBuffer<InstancedInformation> instances: register(t0);
 
@@ -303,11 +305,12 @@ float GeometrySmith(float NV, float NL, float roughness)
 
 float4 PSMain(DSOutput input) : SV_TARGET
 {
+ //   return float4(1.0,1.0,0.0, 1.0);
 
     float3 normal = normalize(input.normal);
 
     // calcuate normal in pixel rate can largely smooth the surface, however, the un-accept result for normal could be cause by the wrong vector at the edge
-
+  
 
     float4 basis = BernsteinBasis(input.patchpos.x);
     float curve1 = contiBezier(input.patches[0].y, input.patches[1].y, input.patches[2].y, input.patches[3].y, basis);
@@ -337,7 +340,7 @@ float4 PSMain(DSOutput input) : SV_TARGET
 
 
     normal = normalize(cross(normalize(tangent), normalize(bitangent)));
-
+  //  return float4(normal, 1.0);
 
     float roughness = 0.1;
     float metallic = 0.9;
@@ -374,16 +377,21 @@ float4 PSMain(DSOutput input) : SV_TARGET
 
     float dist = length(lightpostion.xyz - input.wposition);
 	//float att = 1.0f / (1 + lightattenuation.y*dist + dist*dist*lightattenuation.z);
+    float3 plightspace = normalize(mul(lightview, float4(input.wposition.xyz, 1.0)));
+    float angle = dot(plightspace, float3(0, 0, -1));
+  //  return float4(angle, angle, angle, angle);
+    
 
+    float ta = saturate(angle - lightconeangle) / (1.0 - lightconeangle);
 
     float t = pow(dist / lightradius, 4);
-    float att = saturate(pow(1 - t, 2)) / (dist * dist + 1);
+    float att = saturate(pow(1 - t, 2)) / (dist * dist + 1) * ta;
 
     if (dist > lightradius)
         att = 0;
     float3 ambient = float3(0.0005f, 0.0005, 0.0005) * albedo * float3(ao, ao, ao);
 
-    float3 final = ambient + (diff + spec) * NL * lightcolor.xyz * att;
+    float3 final = ambient + (diff + spec) * NL * lightcolor.xyz * att*lightintensity;
     final = final / (1 + final); // tone mapping
     final = pow(final, 1.0f / 2.2f);
     return float4(final, 1.0f);

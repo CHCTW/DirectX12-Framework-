@@ -136,7 +136,7 @@ void loadAsset()
 	skyboxdata[4] = img[4].mData;
 	skyboxdata[5] = img[5].mData;
 
-	skyBox.CreateTexture(render.mDevice, DXGI_FORMAT_R8G8B8A8_UNORM, img[0].mWidth, img[0].mHeight, 6, true,10);
+	skyBox.CreateTexture(render.mDevice, DXGI_FORMAT_R8G8B8A8_UNORM, img[0].mWidth, img[0].mHeight, 1, true,10);
 
 
 

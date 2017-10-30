@@ -213,7 +213,8 @@ void loadAsset()
 	lightBuffer.maptoCpu();
 
 	light.setRadius(1000);
-	light.setColor(1000, 1000, 1000);
+	light.setColor(1, 1, 1);
+	light.setConeAngle(90);
 	light.addZoom(10);
 	light.addAngle(0, 90);
 

@@ -51,7 +51,7 @@ CubeRenderTarget IrradianceMap;
 const UINT mapWidth = 256;
 const UINT mapHeight = 256;
 bool irr = true;
-
+unsigned face = 0;
 
 void initializeRender()
 {
@@ -75,7 +75,7 @@ void initializeRender()
 	samplerheap.ininitialize(render.mDevice, 1, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 	rtvheap.ininitialize(render.mDevice, 1, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
-	rootsig.mParameters.resize(3);
+	rootsig.mParameters.resize(4);
 	rootsig.mParameters[0].mType = PARAMETERTYPE_CBV;
 	rootsig.mParameters[0].mResCounts = 1;
 	rootsig.mParameters[0].mBindSlot = 0;
@@ -89,8 +89,10 @@ void initializeRender()
 	rootsig.mParameters[2].mResCounts = 1;
 	rootsig.mParameters[2].mBindSlot = 0;
 	rootsig.mParameters[2].mSampler = &sampler;
-
-
+	rootsig.mParameters[3].mType = PARAMETERTYPE_ROOTCONSTANT;
+	rootsig.mParameters[3].mResCounts = 1;
+	rootsig.mParameters[3].mBindSlot = 1;
+	rootsig.mParameters[3].mConstantData = &face;
 
 	rootsig.initialize(render.mDevice);
 
@@ -115,7 +117,7 @@ void loadAsset()
 	cameraBuffer.createConstantBuffer(render.mDevice, srvheap, sizeof(ViewProjection));
 	cameraBuffer.maptoCpu();
 
-	IrradianceMap.createCubeRenderTargets(render.mDevice, mapWidth, mapHeight,1, CUBE_RENDERTAERGET_TYPE_RENDERTARGET, rtvheap, srvheap, D3D12_RESOURCE_FLAG_NONE, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	IrradianceMap.createCubeRenderTargets(render.mDevice, mapWidth, mapHeight,1,1, CUBE_RENDERTAERGET_TYPE_RENDERTARGET, rtvheap, srvheap, D3D12_RESOURCE_FLAG_NONE, DXGI_FORMAT_R32G32B32A32_FLOAT);
 
 
 	int width, height, bpp;
@@ -239,7 +241,7 @@ void generateIrrMap()
 	ShaderSet irrshaders;
 	irrshaders.shaders[VS].load("Shaders/IrradianceCubeMap.hlsl", "VSMain", VS);
 	irrshaders.shaders[PS].load("Shaders/IrradianceCubeMap.hlsl", "PSMain", PS);
-
+	irrshaders.shaders[GS].load("Shaders/IrradianceCubeMap.hlsl", "GSMain", GS);
 
 	Pipeline IrraidancePipeline;
 	RenderTargetFormat retformat(DXGI_FORMAT_R32G32B32A32_FLOAT);
@@ -284,7 +286,7 @@ void generateIrrMap()
 
 
 
-	for (int i = 0; i < 6; ++i)
+	for (; face < 6; ++face)
 	{
 
 		cmdalloc.reset();
@@ -297,8 +299,8 @@ void generateIrrMap()
 		cmdlist.setScissor(tempscissor);
 		cmdlist.bindDescriptorHeaps(&srvheap, &samplerheap);
 		cmdlist.bindGraphicsRootSigature(rootsig);
-		cameraBuffer.updateBufferfromCpu(views[i].getMatrix(), sizeof(ViewProjection));
-		cmdlist.bindCubeRenderTarget(IrradianceMap, i);
+		cameraBuffer.updateBufferfromCpu(views[face].getMatrix(), sizeof(ViewProjection));
+		cmdlist.bindCubeRenderTarget(IrradianceMap, face);
 		cmdlist.setTopolgy(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		cmdlist.bindIndexBuffer(indexBuffer);
 		cmdlist.bindVertexBuffers(vertexBuffer, normalBuffer);

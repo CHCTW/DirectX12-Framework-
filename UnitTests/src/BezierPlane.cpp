@@ -161,8 +161,10 @@ void loadAsset()
 	lightBuffer.maptoCpu();
 
 	light.setRadius(1000);
-	light.setColor(5000, 5000, 5000);
-	light.addZoom(5);
+	light.setConeAngle(60);
+	light.setIntensity(100000);
+	light.setColor(1.0, 1.0, 1.0);
+	light.addZoom(20);
 	light.addAngle(0, 90);
 
 
@@ -257,6 +259,7 @@ void update()
 
 
 	light.update();
+
 	lightBuffer.updateBufferfromCpu(light.getLightData(), sizeof(SpotLightData));
 	//radian = 2 * 3.14159f / Bunnys.mNum;
 

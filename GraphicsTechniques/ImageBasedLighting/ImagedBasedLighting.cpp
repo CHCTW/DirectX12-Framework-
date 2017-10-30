@@ -325,8 +325,8 @@ void initializeRender()
 
 
 
-	IrradianceMap.createCubeRenderTargets(render.mDevice, IrrWidth, IrrHeight, 1, CUBE_RENDERTAERGET_TYPE_RENDERTARGET, rtvheap, srvheap, D3D12_RESOURCE_FLAG_NONE, DXGI_FORMAT_R32G32B32A32_FLOAT);
-	SpecularMap.createCubeRenderTargets(render.mDevice, SpecWidth, SpecHeight, specularlod, CUBE_RENDERTAERGET_TYPE_RENDERTARGET, rtvheap, srvheap, D3D12_RESOURCE_FLAG_NONE, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	IrradianceMap.createCubeRenderTargets(render.mDevice, IrrWidth, IrrHeight, 1,1, CUBE_RENDERTAERGET_TYPE_RENDERTARGET, rtvheap, srvheap, D3D12_RESOURCE_FLAG_NONE, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	SpecularMap.createCubeRenderTargets(render.mDevice, SpecWidth, SpecHeight, 1, specularlod, CUBE_RENDERTAERGET_TYPE_RENDERTARGET, rtvheap, srvheap, D3D12_RESOURCE_FLAG_NONE, DXGI_FORMAT_R32G32B32A32_FLOAT);
 	RenderTargetFormat brdfintformat(DXGI_FORMAT_R32G32_FLOAT);
 	BRDFIntergrateMap.createRenderTargets(render.mDevice, BRDFIntWidth, BRDFIntWidth, brdfintformat, rtvheap, srvheap);
 
@@ -616,15 +616,26 @@ void prepareMap()
 	ShaderSet irrshaders;
 	irrshaders.shaders[VS].load("Shaders/IrradianceCubeMap.hlsl", "VSMain", VS);
 	irrshaders.shaders[PS].load("Shaders/IrradianceCubeMap.hlsl", "PSMain", PS);
-
+	irrshaders.shaders[GS].load("Shaders/IrradianceCubeMap.hlsl", "GSMain", GS);
 
 	ShaderSet specshaders;
 	specshaders.shaders[VS].load("Shaders/SpecularCubeMap.hlsl", "VSMain", VS);
 	specshaders.shaders[PS].load("Shaders/SpecularCubeMap.hlsl", "PSMain", PS);
+	specshaders.shaders[GS].load("Shaders/SpecularCubeMap.hlsl", "GSMain", GS);
 
 	ShaderSet brdfintshaders;
 	brdfintshaders.shaders[VS].load("Shaders/IntergrateBRDF.hlsl", "VSMain", VS);
 	brdfintshaders.shaders[PS].load("Shaders/IntergrateBRDF.hlsl", "PSMain", PS);
+
+
+	struct Consts
+	{
+		unsigned int face;
+		float roughness;
+	} consts;
+
+	
+
 
 	RootSignature mapGenRoot;
 
@@ -643,9 +654,9 @@ void prepareMap()
 	mapGenRoot.mParameters[2].mBindSlot = 0;
 	mapGenRoot.mParameters[2].mSampler = &sampler;
 	mapGenRoot.mParameters[3].mType = PARAMETERTYPE_ROOTCONSTANT;
-	mapGenRoot.mParameters[3].mResCounts = 1;
+	mapGenRoot.mParameters[3].mResCounts = 2;
 	mapGenRoot.mParameters[3].mBindSlot = 1;
-	mapGenRoot.mParameters[3].mVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	mapGenRoot.mParameters[3].mVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 
 
@@ -701,7 +712,7 @@ void prepareMap()
 
 
 
-		for (int i = 0; i < 6; ++i)
+		for (consts.face = 0; consts.face < 6; ++consts.face)
 		{
 
 
@@ -715,8 +726,9 @@ void prepareMap()
 			cmdlist.setScissor(tempscissor);
 			cmdlist.bindDescriptorHeaps(&srvheap, &samplerheap);
 			cmdlist.bindGraphicsRootSigature(mapGenRoot);
-			cameraBuffer.updateBufferfromCpu(views[i].getMatrix(), sizeof(ViewProjection));
-			cmdlist.bindCubeRenderTarget(IrradianceMap, i);
+			cameraBuffer.updateBufferfromCpu(views[consts.face].getMatrix(), sizeof(ViewProjection)); // bad use, this is reason why need to wait 6 times for execute gpu command
+			cmdlist.bindCubeRenderTarget(IrradianceMap, consts.face);
+			cmdlist.bindGraphicsConstant(3, &consts);
 			cmdlist.setTopolgy(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			cmdlist.bindIndexBuffer(Cube.mIndexBuffer);
 			cmdlist.bindVertexBuffers(Cube.mVertexBufferData, Cube.mNormalBuffer);
@@ -724,7 +736,7 @@ void prepareMap()
 
 			cmdlist.cubeRenderTargetBarrier(IrradianceMap, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ);
 
-			if (i != 5)
+			if (consts.face != 5)
 				cmdlist.cubeRenderTargetBarrier(IrradianceMap, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
 			cmdlist.close();
@@ -746,7 +758,7 @@ void prepareMap()
 	tempviewport.setup(0.0f, 0.0f, (float)SpecWidth, (float)SpecHeight);
 	tempscissor.setup(0, SpecWidth, 0, SpecHeight);
 
-	float roughness = 0.2;
+	consts.roughness = 0.2;
 
 	for (UINT  lod = 0; lod < specularlod; lod++)
 	{
@@ -755,8 +767,8 @@ void prepareMap()
 		tempscissor.setup(0, SpecWidth / pow(2, lod), 0, SpecHeight / pow(2, lod));
 
 
-		roughness = float(lod) / float(specularlod);
-		for (int i = 0; i < 6; ++i)
+		consts.roughness = float(lod) / float(specularlod);
+		for (consts.face = 0; consts.face < 6; ++consts.face)
 		{
 
 			cmdalloc.reset();
@@ -769,15 +781,15 @@ void prepareMap()
 			cmdlist.setScissor(tempscissor);
 			cmdlist.bindDescriptorHeaps(&srvheap, &samplerheap);
 			cmdlist.bindGraphicsRootSigature(mapGenRoot);
-			cameraBuffer.updateBufferfromCpu(views[i].getMatrix(), sizeof(ViewProjection));
-			cmdlist.bindCubeRenderTarget(SpecularMap, i,lod);
+			cameraBuffer.updateBufferfromCpu(views[consts.face].getMatrix(), sizeof(ViewProjection));
+			cmdlist.bindCubeRenderTarget(SpecularMap, consts.face,lod);
 			cmdlist.setTopolgy(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-			cmdlist.bindGraphicsConstant(3, &roughness);
+			cmdlist.bindGraphicsConstant(3, &consts);
 			cmdlist.bindIndexBuffer(Cube.mIndexBuffer);
 			cmdlist.bindVertexBuffers(Cube.mVertexBufferData, Cube.mNormalBuffer);
 			cmdlist.drawIndexedInstanced(Cube.indexCount, 1, 0, 0);
 
-			if (i == 5 && lod == specularlod - 1)
+			if (consts.face == 5 && lod == specularlod - 1)
 				cmdlist.cubeRenderTargetBarrier(SpecularMap, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ);
 
 			/*if (i != 5 && lod!=specularlod-1)

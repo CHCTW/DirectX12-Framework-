@@ -335,7 +335,8 @@ void Texture::CreateTexture(ID3D12Device* device, DXGI_FORMAT format, UINT width
 		textureDesc.DepthOrArraySize = (UINT16)arraySize;
 		if (mCubeMap)
 		{
-			textureDesc.DepthOrArraySize = (UINT16)6;
+			textureDesc.DepthOrArraySize *=6;
+			//textureDesc.Width = height *6;
 		}
 		textureDesc.MipLevels = mipLevel;
 		textureDesc.Format = format;
@@ -369,6 +370,8 @@ void Texture::CreateTexture(ID3D12Device* device, DXGI_FORMAT format, UINT width
 		nullptr,
 		IID_PPV_ARGS(&mUploadBuffer)));
 
+
+
 	//GpuAddress = mResource->GetGPUVirtualAddress();
 
 }
@@ -389,9 +392,21 @@ void Texture::addSahderResorceView(DescriptorHeap& heap)
 	srvDesc.Texture2D.MipLevels = textureDesc.MipLevels;
 	if (mCubeMap)
 	{
-		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-		srvDesc.TextureCube.MipLevels = textureDesc.MipLevels;
-		srvDesc.TextureCube.MostDetailedMip = 0;
+
+		if (textureDesc.DepthOrArraySize > 6)  // cube texture array
+		{
+			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
+			srvDesc.TextureCubeArray.First2DArrayFace = 0;
+			srvDesc.TextureCubeArray.NumCubes = textureDesc.DepthOrArraySize/6;
+			srvDesc.TextureCubeArray.MipLevels = textureDesc.MipLevels;
+			srvDesc.TextureCubeArray.MostDetailedMip = 0;
+		}
+		else
+		{
+			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+			srvDesc.TextureCube.MipLevels = textureDesc.MipLevels;
+			srvDesc.TextureCube.MostDetailedMip = 0;
+		}
 		//srvDesc.TextureCube.ResourceMinLODClamp = 0;
 	}
 
@@ -411,6 +426,11 @@ void Texture::addDepgthStencilView(DescriptorHeap& heap)
 	//	depthStencilDesc.Format = DXGI_FORMAT_R16_FLOAT;
 	
 	depthStencilDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+	if (mCubeMap || textureDesc.DepthOrArraySize > 1)
+	{
+		depthStencilDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
+	//	depthStencilDesc.
+	}
 	depthStencilDesc.Flags = D3D12_DSV_FLAG_NONE;
 	mDSV = heap.addResource(DSV, mResource, &depthStencilDesc, nullptr);
 }

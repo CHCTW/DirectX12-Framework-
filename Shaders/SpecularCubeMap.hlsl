@@ -10,6 +10,7 @@ cbuffer SceneConstantBuffer : register(b0)
 };
 cbuffer RoughnessBuffer : register(b1)
 {
+    uint face;
     float roughness;
 };
 
@@ -69,13 +70,29 @@ PSInput VSMain(float3 position : POSITION, float3 normal : NORMAL)
 
     return result;
 }
-
-float4 PSMain(PSInput input) : SV_TARGET
+struct GSOutput
 {
+    float4 position : SV_POSITION;
+    float3 normal : NORMAL;
+    uint face : SV_RenderTargetArrayIndex;
+};
 
+[maxvertexcount(3)]
+void GSMain(triangle PSInput input[3], inout TriangleStream<GSOutput> stream)
+{
+    GSOutput output;
+    output.face = face;
+    [unroll]
+    for (int i = 0; i < 3; ++i)
+    {
+        output.position = input[i].position;
+        output.normal = input[i].normal;
+        stream.Append(output);
+    }
 
-
-
+}
+float4 PSMain(GSOutput input) : SV_TARGET
+{
     float3 specular = float3(0.0,0.0,0.10);
     float3 up = float3(0.0, 1.0, 0.0);
     float3 right = normalize(cross(up, input.normal));

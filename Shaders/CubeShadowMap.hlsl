@@ -27,17 +27,38 @@ struct PSInput
 	float4 position : SV_POSITION;
     float3 wposition : W_POSITION;
 };
+struct GSOutput
+{
+    float4 position : SV_POSITION;
+    float3 wposition : W_POSITION;
+    uint face : SV_RenderTargetArrayIndex;
+};
 PSInput VSMain(float3 position : POSITION, uint instanceid : SV_InstanceID)
 {
-	PSInput result;
+    PSInput result;
 
-	result.position = mul(instances[instanceid].model, float4(position, 1.0f));
+    result.position = mul(instances[instanceid].model, float4(position, 1.0f));
     result.wposition = result.position.xyz;
-	result.position = mul(lightview[face], result.position);
-	result.position = mul(lightproj,result.position);
-	return result;
+    result.position = mul(lightview[face], result.position);
+    result.position = mul(lightproj, result.position);
+    return result;
 }
-float PSMain(PSInput input) : SV_Depth
+[maxvertexcount(3)]
+void GSMain(triangle PSInput input[3], inout TriangleStream<GSOutput> stream)
 {
-    return length(input.wposition - lightpostion.xyz) / lightradius;
+    GSOutput output;
+    output.face = face;
+    [unroll]
+    for (int i = 0; i < 3; ++i)
+    {
+        output.position = input[i].position;
+        output.wposition = input[i].wposition;
+        stream.Append(output);
+    }
+
+}
+
+float PSMain(GSOutput input) : SV_Depth
+{
+    return length(input.wposition - lightpostion.xyz)/lightradius ;
 }

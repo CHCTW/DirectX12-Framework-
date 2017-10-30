@@ -67,7 +67,7 @@ float GeometrySmith(float NV, float NL, float roughness)
 float2 PSMain(PSInput input) : SV_TARGET
 {
 
-    float roughness = saturate(input.uv.y+0.014);
+    float roughness = saturate(input.uv.y);
     float NV = saturate(input.uv.x);
     float3 V = float3(sqrt(1.0f - (NV * NV)), 0.0f, NV);
     float3 N = float3(0.0f, 0.0f, 1.0f);

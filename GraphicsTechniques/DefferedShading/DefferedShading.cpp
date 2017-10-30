@@ -111,10 +111,10 @@ std::uniform_real_distribution<float> distributionmaterial(0.3, 0.8);
 std::uniform_real_distribution<float> distributionscale(1.0, 5.0);
 
 
-std::uniform_real_distribution<float> distributionradius(20.0, 40.0);
+std::uniform_real_distribution<float> distributionradius(20.0, 25.0);
 std::uniform_real_distribution<float> distributionlightY(1.0, 2.0);
-std::array<double, 3> intervals{ 0.0,0.0, 1.0 };
-std::array<float, 3> weights{ 1500 ,0, 1500.0 };
+std::array<double, 2> intervals{ 0.0, 1.0 };
+std::array<float, 2> weights{ 1500 , 1500.0 };
 std::piecewise_linear_distribution<double>
 distributionlightcolor(intervals.begin(), intervals.end(), weights.begin());
 
@@ -232,7 +232,7 @@ void initializeRender()
 	localshader.shaders[VS].load("Shaders/DefferedShadingLocalLight.hlsl", "VSMain", VS);
 	localshader.shaders[PS].load("Shaders/DefferedShadingLocalLight.hlsl", "PSMain", PS);
 
-	localLightpPipeline.createGraphicsPipeline(render.mDevice, defferedrootsig, localshader, retformat, DepthStencilState::DepthStencilState(), BlendState::BlendState(true), RasterizerState::RasterizerState(D3D12_CULL_MODE_BACK));
+	localLightpPipeline.createGraphicsPipeline(render.mDevice, defferedrootsig, localshader, retformat, DepthStencilState::DepthStencilState(), BlendState::BlendState(true), RasterizerState::RasterizerState(D3D12_CULL_MODE_BACK, D3D12_FILL_MODE_SOLID));
 
 
 
@@ -387,7 +387,7 @@ void loadAsset()
 	{
 		light.setRadius(distributionradius(generator));
 		light.setColor(distributionlightcolor(generator), distributionlightcolor(generator), distributionlightcolor(generator));
-		light.setIntensity(20);
+		light.setIntensity(5000);
 
 	//	light.setColor(0, 0.0, 200.0);
 		light.setPosition(distributionXZ(generator), 3,distributionXZ(generator));

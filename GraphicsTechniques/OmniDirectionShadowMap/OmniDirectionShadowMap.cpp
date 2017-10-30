@@ -131,7 +131,7 @@ void initializeRender()
 	shadowViewport.setup(0.0f, 0.0f, (float)cubeWidth, (float)cubeHeight);
 	shadowScissor.setup(0.0f, (float)cubeWidth, 0.0f, (float)cubeHeight);
 
-	cubeShadowMap.createCubeRenderTargets(render.mDevice, cubeWidth, cubeHeight,1, CUBE_RENDERTAERGET_TYPE_DEPTH, dsvheap, srvheap);
+	cubeShadowMap.createCubeRenderTargets(render.mDevice, cubeWidth, cubeHeight,1,1, CUBE_RENDERTAERGET_TYPE_DEPTH, dsvheap, srvheap);
 
 
 	sampler.createSampler(samplerheap);
@@ -195,12 +195,13 @@ void initializeRender()
 	shadowRootsig.mParameters[2].mType = PARAMETERTYPE_ROOTCONSTANT;
 	shadowRootsig.mParameters[2].mResCounts = 1;
 	shadowRootsig.mParameters[2].mBindSlot = 1;
-	shadowRootsig.mParameters[2].mVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+	shadowRootsig.mParameters[2].mVisibility = D3D12_SHADER_VISIBILITY_ALL;
 	shadowRootsig.initialize(render.mDevice);
 
 
 	shadowshaderset.shaders[VS].load("Shaders/CubeShadowMap.hlsl", "VSMain", VS);
 	shadowshaderset.shaders[PS].load("Shaders/CubeShadowMap.hlsl", "PSMain", PS);
+	shadowshaderset.shaders[GS].load("Shaders/CubeShadowMap.hlsl", "GSMain", GS);
 	RenderTargetFormat shadowformat(0, nullptr, true);
 	shadowPipeline.createGraphicsPipeline(render.mDevice, shadowRootsig, shadowshaderset, shadowformat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(D3D12_CULL_MODE_FRONT), VERTEX_LAYOUT_TYPE_SPLIT_ALL);
 
@@ -479,15 +480,16 @@ void onrender()
 		cmdlist.bindGraphicsRootSigature(shadowRootsig, true);
 		cmdlist.setViewPort(shadowViewport);
 		cmdlist.setScissor(shadowScissor);
-	
+
+		cmdlist.bindCubeRenderTarget(cubeShadowMap, 0, 0);
+		cmdlist.clearcubeDepthStencil(cubeShadowMap, 0, 0);
 
 //		cmdlist.bindRenderTarget(shadowMap);
 //		cmdlist.clearDepthStencil(shadowMap);
 		for (int face = 0; face < 6; face++)
 		{
 
-			cmdlist.bindCubeRenderTarget(cubeShadowMap, face,0);
-			cmdlist.clearcubeDepthStencil(cubeShadowMap, face,0);
+
 			///cmdlist.clearcubeDepthStencil(cubeShadowMap, face, 1);
 			cmdlist.bindGraphicsConstant(2, &face);
 

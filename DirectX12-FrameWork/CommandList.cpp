@@ -116,14 +116,14 @@ void CommandList::bindCubeRenderTarget(CubeRenderTarget & crt, UINT face,UINT le
 {
 	if (crt.mType == (CUBE_RENDERTAERGET_TYPE_DEPTH| CUBE_RENDERTAERGET_TYPE_RENDERTARGET))
 	{
-		mDx12CommandList->OMSetRenderTargets(1, &(crt.mFaceRTV[face][level].Cpu), false, &crt.mFaceDSV[face][level].Cpu);
+		mDx12CommandList->OMSetRenderTargets(1, &(crt.mFaceRTV[level].Cpu), false, &crt.mFaceDSV[level].Cpu);
 	}
 	else if (crt.mType == (CUBE_RENDERTAERGET_TYPE_DEPTH))
 	{
-		mDx12CommandList->OMSetRenderTargets(0, nullptr, false, &crt.mFaceDSV[face][level].Cpu);
+		mDx12CommandList->OMSetRenderTargets(0, nullptr, false, &crt.mFaceDSV[level].Cpu);
 	}
 	else
-		mDx12CommandList->OMSetRenderTargets(1, &(crt.mFaceRTV[face][level].Cpu), false, nullptr);
+		mDx12CommandList->OMSetRenderTargets(1, &(crt.mFaceRTV[level].Cpu), false, nullptr);
 }
 
 void CommandList::clearRenderTarget(RenderTarget &rt, const float *color)
@@ -162,7 +162,7 @@ void CommandList::clearcubeRenderTarget(CubeRenderTarget &crt, UINT face, UINT l
 {
 	if (crt.mType & (CUBE_RENDERTAERGET_TYPE_RENDERTARGET))
 	{
-		mDx12CommandList->ClearRenderTargetView(crt.mFaceRTV[face][level].Cpu, crt.mRenderTargetClearValue.Color, 0, NULL);
+		mDx12CommandList->ClearRenderTargetView(crt.mFaceRTV[level].Cpu, crt.mRenderTargetClearValue.Color, 0, NULL);
 	}
 
 }
@@ -170,7 +170,7 @@ void CommandList::clearcubeDepthStencil(CubeRenderTarget &crt, UINT face, UINT l
 {
 	if (crt.mType & (CUBE_RENDERTAERGET_TYPE_DEPTH))
 	{
-		mDx12CommandList->ClearDepthStencilView(crt.mFaceDSV[face][level].Cpu, flag, depth, stencil, 0, nullptr);
+		mDx12CommandList->ClearDepthStencilView(crt.mFaceDSV[level].Cpu, flag, depth, stencil, 0, nullptr);
 	}
 }
 
@@ -289,8 +289,8 @@ bool CommandList::updateTextureCubeData(Texture& texture, void  const ** data)
 		h = texture.textureDesc.Height;
 		total = 0;
 		for (int j = 0; j < texture.textureDesc.MipLevels; j++)
-		{
-			Data[i*texture.textureDesc.MipLevels+j].pData = (const char *)data[i]+ total;
+		{ 
+			Data[i*texture.textureDesc.MipLevels+j].pData = (const char *)data[i]+ total; // mip level offset
 			Data[i*texture.textureDesc.MipLevels + j].RowPitch = w * texture.mByteSize;
 			Data[i*texture.textureDesc.MipLevels + j].SlicePitch = h*Data[i*texture.textureDesc.MipLevels + j].RowPitch;
 			total += (w*h*texture.mByteSize);
@@ -299,7 +299,7 @@ bool CommandList::updateTextureCubeData(Texture& texture, void  const ** data)
 		}
 	}
 	UpdateSubresources(mDx12CommandList, texture.mResource, texture.mUploadBuffer, 0, 0, 6 * texture.textureDesc.MipLevels, Data);
-//	int i = UpdateSubresources(mDx12CommandList, texture.mResource, texture.mUploadBuffer, 0, 0, 6, Data);
+
 //	++i;
 	delete[]Data;
 	return true;

@@ -18,12 +18,14 @@ cbuffer SceneConstantBuffer : register(b0)
 
 cbuffer SpotLightData : register(b1)
 {
-	float4x4 lightview;
-	float4x4 lightproj;
-	float4 lightpostion;
-	float4 lightcolor;
-	float4 lightattenuation;
-	float lightradius;
+    float4x4 lightview;
+    float4x4 lightproj;
+    float4 lightpostion;
+    float4 lightcolor;
+    float lightradius;
+    float lightintensity;
+    float lightconeangle;
+    float padding;
 };
 cbuffer HeightScale : register(b2)
 {
@@ -246,17 +248,19 @@ float4 PSMain(DSOutput input) : SV_TARGET
         float3 diff = Kd * albedo / PI;
 
         float dist = length(lightpostion.xyz - input.wposition);
-	//float att = 1.0f / (1 + lightattenuation.y*dist + dist*dist*lightattenuation.z);
+	    //float att = 1.0f / (1 + lightattenuation.y*dist + dist*dist*lightattenuation.z);
+        float3 plightspace = normalize(mul(lightview, float4(input.wposition.xyz, 1.0)));
+        float angle = dot(plightspace, float3(0, 0, -1));
+      //  return float4(angle, angle, angle, angle);
+    
 
+        float ta = saturate(angle - lightconeangle) / (1.0 - lightconeangle);
 
         float t = pow(dist / lightradius, 4);
-        float att = saturate(pow(1 - t, 2)) / (dist * dist + 1);
-
-        if (dist > lightradius)
-            att = 0;
+        float att = saturate(pow(1 - t, 2)) / (dist * dist + 1)*ta;
         float3 ambient = float3(0.0005f, 0.0005, 0.0005) * albedo * float3(ao, ao, ao);
 
-        float3 final = ambient + (diff + spec) * NL * lightcolor.xyz * att;
+        float3 final = ambient + (diff + spec) * NL * lightcolor.xyz * att * lightintensity;
         final = final / (1 + final); // tone mapping
         final = pow(final, 1.0f / 2.2f);
         return float4(final, 1.0f);

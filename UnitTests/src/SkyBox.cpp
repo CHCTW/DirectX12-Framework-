@@ -129,7 +129,7 @@ void loadAsset()
 	//img[5].load("Assets/Textures/front.jpg", 10);
 
 
-	skyBox.CreateTexture(render.mDevice, DXGI_FORMAT_R8G8B8A8_UNORM, width, height, 6, true);
+	skyBox.CreateTexture(render.mDevice, DXGI_FORMAT_R8G8B8A8_UNORM, width, height, 1, true);
 	skyBox.addSahderResorceView(srvheap);
 
 

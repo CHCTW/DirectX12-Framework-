@@ -16,8 +16,8 @@ class CubeRenderTarget
 
 public:
 
-	bool createCubeRenderTargets(ID3D12Device* device, UINT width, UINT height,UINT miplevel, CubeRenderTargetType type, DescriptorHeap& heap, DescriptorHeap& srvuavheap, D3D12_RESOURCE_FLAGS flag = D3D12_RESOURCE_FLAG_NONE, DXGI_FORMAT renderforamt = DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT depthforamt = DXGI_FORMAT_R32_TYPELESS);
-	bool createCubeRenderTargets(ID3D12Device* device, UINT width, UINT height, UINT miplevel, CubeRenderTargetType type, DescriptorHeap& rtvheap, DescriptorHeap& dsvheap, DescriptorHeap& srvuavheap, D3D12_RESOURCE_FLAGS renderflag = D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_FLAGS depthflag = D3D12_RESOURCE_FLAG_NONE, DXGI_FORMAT renderforamt = DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT depthforamt = DXGI_FORMAT_R32_TYPELESS);
+	bool createCubeRenderTargets(ID3D12Device* device, UINT width, UINT height,UINT arraysize,UINT miplevel, CubeRenderTargetType type, DescriptorHeap& heap, DescriptorHeap& srvuavheap, D3D12_RESOURCE_FLAGS flag = D3D12_RESOURCE_FLAG_NONE, DXGI_FORMAT renderforamt = DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT depthforamt = DXGI_FORMAT_R32_TYPELESS);
+	bool createCubeRenderTargets(ID3D12Device* device, UINT width, UINT height, UINT arraysize, UINT miplevel, CubeRenderTargetType type, DescriptorHeap& rtvheap, DescriptorHeap& dsvheap, DescriptorHeap& srvuavheap, D3D12_RESOURCE_FLAGS renderflag = D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_FLAGS depthflag = D3D12_RESOURCE_FLAG_NONE, DXGI_FORMAT renderforamt = DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT depthforamt = DXGI_FORMAT_R32_TYPELESS);
 	//	bool mDepth;
 //	bool createRenderTargets(ID3D12Device* device, UINT width, UINT height, RenderTargetFormat& format, DescriptorHeap& rtvheap, DescriptorHeap& dsvheap, DescriptorHeap& cbvsrvuavheap);
 //	bool createRenderTargets(ID3D12Device* device, UINT width, UINT height, RenderTargetFormat& format, DescriptorHeap& heap, DescriptorHeap& cbvsrvuavheap);
@@ -26,14 +26,17 @@ public:
 	CubeRenderTargetType mType;
 	UINT mWidth;
 	UINT mHeight;
+	UINT mArraySize;
 	DXGI_FORMAT mRenderTargetFormat;
 	vector<Texture> mRenderBuffer;
 	
-	vector<Handles> mFaceRTV[6];
+	//Handles RTV;
+	//Handles DSV;
+	vector<Handles> mFaceRTV;
 	ClearValue mRenderTargetClearValue;
 	vector<Texture> mDepthBuffer;
 	DXGI_FORMAT mDepthFormat;
-	vector<Handles> mFaceDSV[6];
+	vector<Handles> mFaceDSV;
 	ClearValue mDepthStencilClearValue;
 	void release();
 
