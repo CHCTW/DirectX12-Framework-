@@ -207,7 +207,7 @@ void loadAsset()
 
 
 	cmdlist.bindComputeResource(2, particleBuffers[0]);
-	cmdlist.dispatch((particleNum / 128) + 1, 1, 1);
+	cmdlist.dispatch((particleNum / 512) + 1, 1, 1);
 //	cmdlist.resourceBarrier(particleBuffers[0], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
 
 	cmdlist.resourceBarrier(particleBuffers[1], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);

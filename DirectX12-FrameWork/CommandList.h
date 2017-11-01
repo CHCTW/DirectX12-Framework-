@@ -11,7 +11,7 @@ class Scissor;
 class DescriptorHeap;
 class Resource;
 class CubeRenderTarget;
-
+class CommandSignature;
 
 
 
@@ -50,6 +50,9 @@ public:
 	void drawInstance(UINT vertexcount, UINT instancecount, UINT vertexstart, UINT instancestart);
 	void drawIndexedInstanced(UINT indexcount, UINT instancecount, UINT indexstart, UINT instancestart, UINT vertexstart = 0);
 	void dispatch(UINT groupCountX, UINT groupCountY, UINT groupCountZ);
+	void executeIndirect(CommandSignature &commandsig, UINT commandcount, Buffer &commandbuffer, unsigned long long offset);
+	void executeIndirect(CommandSignature &commandsig, UINT commandcount, Buffer &commandbuffer, unsigned long long offset, Buffer &countbuffer, unsigned long long countoffset);
+
 	void clearRenderTarget(RenderTarget &rt, const float *color);
 	void clearRenderTarget(RenderTarget &rt);
 	void clearDepthStencil(RenderTarget &rt, D3D12_CLEAR_FLAGS flag = D3D12_CLEAR_FLAG_DEPTH, float depth = 1.0f, UINT stencil = 1);

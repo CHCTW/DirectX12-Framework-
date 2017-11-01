@@ -144,6 +144,7 @@
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="CommandAllocator.h" />
     <ClInclude Include="CommandList.h" />
+    <ClInclude Include="CommandSignature.h" />
     <ClInclude Include="CubeRenderTarget.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="DepthStencilState.h" />
@@ -171,6 +172,7 @@
     <ClCompile Include="Buffer.cpp" />
     <ClCompile Include="CommandAllocator.cpp" />
     <ClCompile Include="CommandList.cpp" />
+    <ClCompile Include="CommandSignature.cpp" />
     <ClCompile Include="CubeRenderTarget.cpp" />
     <ClCompile Include="DepthStencilState.cpp" />
     <ClCompile Include="DescriptorHeap.cpp" />

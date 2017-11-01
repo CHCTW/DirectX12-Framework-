@@ -26,7 +26,7 @@ private:
 	bool generateMipmaps(unsigned int miplevel);
 	template
 	<typename T>
-	void downSample(T* originaldata,T* downsampledata,unsigned int width,unsigned height)
+	void downSample(T* originaldata,T* downsampledata,unsigned int width,unsigned int height)
 	{
 		unsigned int xoffset = mChannel;
 		if (width == 1)

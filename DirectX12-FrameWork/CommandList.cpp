@@ -574,3 +574,12 @@ void CommandList::dispatch(UINT groupCountX, UINT groupCountY, UINT groupCountZ)
 {
 	mDx12CommandList->Dispatch(groupCountX, groupCountY, groupCountZ);
 }
+
+void CommandList::executeIndirect(CommandSignature &commandsig, UINT commandcount, Buffer &commandbuffer, unsigned long long offset)
+{
+	mDx12CommandList->ExecuteIndirect(commandsig.mCommandSignature, commandcount, commandbuffer.mResource, offset, nullptr, 0);
+}
+void CommandList::executeIndirect(CommandSignature &commandsig, UINT commandcount, Buffer &commandbuffer, unsigned long long offset, Buffer &countbuffer, unsigned long long countoffset)
+{
+	mDx12CommandList->ExecuteIndirect(commandsig.mCommandSignature, commandcount, commandbuffer.mResource, offset, countbuffer.mResource, countoffset);
+}

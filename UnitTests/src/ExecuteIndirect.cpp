@@ -10,6 +10,7 @@
 #include "Render.h"
 #include "StructureHeaders.h"
 #include "SpecCamera.h"
+#include "Transform.h"
 using namespace std;
 Render render;
 CommandAllocator cmdalloc;
@@ -38,13 +39,54 @@ float curypos;
 float curxoffet;
 float curyoffet;
 bool press = false;
+struct IndirectCommand {
+	GpuAddress  cbvaddress;
+	DrawIndexedArgument draw;
+};
+struct teststruct {
+	DrawIndexedArgument draw2;
+	DrawIndexedArgument draw3;
+	DrawIndexedArgument draw4;
+	GpuAddress  cbvaddress;
+	int test;
+	DrawIndexedArgument draw5;
+};
+struct InstanceData  // for jump GPU address for const buffer, need to alighment with 256byte
+{
+	Matrices transform; // 128 byte
+	float minx;
+	float miny;
+	float minz; //12 byte
+	float maxx;
+	float maxy;
+	float maxz; //12 byte
+	float r;
+	float g;
+	float b;  // 12 byte
+	float padding[23];//92 byte
+
+};
+
+unsigned int xnum = 20;
+unsigned int ynum = 20;
+unsigned int znum = 20;
+float edgeleng = 100;
+unsigned int objnum ;
+Buffer indstanceConstBuffer;
+Buffer indirectBuffer;
+std::vector<InstanceData> instanceInf;
+std::vector<IndirectCommand> commandInf;
+CommandSignature cmdSig;
 void initializeRender()
 {
 
 
 	//Camera cam;
 
-
+	//cout << sizeof(teststruct) << endl;
+	//cout << sizeof(DrawIndexedArgument) << endl;
+	//cout << sizeof(IndirectCommand) << endl;
+	//system("pause");
 
 	render.initialize();
 	RenderTargetFormat retformat(true);
@@ -57,18 +99,28 @@ void initializeRender()
 	fenceEvet = CreateEvent(NULL, FALSE, FALSE, NULL);
 
 	srvheap.ininitialize(render.mDevice, 1);
-	rootsig.mParameters.resize(1);
+	rootsig.mParameters.resize(2);
 	rootsig.mParameters[0].mType = PARAMETERTYPE_CBV;
 	rootsig.mParameters[0].mResCounts = 1;
 	rootsig.mParameters[0].mBindSlot = 0;
 	rootsig.mParameters[0].mResource = &cameraBuffer;
-
-
-
+	rootsig.mParameters[1].mType = PARAMETERTYPE_CBV;
+	rootsig.mParameters[1].mTable = false;
+	rootsig.mParameters[1].mResCounts = 1;
+	rootsig.mParameters[1].mBindSlot = 1;
+	rootsig.mParameters[1].mResource = &indstanceConstBuffer;
 	rootsig.initialize(render.mDevice);
 
-	shaderset.shaders[VS].load("Shaders/ModelLoading.hlsl", "VSMain", VS);
-	shaderset.shaders[PS].load("Shaders/ModelLoading.hlsl", "PSMain", PS);
+
+	cmdSig.mParameters.resize(2);
+	cmdSig.mParameters[0].ConstantBufferView.RootParameterIndex = 1;
+	cmdSig.mParameters[1].Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED;
+	cmdSig.mParameters[0].Type = D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT_BUFFER_VIEW;
+	cmdSig.initialize(render.mDevice, rootsig);
+
+
+	shaderset.shaders[VS].load("Shaders/ExecuteIndirect.hlsl", "VSMain", VS);
+	shaderset.shaders[PS].load("Shaders/ExecuteIndirect.hlsl", "PSMain", PS);
 
 
 	pipeline.createGraphicsPipeline(render.mDevice, rootsig, shaderset, retformat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(), VERTEX_LAYOUT_TYPE_SPLIT_ALL);
@@ -94,7 +146,7 @@ void loadAsset()
 
 
 
-	import.ReadFile("Assets/sphere.obj", aiProcessPreset_TargetRealtime_Quality);
+	import.ReadFile("Assets/teapot.obj", aiProcessPreset_TargetRealtime_Quality);
 	scene = import.GetScene();
 	mesh = scene->mMeshes[0];
 	mesh->HasPositions();
@@ -121,14 +173,80 @@ void loadAsset()
 	if (mesh->HasTangentsAndBitangents())
 		cout << "Has tangent" << endl;
 
+
+	objnum = xnum*ynum*znum;
+
+
+	indstanceConstBuffer.createConstantBuffer(render.mDevice, sizeof(InstanceData)*objnum);
+	indirectBuffer.createStructeredBuffer(render.mDevice, srvheap, sizeof(IndirectCommand), objnum, STRUCTERED_BUFFER_TYPE_READ);
+
+	instanceInf.resize(objnum);
+	float xoffset = edgeleng / (float)(xnum + 1);
+	float yoffset = edgeleng / (float)(ynum + 1);
+	float zoffset = edgeleng / (float)(znum + 1);
+	float x = -edgeleng / 2 + xoffset;
+	float y = -edgeleng / 2 + yoffset;
+	float z = -edgeleng / 2 + zoffset;
+	for (int i = 0; i < xnum; ++i)
+	{
+		y = -edgeleng / 2 + yoffset;
+		for (int j = 0; j < ynum; ++j)
+		{
+			z = -edgeleng / 2 + zoffset;
+			for (int k = 0; k < znum; ++k)
+			{
+				Transform t;
+				t.setPosition(x, y, z);
+				t.CacNewTransform();
+				instanceInf[i*ynum*znum + j*znum + k].transform = t.getMatrices();
+				z += zoffset;
+			}
+			y += yoffset;
+		}
+		x += xoffset;
+		//instanceInf[i].transform
+	}
+	indstanceConstBuffer.maptoCpu();
+	indstanceConstBuffer.updateBufferfromCpu(instanceInf.data(), objnum * sizeof(InstanceData));
+
+	GpuAddress cbvaddress = indstanceConstBuffer.GpuAddress;
+	IndirectCommand command;
+	command.draw.InstanceCount = 1;
+	command.draw.StartInstanceLocation = 0;
+	command.draw.IndexCountPerInstance = mesh->mNumFaces * 3;
+	command.draw.StartIndexLocation = 0;
+	command.draw.BaseVertexLocation = 0;
+
+	for (int i = 0; i < objnum; ++i)  // fill the indirect buffer
+	{
+	
+		command.cbvaddress = cbvaddress;
+		command.draw.StartInstanceLocation = 0;
+		command.draw.InstanceCount = 1;
+		command.draw.IndexCountPerInstance = mesh->mNumFaces * 3;
+		command.draw.StartIndexLocation = 0;
+		command.draw.BaseVertexLocation = 0;
+		commandInf.push_back(command);
+		cbvaddress += sizeof(InstanceData);
+		
+	}
+	//cout << commandInf.size() << endl;
+
 	cmdalloc.reset();
 	cmdlist.reset(Pipeline());
 	cmdlist.resourceBarrier(vertexBuffer.mResource, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
 	cmdlist.resourceBarrier(normalBuffer.mResource, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
 	cmdlist.resourceBarrier(indexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
+
+	cmdlist.resourceBarrier(indirectBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
+
 	cmdlist.updateBufferData(vertexBuffer, mesh->mVertices, mesh->mNumVertices * 3 * sizeof(float));
 	cmdlist.updateBufferData(indexBuffer, indexdata.data(), mesh->mNumFaces * 3 * sizeof(unsigned int));
 	cmdlist.updateBufferData(normalBuffer, mesh->mNormals, mesh->mNumVertices * 3 * sizeof(float));
+	cmdlist.updateBufferData(indirectBuffer, commandInf.data(), sizeof(IndirectCommand)*commandInf.size());
+
+	cmdlist.resourceBarrier(indirectBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
+
 	cmdlist.resourceBarrier(vertexBuffer.mResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 	cmdlist.resourceBarrier(normalBuffer.mResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 	cmdlist.resourceBarrier(indexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
@@ -148,6 +266,9 @@ void loadAsset()
 
 void releaseRender()
 {
+	cmdSig.release();
+	indirectBuffer.release();
+	indstanceConstBuffer.release();
 	import.FreeScene();
 	cameraBuffer.release();
 	indexBuffer.release();
@@ -183,7 +304,10 @@ void update()
 	cmdlist.setTopolgy(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	cmdlist.bindIndexBuffer(indexBuffer);
 	cmdlist.bindVertexBuffers(vertexBuffer, normalBuffer);
-	cmdlist.drawIndexedInstanced(mesh->mNumFaces * 3, 1, 0, 0);
+	//cmdlist.drawIndexedInstanced(mesh->mNumFaces * 3, 1, 0, 0);
+	cmdlist.executeIndirect(cmdSig, objnum, indirectBuffer, 0);
+//	cmdlist.executeIndirect(cmdSig, 1, indirectBuffer, sizeof(IndirectCommand));
+
 	cmdlist.renderTargetBarrier(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
@@ -232,7 +356,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 int main()
 {
 	int testnumber = 3;
-	windows.initialize(1600, 900, "ModelLoading");
+	windows.initialize(1600, 900, "ExecuteIndirect");
 	windows.openWindow();
 	glfwSetCursorPosCallback(windows.mWindow, cursor_pos_callback);
 	glfwSetMouseButtonCallback(windows.mWindow, mouse_button_callback);

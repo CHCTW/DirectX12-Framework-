@@ -86,6 +86,13 @@ enum VertexInputLayOutType
 	VERTEX_LAYOUT_TYPE_SPLIT_ALL
 
 };
+typedef D3D12_INDIRECT_ARGUMENT_DESC CommandParameter;
+typedef D3D12_DRAW_ARGUMENTS DrawArgument;
+typedef D3D12_DRAW_INDEXED_ARGUMENTS DrawIndexedArgument;
+typedef D3D12_DISPATCH_ARGUMENTS DispathArgument;
+typedef D3D12_VERTEX_BUFFER_VIEW VertexBufferView;
+typedef D3D12_INDEX_BUFFER_VIEW IndexBufferView;
+typedef D3D12_GPU_VIRTUAL_ADDRESS GpuAddress;
 struct ClearValue
 {
 	union

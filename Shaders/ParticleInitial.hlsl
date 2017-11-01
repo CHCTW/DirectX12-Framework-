@@ -31,7 +31,7 @@ float2 Hammersley(uint i, uint N)
 
 
 RWStructuredBuffer<Particle> ParticleBuffer : register(u0);
-[numthreads(128, 1, 1)]
+[numthreads(512, 1, 1)]
 
 void CSMain(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID)
 {

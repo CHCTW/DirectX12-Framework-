@@ -108,6 +108,9 @@
     <ClInclude Include="Image.h">
       <Filter>Render\Structers\Resource</Filter>
     </ClInclude>
+    <ClInclude Include="CommandSignature.h">
+      <Filter>Render\Structers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -175,6 +178,9 @@
     </ClCompile>
     <ClCompile Include="Image.cpp">
       <Filter>Render\Structers\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="CommandSignature.cpp">
+      <Filter>Render\Structers</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
