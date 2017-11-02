@@ -5,7 +5,16 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/matrix.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
+enum FrustumPlane
+{
+	FRUSTUM_PLANE_LEFT,
+	FRUSTUM_PLANE_RIGHT,
+	FRUSTUM_PLANE_TOP,
+	FRUSTUM_PLANE_BOTTOM,
+	FRUSTUM_PLANE_FAR,
+	FRUSTUM_PLANE_NEAR,
+	FRUSTUM_PLANE_COUNT
+};
 struct ViewProjection
 {
 	glm::mat4x4 mView;
@@ -14,6 +23,7 @@ struct ViewProjection
 	float padding;
 	glm::mat4x4 mViewInverse;
 	glm::mat4x4 mProjInverse;
+	glm::vec4 mFrustumPlane[FRUSTUM_PLANE_COUNT];
 };
 class Camera
 {
@@ -24,6 +34,7 @@ public:
 		mViewProjection.mProjection = glm::perspective(mFOV*(3.14159f) / 180.0f, mRatio, mFront, mBack);
 		mViewProjection.mProjInverse = glm::inverse(mViewProjection.mProjection);
 		mViewProjection.mViewInverse = glm::inverse(mViewProjection.mView);
+		frustumPlaneCal();
 	//	glm::mat4x4 test = mViewProjection.mProjection*mViewProjection.mProjInverse;
 	}
 	void setRatio(float ratio);
@@ -39,6 +50,7 @@ public:
 	void setTarget(float, float, float);
 	void setUp(float, float, float);
 	void setFOV(float);
+	void frustumPlaneCal();
 	ViewProjection const * getMatrix();
 	ViewProjection mViewProjection;
 };

@@ -11,6 +11,7 @@
 #include "StructureHeaders.h"
 #include "SpecCamera.h"
 #include "Transform.h"
+#include <limits>
 using namespace std;
 Render render;
 CommandAllocator cmdalloc;
@@ -39,7 +40,7 @@ float curypos;
 float curxoffet;
 float curyoffet;
 bool press = false;
-struct IndirectCommand {
+struct IndirectCommand {  // a 4 byte padding will automaticly hide in the end , due to 8 byte alignment
 	GpuAddress  cbvaddress;
 	DrawIndexedArgument draw;
 };
@@ -51,19 +52,22 @@ struct teststruct {
 	int test;
 	DrawIndexedArgument draw5;
 };
+struct float3 {
+	float x;
+	float y;
+	float z;
+};
 struct InstanceData  // for jump GPU address for const buffer, need to alighment with 256byte
 {
 	Matrices transform; // 128 byte
-	float minx;
-	float miny;
-	float minz; //12 byte
-	float maxx;
-	float maxy;
-	float maxz; //12 byte
+	float3 min;
+	float padding;
+	float3 max;
+	float padding2;
 	float r;
 	float g;
 	float b;  // 12 byte
-	float padding[23];//92 byte
+	float paddingend[21];//92 byte
 
 };
 
@@ -73,10 +77,17 @@ unsigned int znum = 20;
 float edgeleng = 100;
 unsigned int objnum ;
 Buffer indstanceConstBuffer;
+Buffer instanceStructBuffer; // use for frustum culliing
 Buffer indirectBuffer;
+Buffer cullIndirectBuffer[3]; // use for culled execute indirect
 std::vector<InstanceData> instanceInf;
 std::vector<IndirectCommand> commandInf;
 CommandSignature cmdSig;
+RootSignature cullrootsig;
+Pipeline cullPipeline;
+SpecCamera camera2;
+Buffer cameraBuffer2;
+bool maincamer = true;
 void initializeRender()
 {
 
@@ -125,11 +136,40 @@ void initializeRender()
 
 	pipeline.createGraphicsPipeline(render.mDevice, rootsig, shaderset, retformat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(), VERTEX_LAYOUT_TYPE_SPLIT_ALL);
 
+
+
+	cullrootsig.mParameters.resize(4);
+	cullrootsig.mParameters[0].mType = PARAMETERTYPE_UAV;
+	cullrootsig.mParameters[0].mResCounts = 1;
+	cullrootsig.mParameters[0].mBindSlot = 0;
+	cullrootsig.mParameters[1].mType = PARAMETERTYPE_CBV;
+	cullrootsig.mParameters[1].mResCounts = 1;
+	cullrootsig.mParameters[1].mBindSlot = 0;
+	cullrootsig.mParameters[1].mResource = &cameraBuffer;
+	cullrootsig.mParameters[2].mType = PARAMETERTYPE_SRV; // all indirect command buffer
+	cullrootsig.mParameters[2].mResCounts = 1;
+	cullrootsig.mParameters[2].mBindSlot = 0;
+	cullrootsig.mParameters[2].mResource = &indirectBuffer;
+	cullrootsig.mParameters[3].mType = PARAMETERTYPE_SRV; // instaned data
+	cullrootsig.mParameters[3].mResCounts = 1;
+	cullrootsig.mParameters[3].mBindSlot = 1;
+	cullrootsig.mParameters[3].mResource = &instanceStructBuffer;
+	cullrootsig.initialize(render.mDevice);
+
+	ShaderSet cullshader;
+	cullshader.shaders[CS].load("Shaders/FrsutumCulling.hlsl", "CSMain", CS);
+	cullPipeline.createComputePipeline(render.mDevice, cullrootsig, cullshader);
+
 	viewport.setup(0.0f, 0.0f, (float)windows.mWidth, (float)windows.mHeight);
 	scissor.setup(0, windows.mWidth, 0, windows.mHeight);
 
 	camera.setRatio((float)windows.mWidth / (float)windows.mHeight);
 	camera.updateViewProj();
+
+
+	camera2.setRatio((float)windows.mWidth / (float)windows.mHeight);
+	camera2.updateViewProj();
+
 }
 
 void loadAsset()
@@ -140,13 +180,14 @@ void loadAsset()
 	cameraBuffer.createConstantBuffer(render.mDevice, srvheap, sizeof(ViewProjection));
 	cameraBuffer.maptoCpu();
 
+	cameraBuffer2.createConstantBuffer(render.mDevice, srvheap, sizeof(ViewProjection));
+	cameraBuffer2.maptoCpu();
 
 
 
 
 
-
-	import.ReadFile("Assets/teapot.obj", aiProcessPreset_TargetRealtime_Quality);
+	import.ReadFile("Assets/sphere.obj", aiProcessPreset_TargetRealtime_Quality);
 	scene = import.GetScene();
 	mesh = scene->mMeshes[0];
 	mesh->HasPositions();
@@ -158,6 +199,28 @@ void loadAsset()
 	}
 	normalBuffer.createVertexBuffer(render.mDevice, mesh->mNumVertices * 3 * sizeof(float), 3 * sizeof(float));
 
+	// genrate min,max for AABB box
+
+	float3 max, min;
+	max.x = std::numeric_limits<float>::min();
+	max.y = std::numeric_limits<float>::min();
+	max.z = std::numeric_limits<float>::min();
+	min.x = std::numeric_limits<float>::max();
+	min.y = std::numeric_limits<float>::max();
+	min.z = std::numeric_limits<float>::max();
+	for (int i = 0; i < mesh->mNumVertices ; i++) // find min, max
+	{
+		max.x = std::max(mesh->mVertices[i].x, max.x);
+		max.y = std::max(mesh->mVertices[i].y, max.y);
+		max.z = std::max(mesh->mVertices[i].z, max.z);
+
+		min.x = std::min(mesh->mVertices[i].x, min.x);
+		min.y = std::min(mesh->mVertices[i].y, min.y);
+		min.z = std::min(mesh->mVertices[i].z, min.z);
+	}
+
+	cout << max.x << "   " << max.y << "   " << max.z << endl;
+	cout << min.x << "   " << min.y << "   " << min.z << endl;
 
 	indexBuffer.createIndexBuffer(render.mDevice, sizeof(unsigned int) * 3 * mesh->mNumFaces);
 
@@ -177,8 +240,13 @@ void loadAsset()
 	objnum = xnum*ynum*znum;
 
 
-	indstanceConstBuffer.createConstantBuffer(render.mDevice, sizeof(InstanceData)*objnum);
+	indstanceConstBuffer.createConstantBuffer(render.mDevice, sizeof(InstanceData)*objnum); // not register in desricptor heap, so can have larget size const buffer
+	instanceStructBuffer.createStructeredBuffer(render.mDevice, srvheap, sizeof(InstanceData), objnum, STRUCTERED_BUFFER_TYPE_READ); // use for culling, start to thinking that with dynamic indexing. do we really need to use const buffer for instant data?
+
 	indirectBuffer.createStructeredBuffer(render.mDevice, srvheap, sizeof(IndirectCommand), objnum, STRUCTERED_BUFFER_TYPE_READ);
+	cullIndirectBuffer[0].createStructeredBuffer(render.mDevice, srvheap, sizeof(IndirectCommand), objnum, STRUCTERED_BUFFER_TYPE_READ_WRITE,true);
+	cullIndirectBuffer[1].createStructeredBuffer(render.mDevice, srvheap, sizeof(IndirectCommand), objnum, STRUCTERED_BUFFER_TYPE_READ_WRITE, true);
+	cullIndirectBuffer[2].createStructeredBuffer(render.mDevice, srvheap, sizeof(IndirectCommand), objnum, STRUCTERED_BUFFER_TYPE_READ_WRITE, true);
 
 	instanceInf.resize(objnum);
 	float xoffset = edgeleng / (float)(xnum + 1);
@@ -199,6 +267,8 @@ void loadAsset()
 				t.setPosition(x, y, z);
 				t.CacNewTransform();
 				instanceInf[i*ynum*znum + j*znum + k].transform = t.getMatrices();
+				instanceInf[i*ynum*znum + j*znum + k].max = max;
+				instanceInf[i*ynum*znum + j*znum + k].min = min;
 				z += zoffset;
 			}
 			y += yoffset;
@@ -239,17 +309,27 @@ void loadAsset()
 	cmdlist.resourceBarrier(indexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
 
 	cmdlist.resourceBarrier(indirectBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceBarrier(instanceStructBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
+
 
 	cmdlist.updateBufferData(vertexBuffer, mesh->mVertices, mesh->mNumVertices * 3 * sizeof(float));
 	cmdlist.updateBufferData(indexBuffer, indexdata.data(), mesh->mNumFaces * 3 * sizeof(unsigned int));
 	cmdlist.updateBufferData(normalBuffer, mesh->mNormals, mesh->mNumVertices * 3 * sizeof(float));
 	cmdlist.updateBufferData(indirectBuffer, commandInf.data(), sizeof(IndirectCommand)*commandInf.size());
 
+	cmdlist.updateBufferData(instanceStructBuffer, instanceInf.data(), objnum * sizeof(InstanceData));
+
+
+	cmdlist.resourceBarrier(instanceStructBuffer, D3D12_RESOURCE_STATE_COPY_DEST,D3D12_RESOURCE_STATE_GENERIC_READ);
 	cmdlist.resourceBarrier(indirectBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
 
 	cmdlist.resourceBarrier(vertexBuffer.mResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 	cmdlist.resourceBarrier(normalBuffer.mResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 	cmdlist.resourceBarrier(indexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+
+	cmdlist.resourceBarrier(cullIndirectBuffer[0], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+	cmdlist.resourceBarrier(cullIndirectBuffer[1], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+	cmdlist.resourceBarrier(cullIndirectBuffer[2], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
 	const UINT64 fenval = fence.fenceValue;
@@ -266,10 +346,17 @@ void loadAsset()
 
 void releaseRender()
 {
+	cullPipeline.release();
+	cullrootsig.realease();
+	cullIndirectBuffer[2].release();
+	cullIndirectBuffer[1].release();
+	cullIndirectBuffer[0].release();
+	instanceStructBuffer.release();
 	cmdSig.release();
 	indirectBuffer.release();
 	indstanceConstBuffer.release();
 	import.FreeScene();
+	cameraBuffer2.release();
 	cameraBuffer.release();
 	indexBuffer.release();
 	normalBuffer.release();
@@ -288,14 +375,31 @@ void releaseRender()
 void update()
 {
 	camera.updateViewProj();
+	camera2.updateViewProj();
 	cameraBuffer.updateBufferfromCpu(camera.getMatrix(), sizeof(ViewProjection));
+	cameraBuffer2.updateBufferfromCpu(camera2.getMatrix(), sizeof(ViewProjection));
 	frameIndex = render.getCurrentSwapChainIndex();
 	cmdalloc.reset();
-	cmdlist.reset(pipeline);
+	cmdlist.reset(cullPipeline);
 	cmdlist.bindDescriptorHeaps(&srvheap);
+	// reset the command number and start culling
+	cmdlist.resourceBarrier(cullIndirectBuffer[frameIndex], D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT, D3D12_RESOURCE_STATE_COPY_DEST); //reset count
+	cmdlist.setCounterforStructeredBuffer(cullIndirectBuffer[frameIndex], 0);
+	cmdlist.resourceBarrier(cullIndirectBuffer[frameIndex], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	cmdlist.bindComputeRootSigature(cullrootsig);
+	cmdlist.bindComputeResource(0, cullIndirectBuffer[frameIndex]);
+	cmdlist.dispatch((objnum + 1023) / 1024, 1, 1);
+	cmdlist.resourceBarrier(cullIndirectBuffer[frameIndex], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+
+
+	cmdlist.bindPipeline(pipeline);
 	cmdlist.bindGraphicsRootSigature(rootsig);
 	cmdlist.setViewPort(viewport);
 	cmdlist.setScissor(scissor);
+	if (maincamer)
+		cmdlist.bindGraphicsResource(0, cameraBuffer);
+	else
+		cmdlist.bindGraphicsResource(0, cameraBuffer2);
 	cmdlist.renderTargetBarrier(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	cmdlist.bindRenderTarget(render.mSwapChainRenderTarget[frameIndex]);
 	const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
@@ -303,10 +407,12 @@ void update()
 	cmdlist.clearDepthStencil(render.mSwapChainRenderTarget[frameIndex]);
 	cmdlist.setTopolgy(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	cmdlist.bindIndexBuffer(indexBuffer);
-	cmdlist.bindVertexBuffers(vertexBuffer, normalBuffer);
-	//cmdlist.drawIndexedInstanced(mesh->mNumFaces * 3, 1, 0, 0);
-	cmdlist.executeIndirect(cmdSig, objnum, indirectBuffer, 0);
-//	cmdlist.executeIndirect(cmdSig, 1, indirectBuffer, sizeof(IndirectCommand));
+	cmdlist.bindVertexBuffers(vertexBuffer, normalBuffer);	
+//	cmdlist.executeIndirect(cmdSig, objnum, indirectBuffer, 0);
+
+
+
+	cmdlist.executeIndirect(cmdSig, objnum, cullIndirectBuffer[frameIndex], 0, cullIndirectBuffer[frameIndex], cullIndirectBuffer[frameIndex].mBufferSize - sizeof(UINT));
 
 	cmdlist.renderTargetBarrier(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 	cmdlist.close();
@@ -335,7 +441,12 @@ void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
 	curypos = ypos;
 
 	if (press)
-		camera.addAngle(curxoffet / 5.0, curyoffet / 5.0);
+	{
+		if(maincamer)
+			camera.addAngle(curxoffet / 5.0, curyoffet / 5.0);
+		else
+			camera2.addAngle(curxoffet / 5.0, curyoffet / 5.0);
+	}
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
@@ -348,11 +459,29 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
 	if (yoffset == 1)
-		camera.addZoom(1);
+	{
+		if (maincamer)
+			camera.addZoom(1);
+		else
+			camera2.addZoom(1);
+	}
 	if (yoffset == -1)
-		camera.addZoom(-1);
+	{
+		if (maincamer)
+			camera.addZoom(-1);
+		else
+			camera2.addZoom(-1);
+	}
 }
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
 
+
+	if (key == GLFW_KEY_1)
+		maincamer = true;
+	if (key == GLFW_KEY_2)
+		maincamer = false;
+}
 int main()
 {
 	int testnumber = 3;
@@ -361,7 +490,7 @@ int main()
 	glfwSetCursorPosCallback(windows.mWindow, cursor_pos_callback);
 	glfwSetMouseButtonCallback(windows.mWindow, mouse_button_callback);
 	glfwSetScrollCallback(windows.mWindow, scroll_callback);
-
+	glfwSetKeyCallback(windows.mWindow, key_callback);
 
 	int limit = 10000;
 	int count = 0;

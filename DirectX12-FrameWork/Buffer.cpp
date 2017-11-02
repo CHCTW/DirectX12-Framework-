@@ -218,7 +218,8 @@ bool Buffer::createStructeredBuffer(ID3D12Device* device, DescriptorHeap &heap, 
 			cout << "Counter Buffer needs to be read write buffer" << endl;
 			return false;
 		}
-		buffersize = (buffersize + D3D12_UAV_COUNTER_PLACEMENT_ALIGNMENT-1) & ~(D3D12_UAV_COUNTER_PLACEMENT_ALIGNMENT-1); // alignment the whole buffer to 256 bytes
+		UINT ali = D3D12_UAV_COUNTER_PLACEMENT_ALIGNMENT;
+		buffersize = (buffersize + ali-1) & ~(ali-1); // alignment the whole buffer to 256 bytes
 		buffersize += sizeof(UINT);// add counter at the end of buffer
 	}
 	if (mResource)

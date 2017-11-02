@@ -26,5 +26,8 @@
     <FxCompile Include="..\..\Shaders\ExecuteIndirect.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
+    <FxCompile Include="..\..\Shaders\FrsutumCulling.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

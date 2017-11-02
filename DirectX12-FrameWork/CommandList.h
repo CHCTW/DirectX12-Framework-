@@ -51,7 +51,7 @@ public:
 	void drawIndexedInstanced(UINT indexcount, UINT instancecount, UINT indexstart, UINT instancestart, UINT vertexstart = 0);
 	void dispatch(UINT groupCountX, UINT groupCountY, UINT groupCountZ);
 	void executeIndirect(CommandSignature &commandsig, UINT commandcount, Buffer &commandbuffer, unsigned long long offset);
-	void executeIndirect(CommandSignature &commandsig, UINT commandcount, Buffer &commandbuffer, unsigned long long offset, Buffer &countbuffer, unsigned long long countoffset);
+	void executeIndirect(CommandSignature &commandsig, UINT commandcount, Buffer &commandbuffer, UINT offset, Buffer &countbuffer, UINT countoffset);
 
 	void clearRenderTarget(RenderTarget &rt, const float *color);
 	void clearRenderTarget(RenderTarget &rt);

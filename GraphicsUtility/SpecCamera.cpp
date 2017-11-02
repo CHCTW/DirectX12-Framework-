@@ -20,6 +20,8 @@ SpecCamera::SpecCamera() : Camera(), mAngle(0.0f,90.f), mOffset(0.0, 0.0), mZoom
 	mPosition[1] = temp[0][1];
 	mPosition[2] = temp[0][2];
 	mViewProjection.mPosition = mPosition;
+	frustumPlaneCal();
+
 }
 
 void SpecCamera::addAngle(float spint, float tilt)
@@ -50,4 +52,5 @@ void SpecCamera::updateViewProj()
 	mPosition[2] = temp[0][2];
 
 	mViewProjection.mPosition = mPosition;
+	frustumPlaneCal();
 }

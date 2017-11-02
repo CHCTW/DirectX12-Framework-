@@ -579,7 +579,7 @@ void CommandList::executeIndirect(CommandSignature &commandsig, UINT commandcoun
 {
 	mDx12CommandList->ExecuteIndirect(commandsig.mCommandSignature, commandcount, commandbuffer.mResource, offset, nullptr, 0);
 }
-void CommandList::executeIndirect(CommandSignature &commandsig, UINT commandcount, Buffer &commandbuffer, unsigned long long offset, Buffer &countbuffer, unsigned long long countoffset)
+void CommandList::executeIndirect(CommandSignature &commandsig, UINT commandcount, Buffer &commandbuffer, UINT offset, Buffer &countbuffer, UINT countoffset)
 {
 	mDx12CommandList->ExecuteIndirect(commandsig.mCommandSignature, commandcount, commandbuffer.mResource, offset, countbuffer.mResource, countoffset);
 }
