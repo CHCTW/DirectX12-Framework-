@@ -219,13 +219,14 @@ void loadAsset()
 		min.z = std::min(mesh->mVertices[i].z, min.z);
 	}
 
-	cout << max.x << "   " << max.y << "   " << max.z << endl;
-	cout << min.x << "   " << min.y << "   " << min.z << endl;
+	//cout << max.x << "   " << max.y << "   " << max.z << endl;
+	//cout << min.x << "   " << min.y << "   " << min.z << endl;
 
 	indexBuffer.createIndexBuffer(render.mDevice, sizeof(unsigned int) * 3 * mesh->mNumFaces);
 
 	std::vector<unsigned int> indexdata;
 	indexdata.resize(mesh->mNumFaces * 3);
+	cout << mesh->mNumFaces << endl;
 	for (int i = 0; i < mesh->mNumFaces; i++)
 	{
 		indexdata[i * 3] = mesh->mFaces[i].mIndices[0];
