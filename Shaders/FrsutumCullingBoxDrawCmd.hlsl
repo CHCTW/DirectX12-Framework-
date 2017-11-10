@@ -15,6 +15,14 @@ struct Command
     uint3 indexarguemnt2;
     uint padding;  // important!! always remember with 64 address, there could be a 4 byte end padding at the end.
 };
+struct OccuCommand
+{
+    uint2 address;
+    uint index;
+    uint4 drawarguemnt;
+    uint padding;
+};
+
 struct InstanceData
 {
     float4x4 model;
@@ -45,12 +53,12 @@ bool inSideFrustum(float4 p)
     for (int i = 0; i < 6; ++i)
     {
         r = dot(p, mFrustumPlane[i]);
-        if(r<0.0)
-            return false;
+        if(r>=0.0)
+            return true;
     }
-    return true;
+    return false;
 }
-bool InSidePlane(in float4 cornor[8], uint index)
+bool InSidePlane(in float4 cornor[8],uint index)
 {
     float r = 0.0f;
     for (int i = 0; i < 8; ++i)
@@ -61,7 +69,8 @@ bool InSidePlane(in float4 cornor[8], uint index)
     }
     return false;
 }
-AppendStructuredBuffer<Command> VisCommands : register(u0); 
+RWStructuredBuffer<OccuCommand> OccTestCommands : register(u0);
+RWStructuredBuffer<Command> VisCommands : register(u1);
 StructuredBuffer<Command> TotalCommands : register(t0);
 StructuredBuffer<InstanceData> InstancedBuffer : register(t1);
 [numthreads(1024, 1, 1)]
@@ -80,6 +89,7 @@ void CSMain(uint3 groupId : SV_GroupID, uint groupIndex : SV_GroupIndex)
         generateCorner(wmin, wmax, cornor);
 
         bool result = false;
+
         bool draw = true;
 
         //for (int i = 0; i < 8; ++i)
@@ -89,11 +99,33 @@ void CSMain(uint3 groupId : SV_GroupID, uint groupIndex : SV_GroupIndex)
 
         for (int i = 0; i < 6; ++i)
         {
-            draw = draw & InSidePlane(cornor, i);
+            draw = draw & InSidePlane(cornor,i);
         }
 
         if (draw)
-        VisCommands.Append(TotalCommands[id.x]);
+        {
+            uint index = VisCommands.IncrementCounter(); //
+            OccTestCommands.IncrementCounter(); //
+            OccuCommand occmd;
+            occmd.address = TotalCommands[id.x].address; // virual address show different pix, need to check why?
+            occmd.drawarguemnt.x = 36;
+            occmd.drawarguemnt.y = 1;
+            occmd.drawarguemnt.z = 0;
+            occmd.drawarguemnt.w = 0;
+            occmd.index = index;
+            occmd.padding = 0;
+
+            Command cmd = TotalCommands[id.x];
+            cmd.address.x = occmd.address.x;
+            cmd.address.y = occmd.address.y;
+        //    uint2 t;
+        //    VisCommands.GetDimensions(t.x, t.y);
+            cmd.padding = index;
+            
+            OccTestCommands[index] = occmd;
+            VisCommands[index]= cmd;
+        }
+        
     }
 
 }

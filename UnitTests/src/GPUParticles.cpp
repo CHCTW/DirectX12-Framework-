@@ -109,6 +109,7 @@ void initializeRender()
 	ParticleRootsig.mParameters[1].mType = PARAMETERTYPE_SRV;
 	ParticleRootsig.mParameters[1].mResCounts = 1;
 	ParticleRootsig.mParameters[1].mBindSlot = 0;
+	ParticleRootsig.mParameters[1].mVisibility = D3D12_SHADER_VISIBILITY_ALL;
 	ParticleRootsig.mParameters[2].mType = PARAMETERTYPE_UAV;
 	ParticleRootsig.mParameters[2].mResCounts = 1;
 	ParticleRootsig.mParameters[2].mBindSlot = 0;
@@ -210,8 +211,8 @@ void loadAsset()
 	cmdlist.dispatch((particleNum / 512) + 1, 1, 1);
 //	cmdlist.resourceBarrier(particleBuffers[0], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
 
-	cmdlist.resourceBarrier(particleBuffers[1], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
-	cmdlist.resourceBarrier(particleBuffers[2], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
+	cmdlist.resourceBarrier(particleBuffers[1], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE| D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	cmdlist.resourceBarrier(particleBuffers[2], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE| D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 
 
@@ -287,8 +288,8 @@ void update()
 	cmdlist.setScissor(scissor);
 	cmdlist.renderTargetBarrier(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-	cmdlist.resourceBarrier(particleBuffers[currentDraw], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
-	cmdlist.resourceBarrier(particleBuffers[(currentDraw+1)%3], D3D12_RESOURCE_STATE_GENERIC_READ,D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	cmdlist.resourceBarrier(particleBuffers[currentDraw], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE| D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	cmdlist.resourceBarrier(particleBuffers[(currentDraw+1)%3], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE| D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 
 	cmdlist.bindRenderTarget(render.mSwapChainRenderTarget[frameIndex]);

@@ -583,3 +583,25 @@ void CommandList::executeIndirect(CommandSignature &commandsig, UINT commandcoun
 {
 	mDx12CommandList->ExecuteIndirect(commandsig.mCommandSignature, commandcount, commandbuffer.mResource, offset, countbuffer.mResource, countoffset);
 }
+
+void CommandList::beginQuery(QueryHeap& queryheap, D3D12_QUERY_TYPE type, UINT index)
+{
+	mDx12CommandList->BeginQuery(queryheap.mHeap, type, index);
+}
+void CommandList::endQuery(QueryHeap& queryheap, D3D12_QUERY_TYPE type, UINT index)
+{
+	mDx12CommandList->EndQuery(queryheap.mHeap, type, index);
+}
+void CommandList::resolveQuery(QueryHeap& queryheap, D3D12_QUERY_TYPE type, UINT start, UINT numquery, Buffer resbuf, UINT64 offset)
+{
+	mDx12CommandList->ResolveQueryData(queryheap.mHeap, type, start, numquery, resbuf.mResource, offset);
+}
+
+void CommandList::setPrediction(Buffer& res, UINT64 offset, D3D12_PREDICATION_OP type)
+{
+	mDx12CommandList->SetPredication(res.mResource, offset, type);
+}
+void CommandList::unsetPrediction(D3D12_PREDICATION_OP type)
+{
+	mDx12CommandList->SetPredication(nullptr, 0, type);
+}

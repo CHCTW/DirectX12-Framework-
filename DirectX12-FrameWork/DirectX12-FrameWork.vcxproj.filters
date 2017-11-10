@@ -111,6 +111,9 @@
     <ClInclude Include="CommandSignature.h">
       <Filter>Render\Structers</Filter>
     </ClInclude>
+    <ClInclude Include="QueryHeap.h">
+      <Filter>Render\Structers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -180,6 +183,9 @@
       <Filter>Render\Structers\Resource</Filter>
     </ClCompile>
     <ClCompile Include="CommandSignature.cpp">
+      <Filter>Render\Structers</Filter>
+    </ClCompile>
+    <ClCompile Include="QueryHeap.cpp">
       <Filter>Render\Structers</Filter>
     </ClCompile>
   </ItemGroup>

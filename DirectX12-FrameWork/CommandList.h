@@ -12,7 +12,7 @@ class DescriptorHeap;
 class Resource;
 class CubeRenderTarget;
 class CommandSignature;
-
+class QueryHeap;
 
 
 class CommandList
@@ -52,13 +52,19 @@ public:
 	void dispatch(UINT groupCountX, UINT groupCountY, UINT groupCountZ);
 	void executeIndirect(CommandSignature &commandsig, UINT commandcount, Buffer &commandbuffer, unsigned long long offset);
 	void executeIndirect(CommandSignature &commandsig, UINT commandcount, Buffer &commandbuffer, UINT offset, Buffer &countbuffer, UINT countoffset);
+	void beginQuery(QueryHeap& queryheap, D3D12_QUERY_TYPE type, UINT index);
+	void endQuery(QueryHeap& queryheap, D3D12_QUERY_TYPE type, UINT index);
+	void resolveQuery(QueryHeap& queryheap, D3D12_QUERY_TYPE type, UINT start, UINT numquery, Buffer resbuf, UINT64 offset);
+	void setPrediction(Buffer& res, UINT64 offset, D3D12_PREDICATION_OP type);
+	void unsetPrediction(D3D12_PREDICATION_OP type);
+
 
 	void clearRenderTarget(RenderTarget &rt, const float *color);
 	void clearRenderTarget(RenderTarget &rt);
 	void clearDepthStencil(RenderTarget &rt, D3D12_CLEAR_FLAGS flag = D3D12_CLEAR_FLAG_DEPTH, float depth = 1.0f, UINT stencil = 1);
 	void clearcubeRenderTarget(CubeRenderTarget &crt, UINT face, UINT level = 0);
 	void clearcubeDepthStencil(CubeRenderTarget &crt, UINT face, UINT level = 0,D3D12_CLEAR_FLAGS flag = D3D12_CLEAR_FLAG_DEPTH, float depth = 1.0f, UINT stencil = 1);
-
+	
 	void resourceBarrier(Resource& res, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
 		D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
 	// This one should not be used after finish frame buffering, or could change this to use via swapchain's render target
