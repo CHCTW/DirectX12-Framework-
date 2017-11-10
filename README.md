@@ -35,6 +35,7 @@ https://www.youtube.com/watch?v=dcNFsgGAZaM
 ![image](https://user-images.githubusercontent.com/30221942/31986129-1bef2dea-b91c-11e7-8e8b-5a2790f47bc6.png)
 19. Execute Indirect : Using execute indirect drawing 8000 spheres(1984 triangles for each sphere). Also using frustum culling to cull out the spheres that will not  show in the camera frustum. https://www.youtube.com/watch?v=9GI294MPXeA&t=2s&index=10&list=PLvLvpclrF-V2Mdev5MhF7zl5RDFbaqnBF
 ![image](https://user-images.githubusercontent.com/30221942/32411080-10b9a7e0-c18f-11e7-8d76-2a855768f004.png)
+20. OcculusionQuery : An add up from unitest-19. Should be using query heap to query occulusion. But setPrediction works terriblly with execute indirect. Change to pixel shader approach to finish it. There will be disorder effect when camera moving to fast. This probally can be sovled by using bigger box? or other method. Can use more low resolution depth-buffer to gain more performance.
 
 ### 2. Graphics Techniques: Projects in this part is for demostaring some graphcis techniques(lighting, deffered shading...)
 
