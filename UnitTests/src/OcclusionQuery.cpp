@@ -97,14 +97,6 @@ RootSignature occucomdrootsig;
 void initializeRender()
 {
 
-
-	//Camera cam;
-
-	//cout << sizeof(teststruct) << endl;
-//	cout << sizeof(OccuIndirCommad) << endl;
-	//cout << sizeof(IndirectCommand) << endl;
-	//system("pause");
-
 	render.initialize();
 	RenderTargetFormat retformat(true);
 	render.createSwapChain(windows, swapChainCount, retformat);
@@ -299,6 +291,8 @@ void loadAsset()
 	//cout << min.x << "   " << min.y << "   " << min.z << endl;
 
 	indexBuffer.createIndexBuffer(render.mDevice, sizeof(unsigned int) * 3 * mesh->mNumFaces);
+
+
 
 	std::vector<unsigned int> indexdata;
 	indexdata.resize(mesh->mNumFaces * 3);

@@ -7,12 +7,50 @@
 #include <assimp\scene.h>
 #include <assimp\postprocess.h>
 #include <assimp\mesh.h>
+#include <string>
+#include "Buffer.h"
+#include "Render.h"
+
+// structer for indirect draw argument
+struct IndirectMeshData
+{
+	VertexBufferView mPosition;
+	VertexBufferView mUV;
+	VertexBufferView mNormal;
+	VertexBufferView mTangent;
+	IndexBufferView mIndex;
+	unsigned int indexCount;
+	unsigned int startIndex;
+	glm::vec3 mMin; // bounding box
+	glm::vec3 mMax;
+};
 class Mesh 
 {
 public:
-	std::vector<glm::vec3> vertex;
-	std::vector<glm::vec2> uv;
-	std::vector<glm::vec3> normal;
-	std::vector<glm::vec3> tangent;
-	std::vector<unsigned int> indecis;
+	Mesh()
+	{
+
+	}
+	~Mesh()
+	{
+		mPositionBuffer.release();
+		mUVBuffer.release();
+		mNormalBuffer.release();
+		mTangentBuffer.release();
+		mIndexBuffer.release();
+	}
+	bool loadMesh(aiMesh* assmesh,Render& render,CommandAllocator& cmdalloc,CommandList &cmdlist);
+	IndirectMeshData getIndirectData();
+	//bool bindIndirectData(IndirectMesh* indirectdata);
+	//bool updateIndirectData(IndirectMesh* indirectdata);
+	Buffer mPositionBuffer;
+	Buffer mUVBuffer;
+	Buffer mNormalBuffer;
+	Buffer mTangentBuffer;
+	Buffer mIndexBuffer;
+	unsigned int indexCount;
+	unsigned int startIndex;
+	glm::vec3 mMin; // bouning box
+	glm::vec3 mMax;
+	//IndirectMesh* IndirectData;
 };

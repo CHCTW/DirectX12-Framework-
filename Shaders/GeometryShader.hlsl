@@ -1,11 +1,9 @@
+#include "GraphicsUtility.hlsl"
 #define PI 3.14159
 struct InstancedInformation
 {
-	float4x4 model;
-	float4x4 normal;
-	float roughness;
-	float metallic;
-	float3 albedo;
+    Matrices matrices;
+    Material material;
 };
 
 cbuffer SceneConstantBuffer : register(b0)
@@ -155,14 +153,14 @@ void GSMain(triangle GSInput gin[3], inout TriangleStream<PSInput> stream)
         //gout.normal = sharpnormal;
         gout.position = (gin[i].position - center) + center;
 
-        gout.position = mul(instances[gout.id].model, gout.position + float4(movedir, 0));
+        gout.position = mul(instances[gout.id].matrices.model, gout.position + float4(movedir, 0));
         gout.wposition = gout.position.xyz / gout.position.w;
 
 
 
         gout.position = mul(view, gout.position);
         gout.position = mul(proj, gout.position);
-        gout.normal = mul(instances[gout.id].normal, float4(gin[i].normal.xyz, 0.0f)).xyz;
+        gout.normal = mul(instances[gout.id].matrices.normal, float4(gin[i].normal.xyz, 0.0f)).xyz;
         gout.scale = scale;
         stream.Append(gout);
     }
@@ -173,9 +171,9 @@ void GSMain(triangle GSInput gin[3], inout TriangleStream<PSInput> stream)
     for (int i = 0; i < 4; ++i)
     {
     
-        fur[i].position = mul(instances[fur[i].id].model, fur[i].position + float4(movedir, 0));
+        fur[i].position = mul(instances[fur[i].id].matrices.model, fur[i].position + float4(movedir, 0));
         fur[i].wposition = fur[i].position.xyz / fur[i].position.w;
-        fur[i].normal = mul(instances[fur[i].id].normal, float4(fur[i].normal, 0.0));
+        fur[i].normal = mul(instances[fur[i].id].matrices.normal, float4(fur[i].normal, 0.0));
         fur[i].position = mul(view, fur[i].position);
         fur[i].position = mul(proj, fur[i].position);
 

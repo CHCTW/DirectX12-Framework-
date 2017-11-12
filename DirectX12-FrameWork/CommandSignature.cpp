@@ -20,9 +20,15 @@ bool CommandSignature::initialize(ID3D12Device* device,RootSignature& rootsig)
 			break;
 		case D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW:
 			byteStride += sizeof(D3D12_VERTEX_BUFFER_VIEW);
+			if (byteStride & 8 - 1 != 0) // not 8 btye alighment, need to add padding to byte size
+				byteStride = (byteStride + 7)&~8;
+			alighment = 8;
 			break;
 		case D3D12_INDIRECT_ARGUMENT_TYPE_INDEX_BUFFER_VIEW:
 			byteStride += sizeof(D3D12_INDEX_BUFFER_VIEW);
+			if (byteStride & 8 - 1 != 0) // not 8 btye alighment, need to add padding to byte size
+				byteStride = (byteStride + 7)&~8;
+			alighment = 8;
 			break;
 		case D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT:
 			byteStride += mParameters[i].Constant.Num32BitValuesToSet * sizeof(unsigned int);
@@ -30,19 +36,19 @@ bool CommandSignature::initialize(ID3D12Device* device,RootSignature& rootsig)
 		case D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT_BUFFER_VIEW: // use pure gpu address only
 			byteStride += sizeof(GpuAddress);
 			if (byteStride & 8-1 != 0) // not 8 btye alighment, need to add padding to byte size
-				byteStride  = (byteStride + 8)&~8;
+				byteStride  = (byteStride + 7)&~8;
 			alighment = 8;
 			break;
 		case D3D12_INDIRECT_ARGUMENT_TYPE_SHADER_RESOURCE_VIEW:
 			byteStride += sizeof(GpuAddress);
 			if (byteStride & 8-1 != 0) // not 8 btye alighment, need to add padding to byte size
-				byteStride = (byteStride + 8)&~8;
+				byteStride = (byteStride + 7)&~8;
 			alighment = 8;
 			break;
 		case D3D12_INDIRECT_ARGUMENT_TYPE_UNORDERED_ACCESS_VIEW:
 			byteStride += sizeof(GpuAddress);
 			if (byteStride & 8-1 != 0) // not 8 btye alighment, need to add padding to byte size
-				byteStride = (byteStride + 8)&~8;
+				byteStride = (byteStride + 7)&~8;
 			alighment = 8;
 			break;
 		default:

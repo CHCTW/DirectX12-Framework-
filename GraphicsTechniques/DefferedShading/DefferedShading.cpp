@@ -322,7 +322,7 @@ void loadAsset()
 
 	// load sphere data
 
-	import.ReadFile("Assets/sphere.obj", aiProcessPreset_TargetRealtime_Fast);
+	import.ReadFile("Assets/cube.obj", aiProcessPreset_TargetRealtime_Fast);
 	scene = import.GetScene();
 	mesh = scene->mMeshes[0];
 

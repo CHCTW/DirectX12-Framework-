@@ -14,6 +14,7 @@
 #include "Material.h"
 #include "SpotLight.h"
 #include "QuadPatch.h"
+#include "Mesh.h"
 struct InstancedInformation
 {
 	Matrices mMatrices; // model and normal transfrom matrix;
@@ -213,9 +214,9 @@ void loadAsset()
 	lightBuffer.createConstantBuffer(render.mDevice, srvheap, sizeof(SpotLightData));
 	lightBuffer.maptoCpu();
 
-	light.setRadius(1000);
+	light.setRadius(100);
 	light.setColor(1, 1, 1);
-	light.setConeAngle(90);
+	light.setConeAngle(45);
 	light.addZoom(10);
 	light.addAngle(0, 90);
 
@@ -251,6 +252,7 @@ void loadAsset()
 	scene = import.GetScene();
 	mesh = scene->mMeshes[0];
 
+
 	UINT verticnum = mesh->mNumVertices;
 
 	if (!Sphere.mVertexBufferData.createVertexBuffer(render.mDevice, mesh->mNumVertices * 3 * sizeof(float), 3 * sizeof(float)))
@@ -272,7 +274,7 @@ void loadAsset()
 		indexdata[i * 3 + 1] = mesh->mFaces[i].mIndices[1];
 		indexdata[i * 3 + 2] = mesh->mFaces[i].mIndices[2];
 	}
-
+	
 	// initialize spheres position data
 	Sphere.mNum = spherecount;
 	Sphere.indexCount = mesh->mNumFaces * 3;
@@ -386,7 +388,8 @@ void loadAsset()
 
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
-	const UINT64 fenval = fence.fenceValue;
+	render.waitCommandsDone();
+	/*const UINT64 fenval = fence.fenceValue;
 	render.mCommandQueue->Signal(fence.mDx12Fence, fenval);
 	fence.fenceValue++;
 
@@ -394,7 +397,7 @@ void loadAsset()
 	{
 		fence.mDx12Fence->SetEventOnCompletion(fenval, fenceEvet);
 		WaitForSingleObject(fenceEvet, INFINITE);
-	}
+	}*/
 	//	import.FreeScene();
 }
 
@@ -504,6 +507,10 @@ void onrender()
 
 
 	cmdlist.bindGraphicsResource(1, Sphere.mInstancedBuffer);
+
+	/*cmdlist.bindIndexBuffer(testMesh.mIndexBuffer);
+	cmdlist.bindVertexBuffers(testMesh.mPositionBuffer, testMesh.mNormalBuffer, testMesh.mUVBuffer, testMesh.mTangentBuffer);*/
+
 	cmdlist.bindIndexBuffer(Sphere.mIndexBuffer);
 	cmdlist.bindVertexBuffers(Sphere.mVertexBufferData, Sphere.mNormalBuffer, Sphere.mUVBuffer, Sphere.mTangentBuffer);
 	cmdlist.drawIndexedInstanced(Sphere.indexCount, Sphere.mNum, 0, 0);
@@ -522,17 +529,10 @@ void onrender()
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
 	render.present();
+	render.waitCommandsDone();
 
 
-	const UINT64 fenval = fence.fenceValue;
-	render.mCommandQueue->Signal(fence.mDx12Fence, fenval);
-	fence.fenceValue++;
 
-	if (fence.mDx12Fence->GetCompletedValue() < fenval)
-	{
-		fence.mDx12Fence->SetEventOnCompletion(fenval, fenceEvet);
-		WaitForSingleObject(fenceEvet, INFINITE);
-	}
 }
 
 

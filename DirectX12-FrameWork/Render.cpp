@@ -74,7 +74,9 @@ bool Render::initialize()
 	}
 
 	//NAME_D3D12_OBJECT(mCommandQueue);
-
+	mFence.initialize(mDevice);
+	mFence.fenceValue = 1;
+	mFenceEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 	
 	for (int i = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV; i < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES; i++)
 	{
@@ -166,6 +168,7 @@ UINT Render::getCurrentSwapChainIndex()
 
 void Render::release()
 {
+	mFence.release();
 	mDSVDescriptorHeap.release();
 	mRTVDescriptorHeap.release();
 	for (int i = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV; i < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES; i++)
@@ -199,7 +202,18 @@ void Render::executeCommands(CommandList *cmds, UINT counts)
 	}
 	mCommandQueue->ExecuteCommandLists(counts, lists);
 }
+void Render::waitCommandsDone()
+{
+	const UINT64 fenval = mFence.fenceValue;
+	mCommandQueue->Signal(mFence.mDx12Fence, fenval);
+	mFence.fenceValue++;
 
+	if (mFence.mDx12Fence->GetCompletedValue() < fenval)
+	{
+		mFence.mDx12Fence->SetEventOnCompletion(fenval, mFenceEvent);
+		WaitForSingleObject(mFenceEvent, INFINITE);
+	}
+}
 bool Render::present()
 {
 	HRESULT hr;

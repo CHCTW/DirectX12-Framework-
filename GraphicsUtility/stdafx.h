@@ -12,7 +12,6 @@
 
 
 // TODO: reference additional headers your program requires here
-#include <DirectXMath.h>
 #include <glm/glm.hpp>
 #include <unordered_map>
 #include <vector>

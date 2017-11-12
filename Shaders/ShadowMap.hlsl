@@ -1,11 +1,9 @@
+#include "GraphicsUtility.hlsl"
 #define PI 3.14159
 struct InstancedInformation
 {
-	float4x4 model;
-	float4x4 normal;
-	float roughness;
-	float metallic;
-	float3 albedo;
+    Matrices matrices;
+    Material material;
 };
 cbuffer SpotLightData : register(b0)
 {
@@ -26,7 +24,7 @@ PSInput VSMain(float3 position : POSITION, uint instanceid : SV_InstanceID)
 {
 	PSInput result;
 
-	result.position = mul(instances[instanceid].model, float4(position, 1.0f));
+    result.position = mul(instances[instanceid].matrices.model, float4(position, 1.0f));
 	result.position = mul(lightview, result.position);
 	result.position = mul(lightproj,result.position);
  

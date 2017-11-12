@@ -1,11 +1,9 @@
+#include "GraphicsUtility.hlsl"
 #define PI 3.14159
 struct InstancedInformation
 {
-	float4x4 model;
-	float4x4 normal;
-	float roughness;
-	float metallic;
-	float3 albedo;
+    Matrices matrices;
+    Material material;
 };
 
 cbuffer SceneConstantBuffer : register(b0)
@@ -40,12 +38,12 @@ PSInput VSMain(float3 position : POSITION, float3 normal : NORMAL, uint instance
 {
 	PSInput result;
 
-	result.position = mul(instances[instanceid].model, float4(position, 1.0f));
+    result.position = mul(instances[instanceid].matrices.model, float4(position, 1.0f));
 	result.wposition = result.position.xyz;
 	result.position = mul(view, result.position);
 	result.position = mul(proj,result.position);
 	
-	result.normal = mul(instances[instanceid].normal, float4(normal, 0.0f)).xyz;
+    result.normal = mul(instances[instanceid].matrices.normal, float4(normal, 0.0f)).xyz;
 	result.id = instanceid;
 	return result;
 }
@@ -90,9 +88,9 @@ float4 PSMain(PSInput input) : SV_TARGET
 //	float3 lightColor = float3(1.0,1.0,1.0);
 	
 	
-	float roughness = instances[input.id].roughness;
-	float metallic = instances[input.id].metallic;
-    float3 albedo = pow(instances[input.id].albedo, 2.2);
+	float roughness = instances[input.id].material.roughness;
+	float metallic = instances[input.id].material.metallic;
+    float3 albedo = pow(instances[input.id].material.albedo, 2.2);
 	float ao = 1.0f;
 
 

@@ -19,6 +19,9 @@
     <Filter Include="Models">
       <UniqueIdentifier>{98c0c0a8-c925-47c1-b2c4-e608e5487049}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shader">
+      <UniqueIdentifier>{c6ba5129-f1ce-43c5-aaaf-f412ace38096}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -92,5 +95,16 @@
     <ClCompile Include="DirectionLight.cpp">
       <Filter>Header Files</Filter>
     </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\Shaders\GraphicsUtility.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Shaders\LightFunctions.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

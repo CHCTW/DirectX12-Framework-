@@ -1,11 +1,9 @@
+#include "GraphicsUtility.hlsl"
 #define PI 3.14159
 struct InstancedInformation
 {
-	float4x4 model;
-	float4x4 normal;
-	float roughness;
-	float metallic;
-	float3 albedo;
+    Matrices matrices;
+    Material material;
 };
 
 cbuffer SceneConstantBuffer : register(b0)
@@ -54,12 +52,12 @@ VSOutput VSMain(float3 position : POSITION, float3 normal : NORMAL, uint instanc
 {
 	VSOutput result;
 
-	result.position = mul(instances[instanceid].model, float4(position, 1.0f));
+	result.position = mul(instances[instanceid].matrices.model, float4(position, 1.0f));
 	result.wposition = result.position.xyz;
 	result.position = mul(view, result.position);
 	result.position = mul(proj,result.position);
 	
-	result.normal = mul(instances[instanceid].normal, float4(normal, 0.0f)).xyz;
+	result.normal = mul(instances[instanceid].matrices.normal, float4(normal, 0.0f)).xyz;
 	result.id = instanceid;
 	return result;
 }

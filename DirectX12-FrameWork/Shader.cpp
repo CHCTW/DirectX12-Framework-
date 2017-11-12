@@ -20,7 +20,7 @@ bool Shader::load(char* filepath, char* entryPoint, ShaderType type)
 #else
 	UINT compileFlags = 0;
 #endif
-	ThrowIfFailed(D3DCompileFromFile(wsz, nullptr, nullptr, entryPoint, Targetchars[type], compileFlags, 0, &mShader, nullptr));
+	ThrowIfFailed(D3DCompileFromFile(wsz, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, entryPoint, Targetchars[type], compileFlags, 0, &mShader, nullptr));
 	
 	ThrowIfFailed(D3DReflect(mShader->GetBufferPointer(), mShader->GetBufferSize(), IID_PPV_ARGS(&mReflector)));
 

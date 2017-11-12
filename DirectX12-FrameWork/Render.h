@@ -21,12 +21,15 @@ public:
 	void releaseSwapChain();
 	UINT getCurrentSwapChainIndex();
 	void executeCommands(CommandList *cmds, UINT counts = 1);
+	void waitCommandsDone();
 	bool present();
-
+	
 	UINT mSwapChainAccout;
 	ID3D12Device* mDevice;
 	
 	ID3D12CommandQueue* mCommandQueue;
+	Fence mFence;
+	HANDLE mFenceEvent;
 	IDXGIFactory4* mDxgiFactory;
 	IDXGIAdapter1* mDxgiAdaptor;
 	IDXGISwapChain3* mSwapChain;
@@ -36,7 +39,7 @@ public:
 	//UINT mRTVDescSize;
 	
 	DescriptorHeap mDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES];
-
+	
 	ID3D12Debug* mDebugLayer;
 
 };

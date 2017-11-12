@@ -31,7 +31,7 @@ struct PSInput
 	float4 position : SV_POSITION;
     nointerpolation uint id : ID;
 };
-PSInput VSMain(float3 position : POSITION, float3 normal : NORMAL, uint instanceid : SV_InstanceID)
+PSInput VSMain(float3 position : POSITION, float3 normal : NORMAL, uint instanceid : SV_InstanceID,uint vid : SV_VertexID)
 {
 	PSInput result;
 //	result.position = float4(1.0, 1.0, 1.0, 1.0);
