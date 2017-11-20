@@ -9,14 +9,15 @@
 #include <assimp\mesh.h>
 #include <string>
 #include "Buffer.h"
-#include "Render.h"
-
+class Render;
+class CommandAllocator;
+class CommandList;
 // structer for indirect draw argument
 struct IndirectMeshData
 {
 	VertexBufferView mPosition;
-	VertexBufferView mUV;
 	VertexBufferView mNormal;
+	VertexBufferView mUV;
 	VertexBufferView mTangent;
 	IndexBufferView mIndex;
 	unsigned int indexCount;
@@ -33,13 +34,9 @@ public:
 	}
 	~Mesh()
 	{
-		mPositionBuffer.release();
-		mUVBuffer.release();
-		mNormalBuffer.release();
-		mTangentBuffer.release();
-		mIndexBuffer.release();
 	}
 	bool loadMesh(aiMesh* assmesh,Render& render,CommandAllocator& cmdalloc,CommandList &cmdlist);
+	void release();
 	IndirectMeshData getIndirectData();
 	//bool bindIndirectData(IndirectMesh* indirectdata);
 	//bool updateIndirectData(IndirectMesh* indirectdata);

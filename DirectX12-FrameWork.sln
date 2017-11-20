@@ -54,6 +54,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "9 - ModelLoading", "UnitTes
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GraphicsUtility", "GraphicsUtility\GraphicsUtility.vcxproj", "{3114F873-50B8-4BE1-8A70-12B0FFE7E8C8}"
+	ProjectSection(ProjectDependencies) = postProject
+		{62932349-890C-4D8C-A0E3-BB9885B98500} = {62932349-890C-4D8C-A0E3-BB9885B98500}
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GraphicsTechniques", "GraphicsTechniques", "{754DFEE7-988E-4314-9E54-DAB65100AAB8}"
 EndProject
@@ -155,6 +158,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "20 - OcclusionQuery", "Unit
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MultiplePointLightShadow", "GraphicsTechniques\MultiplePointLightShadow\MultiplePointLightShadow.vcxproj", "{AD7B2DA6-5D3E-48F7-BC28-C21007B38D70}"
+	ProjectSection(ProjectDependencies) = postProject
+		{62932349-890C-4D8C-A0E3-BB9885B98500} = {62932349-890C-4D8C-A0E3-BB9885B98500}
+		{3114F873-50B8-4BE1-8A70-12B0FFE7E8C8} = {3114F873-50B8-4BE1-8A70-12B0FFE7E8C8}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

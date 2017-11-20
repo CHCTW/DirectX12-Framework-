@@ -27,9 +27,12 @@ public:
 	UINT mSwapChainAccout;
 	ID3D12Device* mDevice;
 	
+	// going to combine these three together
 	ID3D12CommandQueue* mCommandQueue;
 	Fence mFence;
 	HANDLE mFenceEvent;
+
+
 	IDXGIFactory4* mDxgiFactory;
 	IDXGIAdapter1* mDxgiAdaptor;
 	IDXGISwapChain3* mSwapChain;

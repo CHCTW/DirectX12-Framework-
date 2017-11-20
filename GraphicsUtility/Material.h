@@ -3,8 +3,8 @@
 #include <glm/vec3.hpp>
 enum MaterialMapIndex
 {
-	MATERIALMAP_INDEX_NORMAL,
 	MATERIALMAP_INDEX_COLOR,
+	MATERIALMAP_INDEX_NORMAL,
 	MATERIALMAP_INDEX_ROUGHNESS,
 	MATERIALMAP_INDEX_METALIC,
 	MATERIALMAP_INDEX_COUNT
@@ -18,6 +18,7 @@ public:
 		mTextureIndex[MATERIALMAP_INDEX_COLOR] = 0;
 		mTextureIndex[MATERIALMAP_INDEX_ROUGHNESS] = 0;
 		mTextureIndex[MATERIALMAP_INDEX_METALIC] = 0;
+
 		mChoose[MATERIALMAP_INDEX_NORMAL] = 1.0f;
 		mChoose[MATERIALMAP_INDEX_COLOR] = 1.0f;
 		mChoose[MATERIALMAP_INDEX_ROUGHNESS] = 1.0f;
@@ -35,7 +36,11 @@ public:
 	float mRoughness; 
 	float mMetallic;
 	glm::vec3 mAlbedo;
-	// texture index; normal map, base color map, roughness map, metalic map
+	// texture index; 
+	//  0 :base color map 
+	//  1 : normal map, 
+	//  2 : roughness map 
+	//  3 : metalic map
 	unsigned int mTextureIndex[MATERIALMAP_INDEX_COUNT];
 	// combiniation choose between parameters and data from textures
 	// the choose should be normal, albedeo, roughness, metalic

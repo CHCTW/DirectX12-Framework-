@@ -24,6 +24,8 @@ struct ViewProjection
 	glm::mat4x4 mViewInverse;
 	glm::mat4x4 mProjInverse;
 	glm::vec4 mFrustumPlane[FRUSTUM_PLANE_COUNT];
+	float front;
+	float back;
 };
 class Camera
 {
@@ -34,6 +36,8 @@ public:
 		mViewProjection.mProjection = glm::perspective(mFOV*(3.14159f) / 180.0f, mRatio, mFront, mBack);
 		mViewProjection.mProjInverse = glm::inverse(mViewProjection.mProjection);
 		mViewProjection.mViewInverse = glm::inverse(mViewProjection.mView);
+		mViewProjection.front = mFront;
+		mViewProjection.back = mBack;
 		frustumPlaneCal();
 	//	glm::mat4x4 test = mViewProjection.mProjection*mViewProjection.mProjInverse;
 	}
@@ -50,6 +54,7 @@ public:
 	void setTarget(float, float, float);
 	void setUp(float, float, float);
 	void setFOV(float);
+	void setBack(float);
 	void frustumPlaneCal();
 	ViewProjection const * getMatrix();
 	ViewProjection mViewProjection;

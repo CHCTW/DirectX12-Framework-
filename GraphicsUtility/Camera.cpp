@@ -10,6 +10,8 @@ void Camera::updateViewProj()
 	mViewProjection.mProjInverse = glm::inverse(mViewProjection.mProjection);
 	mViewProjection.mViewInverse = glm::inverse(mViewProjection.mView);
 	mViewProjection.mPosition = mPosition;
+	mViewProjection.front = mFront;
+	mViewProjection.back = mBack;
 	frustumPlaneCal();
 }
 void Camera::frustumPlaneCal()
@@ -89,4 +91,9 @@ void Camera::setUp(float x, float y, float z)
 void Camera::setFOV(float fov)
 {
 	mFOV = fov;
+}
+void Camera::setBack(float f)
+{
+	mBack = f;
+	mViewProjection.back = mBack;
 }

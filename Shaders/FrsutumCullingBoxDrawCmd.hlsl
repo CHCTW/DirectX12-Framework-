@@ -107,7 +107,7 @@ void CSMain(uint3 groupId : SV_GroupID, uint groupIndex : SV_GroupIndex)
             uint index = VisCommands.IncrementCounter(); //
             OccTestCommands.IncrementCounter(); //
             OccuCommand occmd;
-            occmd.address = TotalCommands[id.x].address; // virual address show different pix, need to check why?
+            occmd.address = TotalCommands[id.x].address; 
             occmd.drawarguemnt.x = 36;
             occmd.drawarguemnt.y = 1;
             occmd.drawarguemnt.z = 0;

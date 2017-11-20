@@ -168,6 +168,7 @@ UINT Render::getCurrentSwapChainIndex()
 
 void Render::release()
 {
+	CloseHandle(mFenceEvent);
 	mFence.release();
 	mDSVDescriptorHeap.release();
 	mRTVDescriptorHeap.release();

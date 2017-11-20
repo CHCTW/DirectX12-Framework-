@@ -25,6 +25,7 @@ public:
 		mLightData.mProjection = glm::perspective(mFOV*(3.14159f) / 180.0f, mRatio, mFront, mLightData.mRadius);
 		mLightData.mRadius = 100;
 		mLightData.mIntensity = 1000;
+		mLightData.mPosition = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		update();
 	}
 	glm::vec2 mAngle;

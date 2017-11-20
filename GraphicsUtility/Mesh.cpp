@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Mesh.h"
+#include "Render.h"
 #include <limits>
 using namespace std;
 #undef  min()
@@ -29,12 +30,12 @@ bool Mesh::loadMesh(aiMesh* assmesh, Render& render, CommandAllocator& cmdalloc,
 		}
 
 	}
-	if(assmesh->HasNormals())
-		mNormalBuffer.createVertexBuffer(render.mDevice, assmesh->mNumVertices * 3 * sizeof(float), 3 * sizeof(float));
-	if(assmesh->HasTextureCoords(0))
-		mUVBuffer.createVertexBuffer(render.mDevice, assmesh->mNumVertices * 3 * sizeof(float), 3 * sizeof(float));
-	if(assmesh->HasTangentsAndBitangents())
-		mTangentBuffer.createVertexBuffer(render.mDevice, assmesh->mNumVertices * 3 * sizeof(float), 3 * sizeof(float));
+	//if(assmesh->HasNormals())
+	mNormalBuffer.createVertexBuffer(render.mDevice, assmesh->mNumVertices * 3 * sizeof(float), 3 * sizeof(float));
+//	if(assmesh->HasTextureCoords(0))
+	mUVBuffer.createVertexBuffer(render.mDevice, assmesh->mNumVertices * 3 * sizeof(float), 3 * sizeof(float));
+	//if(assmesh->HasTangentsAndBitangents())
+	mTangentBuffer.createVertexBuffer(render.mDevice, assmesh->mNumVertices * 3 * sizeof(float), 3 * sizeof(float));
 	mIndexBuffer.createIndexBuffer(render.mDevice, sizeof(unsigned int) * 3 * assmesh->mNumFaces);
 	std::vector<unsigned int> indexdata;
 	indexdata.resize(assmesh->mNumFaces * 3);
@@ -104,8 +105,17 @@ IndirectMeshData Mesh::getIndirectData()
 	data.mIndex = mIndexBuffer.mIndexBuffer;
 	data.startIndex = startIndex;
 	data.indexCount = indexCount;
-	data.mMax = data.mMax;
-	data.mMin = data.mMin;
+	data.mMax = mMax;
+	data.mMin = mMin;
 	return data;
 	
+}
+
+void Mesh::release()
+{
+	mPositionBuffer.release();
+	mUVBuffer.release();
+	mNormalBuffer.release();
+	mTangentBuffer.release();
+	mIndexBuffer.release();
 }

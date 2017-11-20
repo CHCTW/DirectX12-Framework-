@@ -110,7 +110,7 @@ struct RenderTargetFormat  // assume all render targt and depth buffer will need
 		mRenderTargetflags(D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET), mDepthStencilflags(D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL), mCube(false)
 	{
 		mRenderTargetFormat[0] = DXGI_FORMAT_B8G8R8A8_UNORM;
-		mRenderTargetClearValue[0] = { 0.0,0.0,0.0,0.0 };
+		mRenderTargetClearValue[0] = { 0.0,0.0,0.0,1.0 };
 		if (mDepth)
 		{
 			mDepthStencilClearValue.DepthStencil.Depth = 1.0f;
@@ -121,7 +121,7 @@ struct RenderTargetFormat  // assume all render targt and depth buffer will need
 		mRenderTargetflags(D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET), mDepthStencilflags(D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL), mCube(false)
 	{
 		mRenderTargetFormat[0] = formatforrendertarget;
-		mRenderTargetClearValue[0] = { 0.0,0.0,0.0,0.0 };
+		mRenderTargetClearValue[0] = { 0.0,0.0,0.0,1.0 };
 	}
 
 
@@ -130,7 +130,7 @@ struct RenderTargetFormat  // assume all render targt and depth buffer will need
 		mRenderTargetflags(D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET), mDepthStencilflags(D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL), mCube(false)
 	{
 		mRenderTargetFormat[0] = DXGI_FORMAT_B8G8R8A8_UNORM;
-		mRenderTargetClearValue[0] = { 0.0,0.0,0.0,0.0 };
+		mRenderTargetClearValue[0] = { 0.0,0.0,0.0,1.0 };
 	}
 	RenderTargetFormat(UINT rendertargetnum, DXGI_FORMAT *renderTargetFormat, bool depth = false, bool cube = false, DXGI_FORMAT depthFormat = DXGI_FORMAT_R32_TYPELESS, D3D12_RESOURCE_FLAGS rendertargetflags = D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_FLAGS depthflags = D3D12_RESOURCE_FLAG_NONE)
 		:mDepth(depth), mNumofRenderTargets(rendertargetnum), mDepthStencilFormat(depthFormat),
@@ -139,7 +139,7 @@ struct RenderTargetFormat  // assume all render targt and depth buffer will need
 		for (unsigned int i = 0; i < rendertargetnum; ++i)
 		{
 			mRenderTargetFormat[i] = renderTargetFormat[i];
-			mRenderTargetClearValue[i] = { 0.0,0.0,0.0,0.0 };
+			mRenderTargetClearValue[i] = { 0.0,0.0,0.0,1.0 };
 		}
 		if (mDepth)
 		{
@@ -161,7 +161,7 @@ struct RenderTargetFormat  // assume all render targt and depth buffer will need
 
 const static char *Targetchars[SHADERTYPE_COUNT]
 {
-	"vs_5_0","ps_5_0","cs_5_0","gs_5_0","ds_5_0","hs_5_0"
+	"vs_5_1","ps_5_1","cs_5_1","gs_5_1","ds_5_1","hs_5_1"
 };
 static unsigned int HeapSizes[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES] = { 3000,10,60,30 };
 static unsigned int HeapOffset[VIEW_COUNT] = {0,1000,2000,0,0};
