@@ -19,6 +19,7 @@ struct IndirectMeshData
 	VertexBufferView mNormal;
 	VertexBufferView mUV;
 	VertexBufferView mTangent;
+	VertexBufferView mBiTangent;
 	IndexBufferView mIndex;
 	unsigned int indexCount;
 	unsigned int startIndex;
@@ -44,6 +45,7 @@ public:
 	Buffer mUVBuffer;
 	Buffer mNormalBuffer;
 	Buffer mTangentBuffer;
+	Buffer mBiTangentBuffer;
 	Buffer mIndexBuffer;
 	unsigned int indexCount;
 	unsigned int startIndex;

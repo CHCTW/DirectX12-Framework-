@@ -49,6 +49,9 @@ bool Pipeline::createGraphicsPipeline(ID3D12Device* device, RootSignature& roots
 	psoDesc.DSVFormat = format.mDepthStencilFormat;
 	if (psoDesc.DSVFormat == DXGI_FORMAT_R32_TYPELESS)
 		psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+	if (psoDesc.DSVFormat == DXGI_FORMAT_R16_TYPELESS)
+		psoDesc.DSVFormat = DXGI_FORMAT_D16_UNORM;
+
 //	psoDesc.DepthStencilState.DepthEnable = FALSE;
 //	psoDesc.DepthStencilState.StencilEnable = FALSE;
 

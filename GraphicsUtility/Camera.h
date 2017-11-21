@@ -24,6 +24,7 @@ struct ViewProjection
 	glm::mat4x4 mViewInverse;
 	glm::mat4x4 mProjInverse;
 	glm::vec4 mFrustumPlane[FRUSTUM_PLANE_COUNT];
+	glm::mat4x4 mViewInverseTranspose;
 	float front;
 	float back;
 };

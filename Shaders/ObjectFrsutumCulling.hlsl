@@ -10,6 +10,7 @@ struct Command
     VertexBufferView normal;
     VertexBufferView uv;
     VertexBufferView tangent;
+    VertexBufferView bitangent;
     IndexBufferView index;
     uint objindex;
     uint2 indexarguemnt1;
@@ -95,6 +96,7 @@ void CSMain(uint3 groupId : SV_GroupID, uint groupIndex : SV_GroupIndex)
             cmd.normal = MeshList[meshid].normal;
             cmd.uv = MeshList[meshid].uv;
             cmd.tangent = MeshList[meshid].tangent;
+            cmd.bitangent = MeshList[meshid].bitangent;
             cmd.index = MeshList[meshid].index;
             cmd.objindex = id;
             cmd.indexarguemnt1.x = MeshList[meshid].indexCount;

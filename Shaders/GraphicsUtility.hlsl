@@ -39,6 +39,7 @@ struct Mesh
     VertexBufferView normal;
     VertexBufferView uv;
     VertexBufferView tangent;
+    VertexBufferView bitangent;
     IndexBufferView index;
     uint indexCount;
     uint startIndex;
@@ -54,14 +55,15 @@ struct Camera
     float4x4 viewinverse;
     float4x4 projinverse;
     float4 mFrustumPlane[6];
+    float4x4 viewinverseyranspose;
     float front;
     float back;
 };
-float3 normalMapCal(in float rate,in float3 objnormal,in float3 tangent,in float3 textnormal)
+float3 normalMapCal(in float rate,in float3 objnormal,in float3 tangent,in float3 bitangent,in float3 textnormal)
 {
     float3 normalobject = normalize(objnormal);
+    float3 bitan = -normalize(bitangent);
     float3 tan = normalize(tangent);
-    float3 bitan = normalize(cross(tan, normalobject));
     return  textnormal.x * tan + textnormal.y * bitan + textnormal.z * normalobject;
     
 }
@@ -78,17 +80,19 @@ struct GBufferFormat
 // a very nice website that have various method to reduce the stroge space of gbuffer
 half2 encode(float3 n)
 {
-    half2 enc = normalize(n.xy) * (sqrt(-n.z * 0.5 + 0.5));
-    enc = enc * 0.5 + 0.5;
-    return enc;
+    half f = sqrt(8 * n.z + 8);
+    return n.xy / f + 0.5;
 }
 float3 decode(half2 enc)
 {
-    half4 nn = float4(enc, 0.0, 0.0) * float4(2, 2, 0, 0) + float4(-1, -1, 1, -1);
-    half l = dot(nn.xyz, -nn.xyw);
-    nn.z = l;
-    nn.xy *= sqrt(l);
-    return nn.xyz * 2 + half3(0, 0, -1);
+
+    half2 fenc = enc * 4 - 2;
+    half f = dot(fenc, fenc);
+    half g = sqrt(1 - f / 4);
+    half3 n;
+    n.xy = fenc * g;
+    n.z = 1 - f / 2;
+    return n;
 }
 
 //use method http://research.nvidia.com/publication/2d-polyhedral-bounds-clipped-perspective-projected-3d-sphere
@@ -99,23 +103,23 @@ void BoundsforAxis(in float3 axis, in float3 center, float radius, float near, o
     float2 c = float2(dot(axis, center), center.z);
 
     float tsquare = dot(c, c) - radius * radius;
-    bool cameraindside = (tsquare <= 0);
+    bool cameraindside = (tsquare <= 0.0);
 
     float2 bounds[2];
     float2 v;
-    if (tsquare <= 0)
+    if (tsquare <= 0.0)
         v = float2(0.0, 0.0);
     else
         v = float2(sqrt(tsquare), radius) / length(c);
-    bool clipsphere = (center.y + radius >= near);
+    bool clipsphere = (c.y + radius >= near);
 
     float k = sqrt(radius * radius - (near - c.y) * (near - c.y));
-    [unroll]
+ //   [unroll]
     for (int i = 0; i < 2; ++i)
     {
     
         if (!cameraindside)
-            bounds[i] = mul(float2x2(v.x, -v.y, v.y, v.x), c.xy) * v.x;
+            bounds[i] = mul(float2x2(v.x, -v.y, v.y, v.x), c) * v.x;
         bool clipbound = (cameraindside || (bounds[i].y > near));
         if (clipsphere && clipbound)
             bounds[i] = float2(c.x + k, near);

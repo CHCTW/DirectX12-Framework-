@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "GameCamera.h"
 #define PI 3.14159f
-GameCamera::GameCamera() : Camera(), mAngle(180,90)
+GameCamera::GameCamera() : Camera(), mAngle(0,90)
 {
 	updateViewProj();
 }
@@ -33,6 +33,7 @@ void GameCamera::updateViewProj()
 	mViewProjection.mViewInverse = glm::inverse(mViewProjection.mView);
 	mViewProjection.mProjection = glm::perspective(mFOV*(3.14159f) / 180.0f, mRatio, mFront, mBack);
 	mViewProjection.mProjInverse = glm::inverse(mViewProjection.mProjection);
+	mViewProjection.mViewInverseTranspose = glm::transpose(mViewProjection.mViewInverse);
 	mViewProjection.front = mFront;
 	mViewProjection.back = mBack;
 	frustumPlaneCal();

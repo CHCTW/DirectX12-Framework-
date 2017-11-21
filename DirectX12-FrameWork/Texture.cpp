@@ -323,8 +323,8 @@ void Texture::CreateTexture(ID3D12Device* device, DXGI_FORMAT format, UINT width
 		if (mClearVal.Format == DXGI_FORMAT_R32_TYPELESS)
 			mClearVal.Format = DXGI_FORMAT_D32_FLOAT;
 
-		//if (mClearVal.Format == DXGI_FORMAT_R16_TYPELESS)
-		//	mClearVal.Format = DXGI_FORMAT_R16_FLOAT;
+		if (mClearVal.Format == DXGI_FORMAT_R16_TYPELESS)
+			mClearVal.Format = DXGI_FORMAT_D16_UNORM;
 
 
 		mClearVal.DepthStencil = clear.DepthStencil;
@@ -391,7 +391,7 @@ void Texture::addSahderResorceView(DescriptorHeap& heap)
 	if (srvDesc.Format == DXGI_FORMAT_R32_TYPELESS)
 		srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
 	if (srvDesc.Format == DXGI_FORMAT_R16_TYPELESS)
-		srvDesc.Format = DXGI_FORMAT_R16_FLOAT;
+		srvDesc.Format = DXGI_FORMAT_R16_UNORM;
 
 	// need to decide the deimesnion depends on the real dimesion of texture
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
@@ -429,8 +429,8 @@ void Texture::addDepgthStencilView(DescriptorHeap& heap)
 	depthStencilDesc.Format = textureDesc.Format;
 	if (depthStencilDesc.Format == DXGI_FORMAT_R32_TYPELESS)
 		depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
-	//if (depthStencilDesc.Format == DXGI_FORMAT_R16_TYPELESS)
-	//	depthStencilDesc.Format = DXGI_FORMAT_R16_FLOAT;
+	if (depthStencilDesc.Format == DXGI_FORMAT_R16_TYPELESS)
+		depthStencilDesc.Format = DXGI_FORMAT_D16_UNORM;
 	
 	depthStencilDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 	if (mCubeMap || textureDesc.DepthOrArraySize > 1)
@@ -453,8 +453,8 @@ void Texture::addUnorderedAccessView(DescriptorHeap& heap)
 	uavDesc.Format = mFormat;
 	if (uavDesc.Format == DXGI_FORMAT_R32_TYPELESS)
 		uavDesc.Format = DXGI_FORMAT_D32_FLOAT;
-	//if (uavDesc.Format == DXGI_FORMAT_R16_TYPELESS)
-	//	uavDesc.Format = DXGI_FORMAT_R16_FLOAT;
+	if (uavDesc.Format == DXGI_FORMAT_R16_TYPELESS)
+		uavDesc.Format = DXGI_FORMAT_R16_UNORM;
 
 	uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
 	uavDesc.Texture2D.MipSlice = 0;

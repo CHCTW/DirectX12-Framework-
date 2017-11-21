@@ -12,6 +12,7 @@ void Camera::updateViewProj()
 	mViewProjection.mPosition = mPosition;
 	mViewProjection.front = mFront;
 	mViewProjection.back = mBack;
+	mViewProjection.mViewInverseTranspose = glm::transpose(mViewProjection.mViewInverse);
 	frustumPlaneCal();
 }
 void Camera::frustumPlaneCal()

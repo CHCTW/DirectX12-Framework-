@@ -84,7 +84,7 @@ float4 PSMain(PSInput input) : SV_TARGET
     float metallic = NorMettexture.Sample(g_sampler, uv).a;
     float3 albedo = AlbRoutexture.Sample(g_sampler, uv).rgb;
     float roughness = AlbRoutexture.Sample(g_sampler, uv).a;
-    float depth = Depthtexture.Sample(g_sampler, uv).r;
+    half depth = Depthtexture.Sample(g_sampler, uv).r;
     float4 projcoord;
     projcoord.xy = uv;
     projcoord.y = 1.0 - projcoord.y;

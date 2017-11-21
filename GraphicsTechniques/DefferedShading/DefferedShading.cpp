@@ -240,6 +240,7 @@ void initializeRender()
 	scissor.setup(0, windows.mWidth, 0, windows.mHeight);
 
 	camera.setRatio((float)windows.mWidth / (float)windows.mHeight);
+	camera.setBack(5000);
 	camera.updateViewProj();
 
 

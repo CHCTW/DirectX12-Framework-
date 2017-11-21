@@ -18,6 +18,7 @@ SamplerState g_sampler : register(s0);
 struct PSInput
 {
 	float4 position : SV_POSITION;
+    nointerpolation float3 viewlightpositin : LIGHTPOSITION;
     nointerpolation uint id : ID;
 };
 struct GSInput
@@ -36,7 +37,10 @@ void GSMain(point GSInput gin[1], inout TriangleStream<PSInput> stream)
 {
     PSInput res;
     res.id = gin[0].id;
+
     float4 vspaceposition = mul(camera.view, PointLightList[res.id].lightposition);
+    res.viewlightpositin = vspaceposition.xyz;
+
     float radius = PointLightList[res.id].lightradius;
     float3 left, right, top, bot;
     BoundsforAxis(float3(1, 0, 0), vspaceposition.xyz, radius, -camera.front, left, right);
@@ -87,8 +91,9 @@ void GSMain(point GSInput gin[1], inout TriangleStream<PSInput> stream)
     
 
     float3 normal = decode(GBufferTextures[0].Sample(g_sampler, uv).rg);
+   // normal = GBufferTextures[0].Sample(g_sampler, uv).rgb;
   //  return float4(1.0, 1.0, 0.0, 1.0);
- //   return float4(normal, 1.0);
+   // return float4(normal, 1.0);
     float metallic = GBufferTextures[2].Sample(g_sampler, uv).a;
     float3 albedo = GBufferTextures[1].Sample(g_sampler, uv).rgb;
     float roughness = GBufferTextures[1].Sample(g_sampler, uv).a;
@@ -100,28 +105,26 @@ void GSMain(point GSInput gin[1], inout TriangleStream<PSInput> stream)
     projcoord.z = depth;
     projcoord.w = 1.0f;
     float4 pos = mul(camera.projinverse, projcoord);
-//	pos.xyz = pos.xyz / pos.w;
-    pos = mul(camera.viewinverse, pos);
     pos.xyz = pos.xyz / pos.w;
 
 //	return pos;
-    float4 lightpostion = PointLightList[input.id].lightposition;
+   
 
 
     
-    float dist = length(lightpostion.xyz - pos.xyz);
+    float dist = length(input.viewlightpositin - pos.xyz);
     [branch]
     if (dist > PointLightList[input.id].lightradius)
         discard;
-  //   return float4(albedo, 0.0);
-
+   //  return float4(albedo, 0.0);
+  //  return float4(albedo, 0.0);
 
     float3 F0 = float3(0.04, 0.04, 0.04);
     F0 = lerp(F0, albedo, float3(metallic, metallic, metallic)); // use metalic value to get F
 
-    float3 N = normalize(normal);
-    float3 V = normalize(camera.eye - pos.xyz);
-    float3 L = normalize(lightpostion.xyz - pos.xyz);
+    float3 N = normal;
+    float3 V = normalize(-pos.xyz);
+    float3 L = normalize(input.viewlightpositin - pos.xyz);
     float3 H = normalize(L + V);
     float LH = max(dot(L, H), 0.0f);
     float NL = max(dot(L, N), 0.0f);

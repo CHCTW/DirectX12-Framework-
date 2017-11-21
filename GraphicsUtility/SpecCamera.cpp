@@ -24,7 +24,7 @@ void SpecCamera::updateViewProj()
 	mViewProjection.mViewInverse = glm::inverse(mViewProjection.mView);
 	mViewProjection.mProjection = glm::perspective(mFOV*(3.14159f) / 180.0f, mRatio, mFront, mBack);
 	mViewProjection.mProjInverse = glm::inverse(mViewProjection.mProjection);
-
+	mViewProjection.mViewInverseTranspose = glm::transpose(mViewProjection.mViewInverse);
 
 	glm::mat4 temp;
 	temp[0][0] = 0;

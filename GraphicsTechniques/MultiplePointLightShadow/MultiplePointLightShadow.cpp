@@ -50,6 +50,7 @@ struct IndirectDrawCmd
 	VertexBufferView uv;
 	VertexBufferView normal;
 	VertexBufferView tangent;
+	VertexBufferView bitangent;
 	IndexBufferView index;
 	unsigned int objectindex;
 	DrawIndexedArgument argument;
@@ -257,7 +258,7 @@ void initializeRender()
 	GeoDrawPipeline.createGraphicsPipeline(render.mDevice, geoDrawSig, geoDrawShader, gBufferFormat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(D3D12_CULL_MODE_FRONT), VERTEX_LAYOUT_TYPE_SPLIT_ALL);
 
 
-	geomCmdSig.mParameters.resize(7);
+	geomCmdSig.mParameters.resize(8);
 	geomCmdSig.mParameters[0].Type = D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW;
 	geomCmdSig.mParameters[0].VertexBuffer.Slot = 0;
 	geomCmdSig.mParameters[1].Type = D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW;
@@ -266,12 +267,14 @@ void initializeRender()
 	geomCmdSig.mParameters[2].VertexBuffer.Slot = 2;
 	geomCmdSig.mParameters[3].Type = D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW;
 	geomCmdSig.mParameters[3].VertexBuffer.Slot = 3;
-	geomCmdSig.mParameters[4].Type = D3D12_INDIRECT_ARGUMENT_TYPE_INDEX_BUFFER_VIEW;
-	geomCmdSig.mParameters[5].Type = D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT;
-	geomCmdSig.mParameters[5].Constant.Num32BitValuesToSet = 1; // first paramenter in root sig
-	geomCmdSig.mParameters[5].Constant.RootParameterIndex = 0; 
-	geomCmdSig.mParameters[5].Constant.DestOffsetIn32BitValues = 0;
-	geomCmdSig.mParameters[6].Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED;
+	geomCmdSig.mParameters[4].Type = D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW;
+	geomCmdSig.mParameters[4].VertexBuffer.Slot = 4;
+	geomCmdSig.mParameters[5].Type = D3D12_INDIRECT_ARGUMENT_TYPE_INDEX_BUFFER_VIEW;
+	geomCmdSig.mParameters[6].Type = D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT;
+	geomCmdSig.mParameters[6].Constant.Num32BitValuesToSet = 1; // first paramenter in root sig
+	geomCmdSig.mParameters[6].Constant.RootParameterIndex = 0; 
+	geomCmdSig.mParameters[6].Constant.DestOffsetIn32BitValues = 0;
+	geomCmdSig.mParameters[7].Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED;
 	geomCmdSig.initialize(render.mDevice, geoDrawSig);
 
 	//Light pass 
@@ -383,7 +386,7 @@ void loadAsset()
 
 
 	Assimp::Importer sponzaimport;
-	sponzaimport.ReadFile("Assets/sponza.obj", aiProcessPreset_TargetRealtime_Quality | aiProcess_FlipUVs);
+	sponzaimport.ReadFile("Assets/sponza.obj", aiProcess_CalcTangentSpace|aiProcess_Triangulate | aiProcess_FlipUVs);
 	aiScene const * sponzascene = nullptr;
 	sponzascene = sponzaimport.GetScene();
 
@@ -403,8 +406,8 @@ void loadAsset()
 	pointLightList.resize(pointLightNum);
 	pointLightBuffer.createStructeredBuffer(render.mDevice, srvheap, sizeof(PointLightData), pointLightNum, STRUCTERED_BUFFER_TYPE_READ);
 	PointLight light;
-	light.setPosition(0, 20, 0);
-	light.setRadius(150);
+	light.setPosition(0, 80, 0);
+	light.setRadius(200);
 	light.setColor(0.8, 0.8, 0.8);
 	light.setIntensity(1000);
 	pointLightList[0] = *light.getLightData();
@@ -432,7 +435,7 @@ void loadAsset()
 
 	
 
-	//create the first defualt texture, a 1*1 texture with value(0,0,1.0), which can use as defualt value for normal mapping that has no normal map
+	//create the first defualt texture, a 1*1 texture with value(0.5,0.5,1.0), which can use as defualt value for normal mapping that has no normal map
 	textureList.resize(maxtexturecount);
 	imageList.resize(maxtexturecount);
 
@@ -463,7 +466,18 @@ void loadAsset()
 		{
 		
 			aiString tex;
-			sponzascene->mMaterials[i]->GetTexture(aiTextureType_DIFFUSE, 0, &tex);
+			aiTextureMapMode mode = aiTextureMapMode_Wrap;
+			sponzascene->mMaterials[i]->GetTexture(aiTextureType_DIFFUSE, 0, &tex,nullptr,nullptr,nullptr,nullptr,&mode);
+			if (mode == aiTextureMapMode_Wrap)
+				cout << "A Wrap Texture" << endl;
+			if (mode == aiTextureMapMode_Clamp)
+				cout << "A Clamp Texture" << endl;
+			if (mode == aiTextureMapMode_Mirror)
+				cout << "A Mirror Texture" << endl;
+			if (mode == aiTextureMapMode_Decal)
+				cout << "A Decal Texture" << endl;
+			cout << mode << endl;
+			//sponzascene->mMaterials[i]->GetTexture
 			cout << "Diffuse: " << tex.C_Str() << endl;
 			string fullpath = Path + string(tex.C_Str());
 			cout << fullpath << endl;
@@ -493,7 +507,7 @@ void loadAsset()
 			imageList[texturecount].load(fullpath.c_str());
 			textureList[texturecount].CreateTexture(render.mDevice, DXGI_FORMAT_R8G8B8A8_UNORM, imageList[texturecount].mWidth, imageList[texturecount].mHeight);
 			textureList[texturecount].addSahderResorceView(srvheap);
-			mat.mChoose[MATERIALMAP_INDEX_NORMAL] = 0.0;
+			mat.mChoose[MATERIALMAP_INDEX_NORMAL] = 1.0;
 			mat.mTextureIndex[MATERIALMAP_INDEX_NORMAL] = texturecount + 1;// always +1 since 0 is default
 			++texturecount;
 		}

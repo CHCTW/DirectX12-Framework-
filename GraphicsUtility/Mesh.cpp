@@ -36,6 +36,7 @@ bool Mesh::loadMesh(aiMesh* assmesh, Render& render, CommandAllocator& cmdalloc,
 	mUVBuffer.createVertexBuffer(render.mDevice, assmesh->mNumVertices * 3 * sizeof(float), 3 * sizeof(float));
 	//if(assmesh->HasTangentsAndBitangents())
 	mTangentBuffer.createVertexBuffer(render.mDevice, assmesh->mNumVertices * 3 * sizeof(float), 3 * sizeof(float));
+	mBiTangentBuffer.createVertexBuffer(render.mDevice, assmesh->mNumVertices * 3 * sizeof(float), 3 * sizeof(float));
 	mIndexBuffer.createIndexBuffer(render.mDevice, sizeof(unsigned int) * 3 * assmesh->mNumFaces);
 	std::vector<unsigned int> indexdata;
 	indexdata.resize(assmesh->mNumFaces * 3);
@@ -75,6 +76,11 @@ bool Mesh::loadMesh(aiMesh* assmesh, Render& render, CommandAllocator& cmdalloc,
 		cmdlist.resourceBarrier(mTangentBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
 		cmdlist.updateBufferData(mTangentBuffer, assmesh->mTangents, assmesh->mNumVertices * 3 * sizeof(float));
 		cmdlist.resourceBarrier(mTangentBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+
+		cmdlist.resourceBarrier(mBiTangentBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
+		cmdlist.updateBufferData(mBiTangentBuffer, assmesh->mBitangents, assmesh->mNumVertices * 3 * sizeof(float));
+		cmdlist.resourceBarrier(mBiTangentBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+
 	}
 	cmdlist.resourceBarrier(mIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
 	cmdlist.updateBufferData(mIndexBuffer, indexdata.data(), assmesh->mNumFaces * 3 * sizeof(unsigned int));
@@ -102,6 +108,10 @@ IndirectMeshData Mesh::getIndirectData()
 		data.mUV = mUVBuffer.mVertexBuffer;
 	if (mTangentBuffer.mResource)
 		data.mTangent = mTangentBuffer.mVertexBuffer;
+
+	if (mBiTangentBuffer.mResource)
+		data.mBiTangent = mBiTangentBuffer.mVertexBuffer;
+
 	data.mIndex = mIndexBuffer.mIndexBuffer;
 	data.startIndex = startIndex;
 	data.indexCount = indexCount;
@@ -117,5 +127,6 @@ void Mesh::release()
 	mUVBuffer.release();
 	mNormalBuffer.release();
 	mTangentBuffer.release();
+	mBiTangentBuffer.release();
 	mIndexBuffer.release();
 }
