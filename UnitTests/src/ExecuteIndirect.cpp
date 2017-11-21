@@ -266,6 +266,8 @@ void loadAsset()
 			{
 				Transform t;
 				t.setPosition(x, y, z);
+				t.setScale(2, 1, 3);
+				t.addAngle(glm::vec3(0, 45, 45));
 				t.CacNewTransform();
 				instanceInf[i*ynum*znum + j*znum + k].transform = t.getMatrices();
 				instanceInf[i*ynum*znum + j*znum + k].max = max;

@@ -138,7 +138,7 @@ void initializeRender()
 //	system("pause");
 
 	render.initialize();
-	RenderTargetFormat retformat(true);
+	RenderTargetFormat retformat;
 	render.createSwapChain(windows, swapChainCount, retformat);
 	cmdalloc.initialize(render.mDevice);
 	cmdlist.initial(render.mDevice, cmdalloc);
@@ -742,7 +742,7 @@ void update()
 	cmdlist.bindRenderTarget(render.mSwapChainRenderTarget[frameIndex]);
 	const float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	cmdlist.clearRenderTarget(render.mSwapChainRenderTarget[frameIndex], clearColor);
-	cmdlist.clearDepthStencil(render.mSwapChainRenderTarget[frameIndex]);
+	//cmdlist.clearDepthStencil(render.mSwapChainRenderTarget[frameIndex]);
 
 	cmdlist.bindPipeline(lightPipeline);
 	cmdlist.bindGraphicsRootSigature(lightDrawSig);
