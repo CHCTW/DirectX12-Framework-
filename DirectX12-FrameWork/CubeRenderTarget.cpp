@@ -28,6 +28,8 @@ bool CubeRenderTarget::createCubeRenderTargets(ID3D12Device* device, UINT width,
 		depthStencilDesc.Format = depthforamt;
 		if (depthStencilDesc.Format == DXGI_FORMAT_R32_TYPELESS)
 			depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
+		if (depthStencilDesc.Format == DXGI_FORMAT_R16_TYPELESS)
+			depthStencilDesc.Format = DXGI_FORMAT_D16_UNORM;
 		depthStencilDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
 		depthStencilDesc.Flags = D3D12_DSV_FLAG_NONE;
 		depthStencilDesc.Texture2DArray.FirstArraySlice = 0;
@@ -86,6 +88,8 @@ bool CubeRenderTarget::createCubeRenderTargets(ID3D12Device* device, UINT width,
 		depthStencilDesc.Format = depthforamt;
 		if (depthStencilDesc.Format == DXGI_FORMAT_R32_TYPELESS)
 			depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
+		if (depthStencilDesc.Format == DXGI_FORMAT_R16_TYPELESS)
+			depthStencilDesc.Format = DXGI_FORMAT_D16_UNORM;
 		depthStencilDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
 		depthStencilDesc.Flags = D3D12_DSV_FLAG_NONE;
 		depthStencilDesc.Texture2DArray.MipSlice = 0;

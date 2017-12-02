@@ -69,9 +69,9 @@ float3 normalMapCal(in float rate,in float3 objnormal,in float3 tangent,in float
 }
 struct GBufferFormat
 {
-    half2 normal : COLOR0;
-    float4 albedorough : COLOR1;
-    float4 emmermetal : COLOR2;
+    half2 normal : SV_Target0;
+    float4 albedorough : SV_Target1;
+    float4 emmermetal : SV_Target2;
 };
 
 
@@ -105,21 +105,19 @@ void BoundsforAxis(in float3 axis, in float3 center, float radius, float near, o
     float tsquare = dot(c, c) - radius * radius;
     bool cameraindside = (tsquare <= 0.0);
 
-    float2 bounds[2];
-    float2 v;
-    if (tsquare <= 0.0)
-        v = float2(0.0, 0.0);
-    else
+    
+    float2 v = float2(0.0, 0.0);
+    if (tsquare > 0.0)
         v = float2(sqrt(tsquare), radius) / length(c);
     bool clipsphere = (c.y + radius >= near);
-
+    float2 bounds[2] = { float2(1.0, 1.0), float2(1.0, 1.0) };
     float k = sqrt(radius * radius - (near - c.y) * (near - c.y));
- //   [unroll]
+    [unroll]
     for (int i = 0; i < 2; ++i)
     {
     
-        if (!cameraindside)
-            bounds[i] = mul(float2x2(v.x, -v.y, v.y, v.x), c) * v.x;
+        //if (!cameraindside)
+        bounds[i] = mul(float2x2(v.x, -v.y, v.y, v.x), c) * v.x;
         bool clipbound = (cameraindside || (bounds[i].y > near));
         if (clipsphere && clipbound)
             bounds[i] = float2(c.x + k, near);

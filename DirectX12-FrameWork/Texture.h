@@ -16,7 +16,7 @@ public:
 
 	
 	void addSahderResorceView(DescriptorHeap& heap);
-	void addDepgthStencilView(DescriptorHeap& heap);
+	void addDepgthStencilView(DescriptorHeap& heap,UINT level  = 0);
 	void addRenderTargetView(DescriptorHeap& heap);
 	void addUnorderedAccessView(DescriptorHeap& heap);
 	UINT mByteSize;

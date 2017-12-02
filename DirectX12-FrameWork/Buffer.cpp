@@ -65,7 +65,7 @@ bool Buffer::createVertexBuffer(ID3D12Device* device,UINT buffersize, UINT strid
 	mVertexBuffer.BufferLocation = mResource->GetGPUVirtualAddress();
 	mVertexBuffer.StrideInBytes = strideSize;
 	mVertexBuffer.SizeInBytes = buffersize;
-	mType = STRUCTERED;
+	mType = VERTEX;
 	mState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
 	mHeapType = heaptype;
 	mBufferSize = buffersize;

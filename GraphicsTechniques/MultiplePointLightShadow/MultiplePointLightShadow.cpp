@@ -60,7 +60,14 @@ struct IndirectPointLightDrawCmd
 	unsigned int lightindex;
 	DrawArgument argument;
 };
-
+struct IndirecShadowDrawCmd  // only need position
+{
+	VertexBufferView position;
+	IndexBufferView index;
+	unsigned int objectindex;
+	unsigned int lightindexoffset;
+	DrawIndexedArgument argument;
+};
 
 CommandSignature geomCmdSig;
 RootSignature geoCmdGenRootSig;
@@ -96,13 +103,22 @@ DescriptorHeap samplerheap;
 Sampler matsampler(D3D12_FILTER_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_WRAP, D3D12_TEXTURE_ADDRESS_MODE_WRAP);
 Sampler gbuffersampler;
 RenderTarget GBuffer;
-
+vector<PointLight> pointLights;
+vector<float> vel;
 CommandSignature lightCmdSig;
 //RootSignature geoCmdGenRootSig;
 RootSignature lightDrawSig;
 Pipeline lightPipeline;
 Buffer shadowlightlistBuffer;
-
+Buffer shadowIndirectCmdBuffer;
+CubeRenderTarget cubeShadowMaps;
+unsigned int shadowwidth = 128;
+unsigned int shadowheight = 128;
+RootSignature shadowRootSig;
+CommandSignature shadowCmdSig;
+Pipeline shadowpPipeline;
+ViewPort shadowviewport;
+Scissor shadowscissor;
 // Thourght: each objects is one basic draw call, each object don't have any information about material, matrics, mesh
 // it only know the index in the list, 
 //
@@ -134,7 +150,7 @@ void initializeRender()
 
 	//Camera cam;
 
-	cout << sizeof(IndirectDrawCmd) << endl;
+	cout << sizeof(IndirecShadowDrawCmd) << endl;
 //	system("pause");
 
 	render.initialize();
@@ -179,8 +195,8 @@ void initializeRender()
 
 
 	geoCmdGenRootSig.mParameters.resize(4);
-	geoCmdGenRootSig.mParameters[0].mType = PARAMETERTYPE_UAV; // indirect command + shadow light list
-	geoCmdGenRootSig.mParameters[0].mResCounts = 2;
+	geoCmdGenRootSig.mParameters[0].mType = PARAMETERTYPE_UAV; // indirect command + shadow light list + shadow command
+	geoCmdGenRootSig.mParameters[0].mResCounts = 3;
 	geoCmdGenRootSig.mParameters[0].mBindSlot = 0;
 	geoCmdGenRootSig.mParameters[0].mResource = &indirectGeoCmdBuffer;
 	geoCmdGenRootSig.mParameters[1].mType = PARAMETERTYPE_SRV; //objct + mac + mesh
@@ -213,11 +229,11 @@ void initializeRender()
 
 
 	geoDrawSig.mParameters.resize(7);
-	geoDrawSig.mParameters[0].mType = PARAMETERTYPE_ROOTCONSTANT;
+	geoDrawSig.mParameters[0].mType = PARAMETERTYPE_ROOTCONSTANT; // object index
 	geoDrawSig.mParameters[0].mResCounts = 1;
 	geoDrawSig.mParameters[0].mBindSlot = 1;
 	geoDrawSig.mParameters[0].mVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
-	geoDrawSig.mParameters[1].mType = PARAMETERTYPE_SRV; // objct + mac + mesh +mat
+	geoDrawSig.mParameters[1].mType = PARAMETERTYPE_SRV; // objct 
 	geoDrawSig.mParameters[1].mResCounts = 1;
 	geoDrawSig.mParameters[1].mBindSlot = 0;
 	geoDrawSig.mParameters[1].mResource = &objectBuffer;
@@ -253,6 +269,7 @@ void initializeRender()
 
 	ShaderSet geoDrawShader;
 	geoDrawShader.shaders[VS].load("Shaders/MultipleShadowGeom.hlsl", "VSMain", VS);
+//	geoDrawShader.shaders[GS].load("Shaders/MultipleShadowGeom.hlsl", "GSMain", GS);
 	geoDrawShader.shaders[PS].load("Shaders/MultipleShadowGeom.hlsl", "PSMain", PS);
 
 	GeoDrawPipeline.createGraphicsPipeline(render.mDevice, geoDrawSig, geoDrawShader, gBufferFormat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(D3D12_CULL_MODE_FRONT), VERTEX_LAYOUT_TYPE_SPLIT_ALL);
@@ -277,10 +294,68 @@ void initializeRender()
 	geomCmdSig.mParameters[7].Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED;
 	geomCmdSig.initialize(render.mDevice, geoDrawSig);
 
+
+	// shadow pass
+
+
+	shadowRootSig.mParameters.resize(5);
+	shadowRootSig.mParameters[0].mType = PARAMETERTYPE_ROOTCONSTANT; // obj index + shaddow light index offset
+	shadowRootSig.mParameters[0].mResCounts = 2;
+	shadowRootSig.mParameters[0].mBindSlot = 0;
+	shadowRootSig.mParameters[0].mVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+	shadowRootSig.mParameters[1].mType = PARAMETERTYPE_SRV; // objct 
+	shadowRootSig.mParameters[1].mResCounts = 1;
+	shadowRootSig.mParameters[1].mBindSlot = 0;
+	shadowRootSig.mParameters[1].mResource = &objectBuffer;
+	shadowRootSig.mParameters[1].mVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+	shadowRootSig.mParameters[2].mType = PARAMETERTYPE_SRV; // matrices
+	shadowRootSig.mParameters[2].mResCounts = 1;
+	shadowRootSig.mParameters[2].mBindSlot = 1;
+	shadowRootSig.mParameters[2].mResource = &matricesBuffer;
+	shadowRootSig.mParameters[2].mVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+	shadowRootSig.mParameters[3].mType = PARAMETERTYPE_SRV; // shadow light list 
+	shadowRootSig.mParameters[3].mResCounts = 1;
+	shadowRootSig.mParameters[3].mBindSlot = 2;
+	shadowRootSig.mParameters[3].mResource = &shadowlightlistBuffer;
+	shadowRootSig.mParameters[3].mVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+	shadowRootSig.mParameters[4].mType = PARAMETERTYPE_SRV; // point light buffer
+	shadowRootSig.mParameters[4].mResCounts = 1;
+	shadowRootSig.mParameters[4].mBindSlot = 3;
+	shadowRootSig.mParameters[4].mResource = &pointLightBuffer;
+	shadowRootSig.mParameters[4].mVisibility = D3D12_SHADER_VISIBILITY_GEOMETRY;
+	shadowRootSig.initialize(render.mDevice);
+
+
+
+
+	shadowCmdSig.mParameters.resize(4);
+	shadowCmdSig.mParameters[0].Type = D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW;
+	shadowCmdSig.mParameters[0].VertexBuffer.Slot = 0;
+	shadowCmdSig.mParameters[1].Type = D3D12_INDIRECT_ARGUMENT_TYPE_INDEX_BUFFER_VIEW;
+	shadowCmdSig.mParameters[2].Type = D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT;
+	shadowCmdSig.mParameters[2].Constant.Num32BitValuesToSet = 2; // first paramenter in root sig
+	shadowCmdSig.mParameters[2].Constant.RootParameterIndex = 0;
+	shadowCmdSig.mParameters[2].Constant.DestOffsetIn32BitValues = 0;
+	shadowCmdSig.mParameters[3].Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED;
+	shadowCmdSig.initialize(render.mDevice, shadowRootSig);
+
+
+	ShaderSet ShadowShader;
+	ShadowShader.shaders[VS].load("Shaders/MultiPointLightsCubeShadowMap.hlsl", "VSMain", VS);
+	ShadowShader.shaders[GS].load("Shaders/MultiPointLightsCubeShadowMap.hlsl", "GSMain", GS);
+	ShadowShader.shaders[PS].load("Shaders/MultiPointLightsCubeShadowMap.hlsl", "PSMain", PS);
+
+	cubeShadowMaps.createCubeRenderTargets(render.mDevice, shadowwidth, shadowheight, pointLightNum, 1, CUBE_RENDERTAERGET_TYPE_DEPTH, dsvheap, srvheap, D3D12_RESOURCE_FLAG_NONE, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R16_TYPELESS);
+	RenderTargetFormat shadowformat(0, nullptr, true, true, DXGI_FORMAT_R16_TYPELESS);
+	shadowpPipeline.createGraphicsPipeline(render.mDevice, shadowRootSig, ShadowShader, shadowformat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(), VERTEX_LAYOUT_TYPE_SPLIT_ALL);
+	//shadowpPipeline.createGraphicsPipeline()
+
+	shadowviewport.setup(0, 0, (float)shadowwidth, (float)shadowheight);
+	shadowscissor.setup(0, shadowwidth, 0, shadowheight);
 	//Light pass 
 
 
-	lightDrawSig.mParameters.resize(5);
+	lightDrawSig.mParameters.resize(6);
 	lightDrawSig.mParameters[0].mType = PARAMETERTYPE_ROOTCONSTANT;  // light index
 	lightDrawSig.mParameters[0].mResCounts = 1;
 	lightDrawSig.mParameters[0].mBindSlot = 1;
@@ -302,6 +377,12 @@ void initializeRender()
 	lightDrawSig.mParameters[4].mBindSlot = 0;
 	lightDrawSig.mParameters[4].mSampler = &gbuffersampler;
 	lightDrawSig.mParameters[4].mVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	lightDrawSig.mParameters[5].mType = PARAMETERTYPE_SRV;
+	lightDrawSig.mParameters[5].mResCounts = 1;
+	lightDrawSig.mParameters[5].mBindSlot = 5;
+	lightDrawSig.mParameters[5].mResource = &cubeShadowMaps.mDepthBuffer[0];
+	lightDrawSig.mParameters[5].mVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
 	lightDrawSig.initialize(render.mDevice);
 
 	ShaderSet lightshader;
@@ -400,24 +481,32 @@ void loadAsset()
 	// continuous create buffer and register in the heap
 	indirectGeoCmdBuffer.createStructeredBuffer(render.mDevice, srvheap, sizeof(IndirectDrawCmd), objectList.size(), STRUCTERED_BUFFER_TYPE_READ_WRITE, true);
 	shadowlightlistBuffer.createStructeredBuffer(render.mDevice, srvheap, sizeof(unsigned int), objectList.size()*pointLightNum+1, STRUCTERED_BUFFER_TYPE_READ_WRITE);
+	shadowIndirectCmdBuffer.createStructeredBuffer(render.mDevice, srvheap, sizeof(IndirecShadowDrawCmd), objectList.size(), STRUCTERED_BUFFER_TYPE_READ_WRITE, true);
 	// use the first one as a counter, but since countr doesn't offer add over 1 in one time, just need to use interlock
 
 	// light data 
+	vel.resize(pointLightNum);
+	pointLights.resize(pointLightNum);
 	pointLightList.resize(pointLightNum);
 	pointLightBuffer.createStructeredBuffer(render.mDevice, srvheap, sizeof(PointLightData), pointLightNum, STRUCTERED_BUFFER_TYPE_READ);
 	PointLight light;
-	light.setPosition(0, 80, 0);
-	light.setRadius(200);
-	light.setColor(0.8, 0.8, 0.8);
-	light.setIntensity(1000);
-	pointLightList[0] = *light.getLightData();
+	//for(int i = 0 ; i < pointLightNum ; ++i)
+	pointLights[0].setPosition(0, 30, 0);
+	pointLights[0].setRadius(50);
+	pointLights[0].setColor(0.8, 0.8, 0.8);
+	pointLights[0].setIntensity(100);
+	vel[0] = -10;
+//	light.update();
+	pointLightList[0] = *pointLights[0].getLightData();
 
 
-	light.setPosition(-15, 15, -50);
-	light.setRadius(30);
-	light.setIntensity(300);
-	light.setColor(0.8, 0.6, 0.1);
-	pointLightList[1] = *light.getLightData();
+	pointLights[1].setPosition(-40, 60, -35);
+	pointLights[1].setRadius(40);
+	pointLights[1].setIntensity(300);
+	pointLights[1].setColor(0.8, 0.6, 0.1);
+//	light.update();
+	vel[1] = -10;
+	pointLightList[1] = *pointLights[1].getLightData();
 
 
 
@@ -606,6 +695,8 @@ void loadAsset()
 	cmdlist.resourceBarrier(normalBuffer.mResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 	cmdlist.resourceBarrier(indexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
 	cmdlist.resourceBarrier(indirectGeoCmdBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+	cmdlist.resourceBarrier(shadowIndirectCmdBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+
 
 	// start to load image data to texture
 	cmdlist.resourceBarrier(DefualtTexture, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
@@ -630,6 +721,8 @@ void loadAsset()
 
 	cmdlist.resourceBarrier(shadowlightlistBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,  D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
+	cmdlist.cubeDepthBufferBarrier(cubeShadowMaps, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
 	render.waitCommandsDone();
@@ -639,6 +732,12 @@ void loadAsset()
 void releaseRender()
 {
 
+	shadowpPipeline.release();
+	shadowCmdSig.release();
+	shadowRootSig.realease();
+	cubeShadowMaps.release();
+
+	shadowIndirectCmdBuffer.release();
 	shadowlightlistBuffer.release();
 
 	lightCmdSig.release();
@@ -693,6 +792,23 @@ void update()
 
 	std::chrono::duration<float> delta = t - pre;
 	pre = t;
+
+
+
+	float dir = -1;
+	for (int i = 0; i < pointLightNum; ++i)
+	{
+		
+		pointLights[i].addPosition(0, 0, vel[i]*delta.count());
+		if (abs(pointLights[i].getLightData()->mPosition.z) > 120.0f)
+			vel[i] *= -1;
+	//	pointLights[0].setRadius(50);
+	//	pointLights[0].setColor(0.8, 0.8, 0.8);
+	//	pointLights[0].setIntensity(100);
+		//	light.update();
+		pointLightList[i] = *pointLights[i].getLightData();
+	}
+
 //	cout << delta.count() << endl;
 
 	gamecamera.updateViewProj();
@@ -703,18 +819,48 @@ void update()
 	cmdlist.bindDescriptorHeaps(&srvheap,&samplerheap);
 
 
+
+
+	
+
+
+
+
+
+
+	cmdlist.resourceBarrier(pointLightBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
 	cmdlist.resourceBarrier(indirectGeoCmdBuffer, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT, D3D12_RESOURCE_STATE_COPY_DEST); //reset count
+	cmdlist.resourceBarrier(shadowIndirectCmdBuffer, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT, D3D12_RESOURCE_STATE_COPY_DEST);
 	cmdlist.setCounterforStructeredBuffer(indirectGeoCmdBuffer, 0);
+	cmdlist.setCounterforStructeredBuffer(shadowIndirectCmdBuffer, 0);
+	cmdlist.updateBufferData(pointLightBuffer, pointLightList.data(), pointLightList.size() * sizeof(PointLightData));
 	cmdlist.resourceBarrier(indirectGeoCmdBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	cmdlist.resourceBarrier(shadowIndirectCmdBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	cmdlist.resourceBarrier(pointLightBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 	cmdlist.resourceBarrier(shadowlightlistBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 	cmdlist.bindComputeRootSigature(geoCmdGenRootSig);
-	cmdlist.dispatch((objectList.size() + 255) % 256, 1, 1);
+	cmdlist.dispatch(objectList.size(), 1, 1);
 	cmdlist.resourceBarrier(indirectGeoCmdBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
 	cmdlist.resourceBarrier(shadowlightlistBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	cmdlist.resourceBarrier(shadowIndirectCmdBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+
+	cmdlist.setTopolgy(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// shadow pass
+	cmdlist.bindPipeline(shadowpPipeline);
+	cmdlist.bindGraphicsRootSigature(shadowRootSig);
+	cmdlist.setViewPort(shadowviewport);
+	cmdlist.setScissor(shadowscissor);
+	cmdlist.cubeDepthBufferBarrier(cubeShadowMaps, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	cmdlist.bindCubeRenderTarget(cubeShadowMaps, 0, 0);
+	cmdlist.clearcubeDepthStencil(cubeShadowMaps, 0, 0);
+
+	cmdlist.executeIndirect(shadowCmdSig, objectList.size(), shadowIndirectCmdBuffer, 0, shadowIndirectCmdBuffer, shadowIndirectCmdBuffer.mBufferSize - sizeof(UINT));
 
 
-
+	cmdlist.cubeDepthBufferBarrier(cubeShadowMaps, D3D12_RESOURCE_STATE_DEPTH_WRITE,D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	// G Pass
 	cmdlist.bindPipeline(pipeline);
 	cmdlist.bindGraphicsRootSigature(rootsig);
 	cmdlist.setViewPort(viewport);
@@ -730,7 +876,7 @@ void update()
 	cmdlist.clearDepthStencil(GBuffer);
 
 
-	cmdlist.setTopolgy(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
 
 	cmdlist.bindPipeline(GeoDrawPipeline);
 	cmdlist.bindGraphicsRootSigature(geoDrawSig);
@@ -738,6 +884,13 @@ void update()
 	cmdlist.renderTargetBarrier(GBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET,D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 	cmdlist.depthBufferBarrier(GBuffer, D3D12_RESOURCE_STATE_DEPTH_WRITE,D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
+
+
+
+
+
+
+	// LightPass
 	cmdlist.renderTargetBarrier(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	cmdlist.bindRenderTarget(render.mSwapChainRenderTarget[frameIndex]);
 	const float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };

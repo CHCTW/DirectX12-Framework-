@@ -35,6 +35,7 @@ public:
 	void addZoom(float zoom);
 	void update();
 	void setPosition(float x,float y,float z);
+	void addPosition(float x, float y, float z);
 	void setRadius(float r);
 	void setIntensity(float i);
 	void setColor(float r, float g, float b);

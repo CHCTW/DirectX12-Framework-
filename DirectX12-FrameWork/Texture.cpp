@@ -421,7 +421,7 @@ void Texture::addSahderResorceView(DescriptorHeap& heap)
 	mSRV = heap.addResource(SRV, mResource, &srvDesc, nullptr);
 }
 
-void Texture::addDepgthStencilView(DescriptorHeap& heap)
+void Texture::addDepgthStencilView(DescriptorHeap& heap, UINT level)
 {
 	D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilDesc = {};
 
@@ -433,12 +433,26 @@ void Texture::addDepgthStencilView(DescriptorHeap& heap)
 		depthStencilDesc.Format = DXGI_FORMAT_D16_UNORM;
 	
 	depthStencilDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+//	depthStencilDesc.Texture2D.MipSlice = level;
 	if (mCubeMap || textureDesc.DepthOrArraySize > 1)
 	{
 		depthStencilDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
+	//	depthStencilDesc.Texture2DArray.MipSlice = level;
+		depthStencilDesc.Texture2DArray.FirstArraySlice = 0;
+		depthStencilDesc.Texture2DArray.ArraySize = textureDesc.DepthOrArraySize;
 	//	depthStencilDesc.
 	}
 	depthStencilDesc.Flags = D3D12_DSV_FLAG_NONE;
+
+
+
+
+
+
+
+
+
+
 	mDSV = heap.addResource(DSV, mResource, &depthStencilDesc, nullptr);
 }
 void Texture::addRenderTargetView(DescriptorHeap& heap)

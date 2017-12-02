@@ -10,8 +10,11 @@ public:
 	Handles mSRV;
 	Handles mUAV;
 	Handles mCBV;
+	// going move these to texture class, also make it array so it can handle lod rendertarget 
 	Handles mRTV;
 	Handles mDSV;
+	//*********************************************************//
+
 	D3D12_GPU_VIRTUAL_ADDRESS GpuAddress;
 	void* CpuMapAddress;
 	Resource::Resource():mResource(nullptr),mUploadBuffer(nullptr), CpuMapAddress(nullptr)

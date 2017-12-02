@@ -32,5 +32,8 @@
     <FxCompile Include="..\..\Shaders\MultiShadowPointLight.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
+    <FxCompile Include="..\..\Shaders\MultiPointLightsCubeShadowMap.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

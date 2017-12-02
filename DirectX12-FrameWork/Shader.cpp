@@ -13,14 +13,25 @@ bool Shader::load(char* filepath, char* entryPoint, ShaderType type)
 	std::wstring strins;
 	strins.resize(256);
 	WCHAR wsz[256];
+	ID3DBlob* error;
 	swprintf(wsz,256, L"%S", filepath);
 #if defined(_DEBUG)
 	// Enable better shader debugging with the graphics debugging tools.
 	UINT compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION| D3DCOMPILE_ENABLE_UNBOUNDED_DESCRIPTOR_TABLES| D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR;
 #else
-	UINT compileFlags = D3DCOMPILE_ENABLE_UNBOUNDED_DESCRIPTOR_TABLES;
+	UINT compileFlags = D3DCOMPILE_ENABLE_UNBOUNDED_DESCRIPTOR_TABLES| D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR;
 #endif
-	ThrowIfFailed(D3DCompileFromFile(wsz, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, entryPoint, Targetchars[type], compileFlags, 0, &mShader, nullptr));
+	HRESULT hr = D3DCompileFromFile(wsz, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, entryPoint, Targetchars[type], compileFlags, 0, &mShader, &error);
+	
+	if (error)
+	{
+		OutputDebugStringA(reinterpret_cast<const char*>(error->GetBufferPointer()));
+		error->Release();
+	}
+
+	ThrowIfFailed(hr);
+
+
 	
 	ThrowIfFailed(D3DReflect(mShader->GetBufferPointer(), mShader->GetBufferSize(), IID_PPV_ARGS(&mReflector)));
 

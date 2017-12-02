@@ -54,6 +54,16 @@ void PointLight::setColor(float r, float g, float b)
 }
 PointLightData const * PointLight::getLightData()
 {
+	glm::vec3 temp = glm::vec3(mLightData.mPosition.x, mLightData.mPosition.y, mLightData.mPosition.z);
+		mLightData.mView[0] = glm::lookAt(temp, temp + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0));
+	mLightData.mView[1] = glm::lookAt(temp, temp + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0));
+
+	mLightData.mView[2] = glm::lookAt(temp, temp + glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, 0.0, 1.0)); //z is correct
+	mLightData.mView[3] = glm::lookAt(temp, temp + glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, -1.0));
+
+	mLightData.mView[4] = glm::lookAt(temp, temp + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0));
+	mLightData.mView[5] = glm::lookAt(temp, temp + glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, -1.0, 0.0));
+
 	return &mLightData;
 }
 
@@ -62,3 +72,7 @@ void PointLight::setPosition(float x, float y, float z)
 	mLightData.mPosition = glm::vec4(x, y, z, 1.0);
 }
 
+void PointLight::addPosition(float x, float y, float z)
+{
+	mLightData.mPosition += glm::vec4(x, y, z, 0.0);
+}

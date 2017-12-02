@@ -14,11 +14,13 @@ Texture2D GBufferTextures[4] : register(t0);
 //  unused + metlaic
 //  depth
 StructuredBuffer<PointLightData> PointLightList : register(t4);
+TextureCubeArray shadowmaps : register(t5);
 SamplerState g_sampler : register(s0);
 struct PSInput
 {
 	float4 position : SV_POSITION;
-    nointerpolation float3 viewlightpositin : LIGHTPOSITION;
+    nointerpolation float3 viewlightpositin : VIEWLIGHTPOSITION;
+    nointerpolation float3 worldlightpositin : WORLDLIGHTPOSITION;
     nointerpolation uint id : ID;
 };
 struct GSInput
@@ -38,11 +40,14 @@ void GSMain(point GSInput gin[1], inout TriangleStream<PSInput> stream)
     PSInput res;
     res.id = gin[0].id;
 
+    res.worldlightpositin = PointLightList[res.id].lightposition.xyz;
     float4 vspaceposition = mul(camera.view, PointLightList[res.id].lightposition);
     res.viewlightpositin = vspaceposition.xyz;
+    
 
     float radius = PointLightList[res.id].lightradius;
-    float3 left, right, top, bot;
+    float def = 1.0;
+    float3 left = def.xxx, right = def.xxx, top = def.xxx, bot = def.xxx;
     BoundsforAxis(float3(1, 0, 0), vspaceposition.xyz, radius, -camera.front, left, right);
     BoundsforAxis(float3(0, 1, 0), vspaceposition.xyz, radius, -camera.front, bot, top);
 
@@ -82,6 +87,16 @@ void GSMain(point GSInput gin[1], inout TriangleStream<PSInput> stream)
 
 
 }
+static const uint samplecount = 20;
+static float3 pcfs[20] =
+{
+    float3(1, 1, 1), float3(1, -1, 1), float3(-1, -1, 1), float3(-1, 1, 1),
+   float3(1, 1, -1), float3(1, -1, -1), float3(-1, -1, -1), float3(-1, 1, -1),
+   float3(1, 1, 0), float3(1, -1, 0), float3(-1, -1, 0), float3(-1, 1, 0),
+   float3(1, 0, 1), float3(-1, 0, 1), float3(1, 0, -1), float3(-1, 0, -1),
+   float3(0, 1, 1), float3(0, -1, 1), float3(0, -1, -1), float3(0, 1, -1)
+};
+
     float4 PSMain(PSInput input) : SV_TARGET
 {
 	//input.position.x/1920
@@ -105,17 +120,44 @@ void GSMain(point GSInput gin[1], inout TriangleStream<PSInput> stream)
     projcoord.z = depth;
     projcoord.w = 1.0f;
     float4 pos = mul(camera.projinverse, projcoord);
-    pos.xyz = pos.xyz / pos.w;
-
-//	return pos;
-   
-
-
+    pos.xyzw /= pos.w;
     
+
+    float4 wpos = mul(camera.viewinverse, pos);
+    wpos.xyz = wpos.xyz / wpos.w;
+
+//	return wpos;
     float dist = length(input.viewlightpositin - pos.xyz);
-    [branch]
     if (dist > PointLightList[input.id].lightradius)
         discard;
+
+
+    //return pos;
+    float3 shadowcood = PointLightList[input.id].lightposition.xyz - wpos.xyz;
+    float lightdepth = shadowmaps.Sample(g_sampler, float4(shadowcood, input.id)).r * PointLightList[input.id].lightradius;
+    float pixdepth = length(shadowcood);
+    float shadow = 0.0f;
+    float diskradius = 0.1;
+    float test = (pixdepth < lightdepth + 0.5f);
+
+
+
+  //  [unroll]
+    for (uint i = 0; i < samplecount; ++i)
+    {
+        lightdepth = shadowmaps.Sample(g_sampler, float4(shadowcood+pcfs[i], input.id)).r;
+        lightdepth *= PointLightList[input.id].lightradius;
+        if (pixdepth > (lightdepth + 0.1f))
+            shadow += 1.0;
+
+
+    }
+
+  //  test = 1 - (shadow / (float) samplecount);
+
+    
+   
+
    //  return float4(albedo, 0.0);
   //  return float4(albedo, 0.0);
 
@@ -158,7 +200,7 @@ void GSMain(point GSInput gin[1], inout TriangleStream<PSInput> stream)
   //  att = att * att;
     //return float4(att, att, att, 1.0);
 
-    float3 final = (diff + spec) * NL * PointLightList[input.id].lightcolor.xyz * att * PointLightList[input.id].lightintensity;
+    float3 final = (diff + spec) * NL * PointLightList[input.id].lightcolor.xyz * att * PointLightList[input.id].lightintensity * test;
     
     final = final / (1 + final); // tone mapping
     final = pow(final, 1 / 2.2f);

@@ -115,5 +115,8 @@
     <FxCompile Include="..\Shaders\LightFunctions.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
+    <FxCompile Include="..\Shaders\Math.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

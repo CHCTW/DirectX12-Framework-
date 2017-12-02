@@ -131,7 +131,7 @@ void initializeRender()
 	shadowViewport.setup(0.0f, 0.0f, (float)cubeWidth, (float)cubeHeight);
 	shadowScissor.setup(0.0f, (float)cubeWidth, 0.0f, (float)cubeHeight);
 
-	cubeShadowMap.createCubeRenderTargets(render.mDevice, cubeWidth, cubeHeight,1,1, CUBE_RENDERTAERGET_TYPE_DEPTH, dsvheap, srvheap);
+	cubeShadowMap.createCubeRenderTargets(render.mDevice, cubeWidth, cubeHeight,1,1, CUBE_RENDERTAERGET_TYPE_DEPTH, dsvheap, srvheap,D3D12_RESOURCE_FLAG_NONE, DXGI_FORMAT_R8G8B8A8_UNORM,DXGI_FORMAT_R16_TYPELESS);
 
 
 	sampler.createSampler(samplerheap);
@@ -202,7 +202,7 @@ void initializeRender()
 	shadowshaderset.shaders[VS].load("Shaders/CubeShadowMap.hlsl", "VSMain", VS);
 	shadowshaderset.shaders[PS].load("Shaders/CubeShadowMap.hlsl", "PSMain", PS);
 	shadowshaderset.shaders[GS].load("Shaders/CubeShadowMap.hlsl", "GSMain", GS);
-	RenderTargetFormat shadowformat(0, nullptr, true);
+	RenderTargetFormat shadowformat(0, nullptr, true,true, DXGI_FORMAT_R16_TYPELESS);
 	shadowPipeline.createGraphicsPipeline(render.mDevice, shadowRootsig, shadowshaderset, shadowformat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(D3D12_CULL_MODE_FRONT), VERTEX_LAYOUT_TYPE_SPLIT_ALL);
 
 }

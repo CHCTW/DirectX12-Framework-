@@ -17,7 +17,6 @@ SamplerState mat_text_sampler : register(s0);
 struct PSInput
 {
 	float4 position : SV_POSITION;
-    float3 wposition : WPOSITION;
 	float3 normal : NORMAL;
     float3 tangent : TANGENT;
     float3 bitangent : BITANGENT;
@@ -29,8 +28,8 @@ PSInput VSMain(float3 position : POSITION, float3 normal : NORMAL,float2 uv : TE
 	PSInput result;
     uint mid = ObjectList[ojectindex].matricesid;
     result.position = mul(MatricesList[mid].model, float4(position, 1.0f));
-    result.wposition = mul(MatricesList[mid].model, float4(position, 1.0f)).xyz;
     result.position = mul(camera.view, result.position);
+
     result.position = mul(camera.proj, result.position);
     result.normal = mul(MatricesList[mid].normal, float4(normal, 0.0)).xyz;
     result.normal =  mul(camera.viewinverseyranspose, float4(result.normal, 0.0)).xyz;
@@ -39,15 +38,29 @@ PSInput VSMain(float3 position : POSITION, float3 normal : NORMAL,float2 uv : TE
 
     result.bitangent = mul(MatricesList[mid].normal, float4(bitangent, 0.0)).xyz;
     result.bitangent = mul(camera.viewinverseyranspose, float4(result.bitangent, 0.0)).xyz;
- //   result.tangent = tangent;
+
 
     result.uv = uv;
     result.mat = MaterialList[ObjectList[ojectindex].materialid];
    // result.normal = normal;
 	return result;
 }
+//[maxvertexcount(3)]
+//void GSMain(triangle PSInput gin[3], inout TriangleStream<PSInput> stream)
+//{
+//    float3 vec1 = gin[1].vposition.xyz - gin[0].vposition.xyz;
+//    float3 vec2 = gin[2].vposition.xyz - gin[0].vposition.xyz;
+//    float3 flatn = cross(vec1, vec2);
+//    if(dot(-gin[1].vposition.xyz,flatn)>0)
+//    {
+//        stream.Append(gin[0]);
+//        stream.Append(gin[1]);
+//        stream.Append(gin[2]);
 
-GBufferFormat PSMain(PSInput input) : SV_TARGET
+//    }
+
+//}
+    GBufferFormat PSMain(PSInput input)
 {
     GBufferFormat res;
     uint diffid = input.mat.texutres.x;
@@ -58,7 +71,7 @@ GBufferFormat PSMain(PSInput input) : SV_TARGET
     float3 diffuse = difftext.xyz * (1.0 - rate) + input.mat.albedo * rate;
 
 
-    float3 normaltext = MaterialTextures[input.mat.texutres.y].Sample(mat_text_sampler, input.uv) * 2.0 - 1.0;
+    float3 normaltext = (MaterialTextures[input.mat.texutres.y].Sample(mat_text_sampler, input.uv) * 2.0 - 1.0).xyz;
     float normalrate = input.mat.chooses.y;
     float3 normal =normalMapCal(normalrate,input.normal,input.tangent, input.bitangent, normaltext);
     //normal = normalize(input.normal);
@@ -74,7 +87,7 @@ GBufferFormat PSMain(PSInput input) : SV_TARGET
 
     res.albedorough = float4(diffuse, rough);
     res.emmermetal.w = metalic;
-
+    res.emmermetal.xyz = metalic.xxx;
     return res;
 
 
