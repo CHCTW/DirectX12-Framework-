@@ -140,6 +140,7 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="DirectionLight.h" />
     <ClInclude Include="GameCamera.h" />
+    <ClInclude Include="GaussionCurve.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="Optical.h" />
     <ClInclude Include="PointLight.h" />
@@ -156,6 +157,7 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="DirectionLight.cpp" />
     <ClCompile Include="GameCamera.cpp" />
+    <ClCompile Include="GaussionCurve.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Optical.cpp" />
     <ClCompile Include="PointLight.cpp" />

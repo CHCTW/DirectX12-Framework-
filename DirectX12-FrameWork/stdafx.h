@@ -161,7 +161,7 @@ struct RenderTargetFormat  // assume all render targt and depth buffer will need
 
 const static char *Targetchars[SHADERTYPE_COUNT]
 {
-	"vs_5_1","ps_5_1","cs_5_1","gs_5_1","ds_5_1","hs_5_1"
+	"vs_5_1","ps_5_1","cs_5_0","gs_5_1","ds_5_1","hs_5_1"
 };
 static unsigned int HeapSizes[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES] = { 3000,10,60,30 };
 static unsigned int HeapOffset[VIEW_COUNT] = {0,1000,2000,0,0};

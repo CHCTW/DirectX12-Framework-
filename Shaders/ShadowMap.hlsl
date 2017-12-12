@@ -28,5 +28,6 @@ PSInput VSMain(float3 position : POSITION, uint instanceid : SV_InstanceID)
 	result.position = mul(lightview, result.position);
 	result.position = mul(lightproj,result.position);
  
+    result.position /= result.position.w;
 	return result;
 }

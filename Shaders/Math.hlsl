@@ -153,5 +153,17 @@ inline bool IsSphereTriangleIntersectBackCull(in float3 A, in float3 B, in float
     return face && (inside || (intri && intersect)); 
 
 }
+#define MAXRADIUS 50
+float getGaussionWeight(in float4 array[(MAXRADIUS * 2 + 1 + 3) / 4], uint index)
+{
+    uint entry = index / 4;
+    uint channel = index % 4;
+    return array[entry][channel];
+}
+struct GaussionData
+{
 
-
+    uint radius;
+    float3 padding;
+    float4 weight[(MAXRADIUS * 2 + 1+3)/4];
+};

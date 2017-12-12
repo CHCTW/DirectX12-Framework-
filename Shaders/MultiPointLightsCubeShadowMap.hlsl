@@ -42,7 +42,8 @@ void GSMain(triangle PSInput input[3], inout TriangleStream<GSOutput> stream)
     float4 srpoints[3];
     float3 lightpos = PointLightList[lightindex].lightposition.xyz;
     float lightrad = PointLightList[lightindex].lightradius;
-   
+    float4 maxpoint;
+    float4 minpoint;
     bool draw = IsSphereTriangleIntersectBackCull(input[0].position.xyz, input[1].position.xyz, input[2].position.xyz, lightpos, lightrad);
     [branch]
     if (draw)  // have traingle culling here? maybe do as a prototype
@@ -50,19 +51,41 @@ void GSMain(triangle PSInput input[3], inout TriangleStream<GSOutput> stream)
         [unroll]
         for (int face = 0; face < 6; ++face)
         {
-        output.targetindex = face + lightindex * 6;
-         [unroll]
-        for (int i = 0; i < 3; ++i)
-        {
-            output.position = float4(input[i].position.xyz, 1.0);
-      //          output.wposition = input[i].position.xyz;
-            output.position = mul(PointLightList[lightindex].lightview[face], output.position);
-            output.position = mul(PointLightList[lightindex].lightproj, output.position);
-            output.normlineardepth = length(input[i].position.xyz - lightpos.xyz) / lightrad;
-            stream.Append(output);
-        }
-        stream.RestartStrip();
+            output.targetindex = face + lightindex * 6;
 
+
+          //  [unroll]
+          //  for (int i = 0; i < 3; ++i)
+          //  {
+          //      output.position = float4(input[i].position.xyz, 1.0);
+          ////          output.wposition = input[i].position.xyz;
+          //      output.position = mul(PointLightList[lightindex].lightview[face], output.position);
+          //      output.position = mul(PointLightList[lightindex].lightproj, output.position);
+          //      srpoints[i] = output.position;
+          //      output.normlineardepth = length(input[i].position.xyz - lightpos.xyz) / lightrad;
+          //    //  stream.Append(output);
+          //  }
+
+            if(draw)
+            {
+            
+             [unroll]
+                for (int i = 0; i < 3; ++i)
+                {
+                    output.position = float4(input[i].position.xyz, 1.0);
+          //          output.wposition = input[i].position.xyz;
+                    output.position = mul(PointLightList[lightindex].lightview[face], output.position);
+                    
+                    output.position = mul(PointLightList[lightindex].lightproj, output.position);
+                    float t = output.position.w;
+       //             output.position /= t;
+            //        output.position.w = 1.0f;
+
+                    output.normlineardepth = length(input[i].position.xyz - lightpos.xyz) / lightrad;
+                    stream.Append(output);
+                }
+                stream.RestartStrip();
+            }
         }
 
     }

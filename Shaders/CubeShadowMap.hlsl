@@ -52,6 +52,7 @@ void GSMain(triangle PSInput input[3], inout TriangleStream<GSOutput> stream)
     for (int i = 0; i < 3; ++i)
     {
         output.position = input[i].position;
+        output.position = input[i].position / input[i].position.w;
         output.wposition = input[i].wposition;
         stream.Append(output);
     }

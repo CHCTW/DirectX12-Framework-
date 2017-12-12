@@ -168,7 +168,7 @@ float4 PSMain(PSInput input) : SV_TARGET
 
 	float dist = length(lightpostion.xyz - input.wposition);
 
-    float3 plightspace = normalize(mul(lightview, float4(input.wposition.xyz, 1.0))); // get diredtion from light point to poision in light spcace;
+    float3 plightspace = normalize(mul(lightview, float4(input.wposition.xyz, 1.0))).xyz; // get diredtion from light point to poision in light spcace;
    // return float4(plightspace, 1.0);
 
     float angle = dot(plightspace, float3(0, 0, -1));

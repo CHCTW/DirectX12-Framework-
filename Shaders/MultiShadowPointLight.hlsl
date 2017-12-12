@@ -201,11 +201,6 @@ static float3 pcfs[20] =
     //return float4(att, att, att, 1.0);
 
     float3 final = (diff + spec) * NL * PointLightList[input.id].lightcolor.xyz * att * PointLightList[input.id].lightintensity * test;
-    
-    final = final / (1 + final); // tone mapping
-    final = pow(final, 1 / 2.2f);
-//	pos.xyz = pos.xyz / 100;
-//	pos.xyz = normalize(pos.xyz);
     return float4(final, 1.0);
 ////    return float4(0.03,0.03,0.03, 1.0);
 
