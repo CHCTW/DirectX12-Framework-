@@ -19,90 +19,52 @@ void CSMain(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID, uint3 
         // use bilinear to get four most recent data and interpoloate
 
         float4 down = float4(0.0f, 0.0f, 0.0f, 0.0f);
-        
-        float4 pixel = hdr.SampleLevel(bilinear, ((float2) id + 0.5f) / (float2) dim, 0);
-        float4 orpix = pixel;
-        float orinensity = dot(graysacelintensity, pixel) - bloomthreshold;
-        orinensity = saturate(orinensity);
-        pixel = pixel / (1 + pixel);
-        float intensity = max(dot(graysacelintensity, pixel) - bloomthreshold, 0.0f);
+        float2 diminv = 1.0f / (float2) dim;
+        float2 offset = 0.25f * diminv;
+        float2 uv = ((float2) id + 0.5f) * diminv;
+        float4 pixel = hdr.SampleLevel(bilinear, uv, 0);
+
+
+        // from dx mini engine very nicely remove lone pixel with very high energy
+
+        float4 pixel1 = hdr.SampleLevel(bilinear, uv + float2(-offset.x, -offset.y), 0);
+        float4 pixel2 = hdr.SampleLevel(bilinear, uv + float2(offset.x, -offset.y), 0);
+        float4 pixel3 = hdr.SampleLevel(bilinear, uv + float2(-offset.x, offset.y), 0);
+        float4 pixel4 = hdr.SampleLevel(bilinear, uv + float2(offset.x, offset.y), 0);
+
+
+
+        float luma1 = dot(graysacelintensity, pixel1); // use gray scale as intensity
+        float luma2 = dot(graysacelintensity, pixel2);
+        float luma3 = dot(graysacelintensity, pixel3);
+        float luma4 = dot(graysacelintensity, pixel4);
+
+        const float kSmallEpsilon = 0.0001;
+
+
+        pixel1 *= max(kSmallEpsilon, luma1 - bloomthreshold) / (luma1 + kSmallEpsilon); 
+        pixel2 *= max(kSmallEpsilon, luma2 - bloomthreshold) / (luma2 + kSmallEpsilon);
+        pixel3 *= max(kSmallEpsilon, luma3 - bloomthreshold) / (luma3 + kSmallEpsilon);
+        pixel4 *= max(kSmallEpsilon, luma4 - bloomthreshold) / (luma4 + kSmallEpsilon);
+
+        const float kShimmerFilterInverseStrength = 1.0f;
+        float weight1 = 1.0f / (luma1 + kShimmerFilterInverseStrength);
+        float weight2 = 1.0f / (luma2 + kShimmerFilterInverseStrength);
+        float weight3 = 1.0f / (luma3 + kShimmerFilterInverseStrength);
+        float weight4 = 1.0f / (luma4 + kShimmerFilterInverseStrength);
+        float weightSum = weight1 + weight2 + weight3 + weight4;  // 
+
          
         // get emmerisve datat that is over certain value, also down sample
-        bloom[id.xy] = orpix * orinensity;
+       // bloom[id.xy] = orpix * orinensity;
   //      DeviceMemoryBarrierWithGroupSync();
-     //     bloom[id.yx] = float4(1.0, 0.0, 0.0, 0.0);
+        bloom[id.xy] = (pixel1 * weight1 + pixel2 * weight2 + pixel3 * weight3 + pixel4 * weight4) / weightSum;;
 
     //DeviceMemoryBarrierWithGroupSync();
     //AllMemoryBarrier();
      //   DeviceMemoryBarrierSybnc
 
       }
- //   AllMemoryBarrierWithGroupSync(); // wait for all data write in
-  
-
- //   cache[tid.x] = bloom[id.xy - uint2(gaussion.radius, 0)]; // load previous part
- //   if (tid.x > GROUPSIZE - 1 - gaussion.radius * 2) // load right part
- //       cache[tid.x + (gaussion.radius) * 2] = bloom[id.xy + float2(gaussion.radius, 0.0)];
- //   GroupMemoryBarrierWithGroupSync(); // wait for all thread done loading to cache
-
- //   float4 horres = float4(0.0, 0.0, 0.0, 0.0f);
- //   for (uint i = 0; i < gaussion.radius * 2 + 1; ++i)
- //   {
-
-
-
- //       uint entry = i / 4;
- //       uint channel = i % 4;
-
-
- //       horres += (cache[tid.x + i] *
- //       gaussion.weight[entry][channel]);
- //   }
- ////   horres /= (float) (total);
- //   //DeviceMemoryBarrier(); // wait all res has been calculate
- //   DeviceMemoryBarrierWithGroupSync();
- //   bloom[id.xy] = horres + float4(1.0, 0.0, 0.0, 0.0);
- //   bloom[id.yx] = float4(1.0, 0.0, 0.0, 0.0);
-//    AllMemoryBarrierWithGroupSync();
-
-
-
-
-//    cache2[tid.x] = bloom[id.yx - uint2(0, gaussion.radius)]; // load ver blur res
-//    if (tid.x > GROUPSIZE - 1 - gaussion.radius * 2) // load right part
-//        cache2[tid.x + (gaussion.radius) * 2] = bloom[id.yx + float2(0.0, gaussion.radius)];
-//    GroupMemoryBarrierWithGroupSync();
-//    DeviceMemoryBarrierWithGroupSync();
-//    float4 verres = float4(0.0, 0.0, 0.0, 0.0f);
-
-//    uint start = id.y - gaussion.radius;
-//        for (uint j = 0; j < gaussion.radius * 2 + 1; ++j)
-//    {
-//        float w = abs(abs((int) i - rad) - rad);
-           
-//        total += w;
-
-
-//        uint entry = j / 4;
-//        uint channel = j % 4;
-//        int offset = (int) j - (int) gaussion.radius;
-//        verres += (cache2[tid.x + j] * gaussion.weight[entry][channel]);
-
-//     //   horres += (bloom[uint2(id.x, start+ j)] * gaussion.weight[entry][channel]);
-//    }
-
-//  DeviceMemoryBarrierWithGroupSync();
-   
-
-    
-// //   AllMemoryBarrierWithGroupSync();
-
-////    bloom[id.xy] = verres;
-//    bloom[id.yx] = verres;
-
-
-
-//    bloom[id.yx] = horres;
 
     
 }

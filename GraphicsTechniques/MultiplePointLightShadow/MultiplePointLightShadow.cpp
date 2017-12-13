@@ -127,7 +127,7 @@ Texture TempBuffer;
 GaussionWeight gaussdata;
 
 GaussionCurve curve(10, 3);
-float bloomthreash = 15.0f;
+float bloomthreash = 5.0f;
 RootSignature brightextsig;
 RootSignature gaussiansig;
 Buffer gaussianconst;
@@ -605,19 +605,19 @@ void loadAsset()
 	pointLightBuffer.createStructeredBuffer(render.mDevice, srvheap, sizeof(PointLightData), pointLightNum, STRUCTERED_BUFFER_TYPE_READ);
 	PointLight light;
 	//for(int i = 0 ; i < pointLightNum ; ++i)
-	pointLights[0].setPosition(-17, 60, 0);
-	pointLights[0].setRadius(250);
-	pointLights[0].setColor(0.8, 0.8, 0.8);
-	pointLights[0].setIntensity(2800);
+	pointLights[0].setPosition(-10, 5, 0);
+	pointLights[0].setRadius(50);
+	pointLights[0].setColor(0.1, 0.1, 0.8);
+	pointLights[0].setIntensity(1000);
 	vel[0] = -10;
 //	light.update();
 	pointLightList[0] = *pointLights[0].getLightData();
 
 
-	pointLights[1].setPosition(0, 3, -35);
-	pointLights[1].setRadius(40);
+	pointLights[1].setPosition(0, 5, -35);
+	pointLights[1].setRadius(80);
 	pointLights[1].setIntensity(5000);
-	pointLights[1].setColor(0.8, 0.1, 0.1);
+	pointLights[1].setColor(0.8, 0.1, 0.0);
 //	light.update();
 	vel[1] = -10;
 	pointLightList[1] = *pointLights[1].getLightData();
@@ -939,7 +939,7 @@ void update()
 	{
 		
 		pointLights[i].addPosition(0, 0, vel[i]*delta.count());
-		if (abs(pointLights[i].getLightData()->mPosition.z) > 120.0f)
+		if (abs(pointLights[i].getLightData()->mPosition.z) > 100.0f)
 			vel[i] *= -1;
 		pointLightList[i] = *pointLights[i].getLightData();
 	}

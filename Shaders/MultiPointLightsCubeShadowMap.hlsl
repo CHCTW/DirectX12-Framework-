@@ -45,6 +45,7 @@ void GSMain(triangle PSInput input[3], inout TriangleStream<GSOutput> stream)
     float4 maxpoint;
     float4 minpoint;
     bool draw = IsSphereTriangleIntersectBackCull(input[0].position.xyz, input[1].position.xyz, input[2].position.xyz, lightpos, lightrad);
+  //  bool draw = true;
     [branch]
     if (draw)  // have traingle culling here? maybe do as a prototype
     {

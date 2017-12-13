@@ -145,7 +145,7 @@ static float3 pcfs[20] =
   //  [unroll]
     for (uint i = 0; i < samplecount; ++i)
     {
-        lightdepth = shadowmaps.Sample(g_sampler, float4(shadowcood+pcfs[i], input.id)).r;
+        lightdepth = shadowmaps.SampleLevel(g_sampler, float4(shadowcood*5+pcfs[i], input.id),0).r;
         lightdepth *= PointLightList[input.id].lightradius;
         if (pixdepth > (lightdepth + 0.1f))
             shadow += 1.0;
@@ -153,7 +153,7 @@ static float3 pcfs[20] =
 
     }
 
-  //  test = 1 - (shadow / (float) samplecount);
+    test = 1 - (shadow / (float) samplecount);
 
     
    
