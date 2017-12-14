@@ -41,7 +41,7 @@ void PointLight::update()
 void PointLight::setRadius(float r)
 {
 	mLightData.mRadius = r;
-	mLightData.mProjection = glm::perspective(mFOV*(3.14159f) / 180.0f, 1.0f, 0.1f, mLightData.mRadius);
+	mLightData.mProjection = glm::perspective(mFOV*(3.14159f) / 180.0f, 1.0f, 0.01f, mLightData.mRadius);
 }
 
 void PointLight::setIntensity(float i)

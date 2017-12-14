@@ -133,7 +133,7 @@ static float3 pcfs[20] =
 
 
     //return pos;
-    float3 shadowcood = PointLightList[input.id].lightposition.xyz - wpos.xyz;
+    float3 shadowcood =PointLightList[input.id].lightposition.xyz - wpos.xyz;
     float lightdepth = shadowmaps.Sample(g_sampler, float4(shadowcood, input.id)).r * PointLightList[input.id].lightradius;
     float pixdepth = length(shadowcood);
     float shadow = 0.0f;
@@ -142,20 +142,19 @@ static float3 pcfs[20] =
 
 
 
-  //  [unroll]
-    for (uint i = 0; i < samplecount; ++i)
-    {
-        lightdepth = shadowmaps.SampleLevel(g_sampler, float4(shadowcood*5+pcfs[i], input.id),0).r;
-        lightdepth *= PointLightList[input.id].lightradius;
-        if (pixdepth > (lightdepth + 0.1f))
-            shadow += 1.0;
+  ////  [unroll]
+  //  for (uint i = 0; i < samplecount; ++i)
+  //  {
+  //      lightdepth = shadowmaps.SampleLevel(g_sampler, float4(shadowcood * 256 / pixdepth + pcfs[i], input.id), 0).r;
+  //      lightdepth *= PointLightList[input.id].lightradius;
+  //      if (pixdepth > (lightdepth + 0.1f))
+  //          shadow += 1.0;
 
 
-    }
+  //  }
 
-    test = 1 - (shadow / (float) samplecount);
-
-    
+  //  test = 1 - (shadow / (float) samplecount);
+   
    
 
    //  return float4(albedo, 0.0);

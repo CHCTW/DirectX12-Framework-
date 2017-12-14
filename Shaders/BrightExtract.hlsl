@@ -7,7 +7,7 @@ cbuffer threashold : register(b0)
 Texture2D hdr : register(t0);
 globallycoherent RWTexture2D<float4> bloom : register(u0);
 sampler bilinear : register(s0);
-static const float4 graysacelintensity = { 0.299f, 0.587f, 0.114f, 0.0f };
+static const float4 graysacelintensity = { 0.2126, 0.7152f, 0.0722f, 0.0f };
 [numthreads(GROUPSIZE, 1, 1)] // block size 256 pixel, so the approach is invoke group with width, since width is large than height
 void CSMain(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID, uint3 gid : SV_GroupID)
 {

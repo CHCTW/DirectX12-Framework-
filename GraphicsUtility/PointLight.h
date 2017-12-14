@@ -19,11 +19,11 @@ struct PointLightData
 class PointLight
 {
 public:
-	PointLight() : mFOV(90.0f), mFront(0.1f), mRatio(1.0f), mAngle(0.0f, 90.f), mOffset(0.0, 0.0), mZoom(10.0f)
+	PointLight() : mFOV(90.0f), mFront(0.01f), mRatio(1.0f), mAngle(0.0f, 90.f), mOffset(0.0, 0.0), mZoom(10.0f)
 	{
 		mLightData.mColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0);
-		mLightData.mProjection = glm::perspective(mFOV*(3.14159f) / 180.0f, mRatio, mFront, mLightData.mRadius);
 		mLightData.mRadius = 100;
+		mLightData.mProjection = glm::perspective(mFOV*(3.14159f) / 180.0f, mRatio, mFront, mLightData.mRadius);
 		mLightData.mIntensity = 1000;
 		mLightData.mPosition = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		update();

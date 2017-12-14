@@ -39,8 +39,7 @@ PSInput VSMain(float3 position : POSITION, uint instanceid : SV_InstanceID)
 
     result.position = mul(instances[instanceid].matrices.model, float4(position, 1.0f));
     result.wposition = result.position.xyz;
-    result.position = mul(lightview[face], result.position);
-    result.position = mul(lightproj, result.position);
+
     return result;
 }
 [maxvertexcount(3)]
@@ -52,7 +51,11 @@ void GSMain(triangle PSInput input[3], inout TriangleStream<GSOutput> stream)
     for (int i = 0; i < 3; ++i)
     {
         output.position = input[i].position;
-        output.position = input[i].position / input[i].position.w;
+
+        output.position = mul(lightview[face], input[i].position);
+        output.position = mul(lightproj, output.position);
+
+//        output.position = input[i].position / input[i].position.w;
         output.wposition = input[i].wposition;
         stream.Append(output);
     }

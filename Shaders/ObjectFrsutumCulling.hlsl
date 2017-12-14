@@ -93,11 +93,15 @@ void CSMain(uint3 groupId : SV_GroupID, uint groupIndex : SV_GroupIndex, uint th
         generateAlignBox(cornor, min, max);
         if (id==0)
         {
-            ShadowLightIndices[0] = 1; // reset valid light list
+            InterlockedMax(ShadowLightIndices[0], 1u);
+            InterlockedMin(ShadowLightIndices[0], 1u);
+
+         //   ShadowLightIndices[0] = 1; // reset valid light list
         }
     }
     GroupMemoryBarrierWithGroupSync(); // wait for the cube point data
-    
+   // DeviceMemoryBarrierWithGroupSync();
+
     if (threadID.x < lightdim.x) // total light count
     {
         // check the light will show on the screen
@@ -106,6 +110,7 @@ void CSMain(uint3 groupId : SV_GroupID, uint groupIndex : SV_GroupIndex, uint th
 
 
         valid = AlignBoxisSphereIntsec(min, max, PointLightList[threadID.x].lightposition.xyz, PointLightList[threadID.x].lightradius);
+     //   valid = true;
         if(valid)
         {
             uint index;

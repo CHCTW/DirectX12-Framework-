@@ -99,7 +99,7 @@ vector<Texture> textureList;
 int maxtexturecount = 1000;
 vector<Image> imageList;
 int texturecount = 0;
-int pointLightNum = 2;
+int pointLightNum = 5;
 DescriptorHeap samplerheap;
 Sampler matsampler(D3D12_FILTER_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_WRAP, D3D12_TEXTURE_ADDRESS_MODE_WRAP);
 Sampler gbuffersampler;
@@ -127,7 +127,7 @@ Texture TempBuffer;
 GaussionWeight gaussdata;
 
 GaussionCurve curve(10, 3);
-float bloomthreash = 5.0f;
+float bloomthreash = 1.0f;
 RootSignature brightextsig;
 RootSignature gaussiansig;
 Buffer gaussianconst;
@@ -358,7 +358,7 @@ void initializeRender()
 	shadowRootSig.mParameters[4].mResCounts = 1;
 	shadowRootSig.mParameters[4].mBindSlot = 3;
 	shadowRootSig.mParameters[4].mResource = &pointLightBuffer;
-	shadowRootSig.mParameters[4].mVisibility = D3D12_SHADER_VISIBILITY_GEOMETRY;
+	//shadowRootSig.mParameters[4].mVisibility = D3D12_SHADER_VISIBILITY_GEOMETRY;
 	shadowRootSig.initialize(render.mDevice);
 
 
@@ -605,23 +605,43 @@ void loadAsset()
 	pointLightBuffer.createStructeredBuffer(render.mDevice, srvheap, sizeof(PointLightData), pointLightNum, STRUCTERED_BUFFER_TYPE_READ);
 	PointLight light;
 	//for(int i = 0 ; i < pointLightNum ; ++i)
-	pointLights[0].setPosition(-10, 5, 0);
-	pointLights[0].setRadius(50);
+	pointLights[0].setPosition(-35, 2, 0);
+	pointLights[0].setRadius(40);
 	pointLights[0].setColor(0.1, 0.1, 0.8);
 	pointLights[0].setIntensity(1000);
 	vel[0] = -10;
-//	light.update();
 	pointLightList[0] = *pointLights[0].getLightData();
 
 
 	pointLights[1].setPosition(0, 5, -35);
-	pointLights[1].setRadius(80);
+	pointLights[1].setRadius(50);
 	pointLights[1].setIntensity(5000);
 	pointLights[1].setColor(0.8, 0.1, 0.0);
-//	light.update();
 	vel[1] = -10;
 	pointLightList[1] = *pointLights[1].getLightData();
 
+	pointLights[2].setPosition(-35, 65, -50);
+	pointLights[2].setRadius(30);
+	pointLights[2].setIntensity(15000);
+	pointLights[2].setColor(0.2, 0.6, 0.1);
+	vel[2] = 10;
+	pointLightList[2] = *pointLights[2].getLightData();
+
+
+	pointLights[3].setPosition( 3, 80, 0);
+	pointLights[3].setRadius(50);
+	pointLights[3].setIntensity(1000);
+	pointLights[3].setColor(0.2, 0.6, 0.6);
+	vel[3] = 0;
+	pointLightList[3] = *pointLights[3].getLightData();
+
+
+	pointLights[4].setPosition(35, 68, 0);
+	pointLights[4].setRadius(30);
+	pointLights[4].setIntensity(1000);
+	pointLights[4].setColor(0.7, 0.1, 0.6);
+	vel[4] = -10;
+	pointLightList[4] = *pointLights[4].getLightData();
 
 
 	lightCmd.resize(pointLightNum);
@@ -671,14 +691,14 @@ void loadAsset()
 			aiString tex;
 			aiTextureMapMode mode = aiTextureMapMode_Wrap;
 			sponzascene->mMaterials[i]->GetTexture(aiTextureType_DIFFUSE, 0, &tex,nullptr,nullptr,nullptr,nullptr,&mode);
-			if (mode == aiTextureMapMode_Wrap)
-				cout << "A Wrap Texture" << endl;
-			if (mode == aiTextureMapMode_Clamp)
-				cout << "A Clamp Texture" << endl;
-			if (mode == aiTextureMapMode_Mirror)
-				cout << "A Mirror Texture" << endl;
-			if (mode == aiTextureMapMode_Decal)
-				cout << "A Decal Texture" << endl;
+			//if (mode == aiTextureMapMode_Wrap)
+			//	cout << "A Wrap Texture" << endl;
+			//if (mode == aiTextureMapMode_Clamp)
+			//	cout << "A Clamp Texture" << endl;
+			//if (mode == aiTextureMapMode_Mirror)
+			//	cout << "A Mirror Texture" << endl;
+			//if (mode == aiTextureMapMode_Decal)
+			//	cout << "A Decal Texture" << endl;
 	//		cout << mode << endl;
 			//sponzascene->mMaterials[i]->GetTexture
 //			cout << "Diffuse: " << tex.C_Str() << endl;
@@ -939,7 +959,7 @@ void update()
 	{
 		
 		pointLights[i].addPosition(0, 0, vel[i]*delta.count());
-		if (abs(pointLights[i].getLightData()->mPosition.z) > 100.0f)
+		if (abs(pointLights[i].getLightData()->mPosition.z) > 110.0f)
 			vel[i] *= -1;
 		pointLightList[i] = *pointLights[i].getLightData();
 	}
@@ -975,7 +995,7 @@ void update()
 	cmdlist.resourceBarrier(shadowlightlistBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 	cmdlist.bindComputeRootSigature(geoCmdGenRootSig);
-	cmdlist.dispatch(objectList.size(), 1, 1);
+	cmdlist.dispatch(objectList.size() , 1, 1);
 	cmdlist.resourceBarrier(indirectGeoCmdBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
 	cmdlist.resourceBarrier(shadowlightlistBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 	cmdlist.resourceBarrier(shadowIndirectCmdBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
