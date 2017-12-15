@@ -54,6 +54,8 @@ Multiple Point Lights ShadowMap : Based on the method :  Tile-Based Omnidirectio
 The whole scene consist with 128 point lights. The fame time is about 70ms.
 I use cube shadow map but make the whole pass with execute indirect to largely decrease the draw commands. 
 Also I am adding the bloom effect. The bloom effect is learned from dx12 mini engine.
+https://www.youtube.com/watch?v=YpxZGnVfkb4&feature=youtu.be
+
 ![image](https://user-images.githubusercontent.com/30221942/34026871-cfa18ebe-e10d-11e7-8080-4effde1b179d.png)
 
 ### 3. Direcx12 Framework : This project is included by all the Unitests and Graphics Techniques. It is the core of this framework. It only generate lib file.
