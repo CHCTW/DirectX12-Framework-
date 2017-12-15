@@ -1,6 +1,7 @@
 # DirectX12-Framework-
 A framework for learning DirectX12 and demonstrate graphics techniques 
-![image](https://user-images.githubusercontent.com/30221942/30882868-408c5a74-a2bf-11e7-98c6-b360ee58812c.png)
+![image](https://user-images.githubusercontent.com/30221942/34026871-cfa18ebe-e10d-11e7-8080-4effde1b179d.png)
+
 
 ## All Unitest and Graphic Techniques pojects files working space is incorrect. Right click the project file and select properties.Click Debugging and find Working Directory area. Change it to $(SolutionDir) .
 
@@ -49,7 +50,11 @@ Deferred Shading : Draw all parameters that is need for lighting caculation to t
 ![image](https://user-images.githubusercontent.com/30221942/30778454-2ceaa09c-a08b-11e7-9b5c-1215392cc16b.png)
 Imaged Based Lighting : Use enviroment map as light source. The method I used is from : https://learnopengl.com/#!PBR/IBL/Diffuse-irradiance
 ![image](https://user-images.githubusercontent.com/30221942/30882868-408c5a74-a2bf-11e7-98c6-b360ee58812c.png)
-
+Multiple Point Lights ShadowMap : Based on the method :  Tile-Based Omnidirectional Shadows by Hawar Doghramachi. Which can be found in GPU Pro6. http://gpupro.blogspot.com/2014/12/gp...
+The whole scene consist with 128 point lights. The fame time is about 70ms.
+I use cube shadow map but make the whole pass with execute indirect to largely decrease the draw commands. 
+Also I am adding the bloom effect. The bloom effect is learned from dx12 mini engine.
+![image](https://user-images.githubusercontent.com/30221942/34026871-cfa18ebe-e10d-11e7-8080-4effde1b179d.png)
 
 ### 3. Direcx12 Framework : This project is included by all the Unitests and Graphics Techniques. It is the core of this framework. It only generate lib file.
 ### 4. Graphics Utility : This project is included by part Unitests and Graphics Techniques. It contains some helper structer like spot light, Transform, Camera.... It only generate lib file.
