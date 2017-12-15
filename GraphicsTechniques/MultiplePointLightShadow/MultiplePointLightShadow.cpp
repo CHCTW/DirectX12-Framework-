@@ -15,6 +15,8 @@
 #include "PointLight.h"
 #include "GaussionCurve.h"
 #include <chrono>
+#include <random>
+#include <array>
 using namespace std;
 Render render;
 CommandAllocator cmdalloc;
@@ -99,7 +101,7 @@ vector<Texture> textureList;
 int maxtexturecount = 1000;
 vector<Image> imageList;
 int texturecount = 0;
-int pointLightNum = 5;
+
 DescriptorHeap samplerheap;
 Sampler matsampler(D3D12_FILTER_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_WRAP, D3D12_TEXTURE_ADDRESS_MODE_WRAP);
 Sampler gbuffersampler;
@@ -136,6 +138,29 @@ Pipeline brightExtractPipeline;
 Pipeline gaussianPipeline;
 Pipeline combinePipe;
 RootSignature combinesig;
+int pointLightNum = 128;
+
+std::default_random_engine generator(5);
+std::uniform_real_distribution<float> distributionXZ(-50.0, 50.0);
+std::uniform_real_distribution<float> distributionY(5.0, 100.0f);
+std::uniform_real_distribution<float> distributionintensity(100, 1500);
+std::uniform_real_distribution<float> distributionradius(15.0, 20.0);;
+std::array<double, 2> intervals{ 0.0, 1.0 };
+std::array<float, 2> weights{ 1500 , 1500.0 };
+std::piecewise_linear_distribution<double>
+distributionlightcolor(intervals.begin(), intervals.end(), weights.begin());
+
+
+
+std::array<double, 3> xintervals{-55, 0.0,55 };
+std::array<float, 3> xweights{ 1000,2000,1000 };
+std::piecewise_linear_distribution<double>
+distributionX(xintervals.begin(), xintervals.end(), xweights.begin());
+
+
+//std::uniform_real_distribution<float> distributionlightcolor(0.3, 1.5);
+std::uniform_real_distribution<float> distributionmove(-10, 10);
+
 //Texture FinalBuffer;
 // Thourght: each objects is one basic draw call, each object don't have any information about material, matrics, mesh
 // it only know the index in the list, 
@@ -605,43 +630,54 @@ void loadAsset()
 	pointLightBuffer.createStructeredBuffer(render.mDevice, srvheap, sizeof(PointLightData), pointLightNum, STRUCTERED_BUFFER_TYPE_READ);
 	PointLight light;
 	//for(int i = 0 ; i < pointLightNum ; ++i)
-	pointLights[0].setPosition(-35, 2, 0);
-	pointLights[0].setRadius(40);
-	pointLights[0].setColor(0.1, 0.1, 0.8);
-	pointLights[0].setIntensity(1000);
-	vel[0] = -10;
-	pointLightList[0] = *pointLights[0].getLightData();
+	for (int i = 0; i < pointLightNum; ++i)
+	{
+		pointLights[i].setPosition(distributionX(generator), distributionY(generator), distributionXZ(generator));
+		pointLights[i].setRadius(distributionradius(generator));
+		pointLights[i].setColor(distributionlightcolor(generator), distributionlightcolor(generator), distributionlightcolor(generator));
+		pointLights[i].setIntensity(distributionintensity(generator));
+		vel[i] = distributionmove(generator);
+		pointLightList[i] = *pointLights[i].getLightData();
+	}
 
 
-	pointLights[1].setPosition(0, 5, -35);
-	pointLights[1].setRadius(50);
-	pointLights[1].setIntensity(5000);
-	pointLights[1].setColor(0.8, 0.1, 0.0);
-	vel[1] = -10;
-	pointLightList[1] = *pointLights[1].getLightData();
-
-	pointLights[2].setPosition(-35, 65, -50);
-	pointLights[2].setRadius(30);
-	pointLights[2].setIntensity(15000);
-	pointLights[2].setColor(0.2, 0.6, 0.1);
-	vel[2] = 10;
-	pointLightList[2] = *pointLights[2].getLightData();
+	//pointLights[0].setPosition(-35, 2, 0);
+	//pointLights[0].setRadius(40);
+	//pointLights[0].setColor(0.1, 0.1, 0.8);
+	//pointLights[0].setIntensity(1000);
+	//vel[0] = -10;
+	//pointLightList[0] = *pointLights[0].getLightData();
 
 
-	pointLights[3].setPosition( 3, 80, 0);
-	pointLights[3].setRadius(50);
-	pointLights[3].setIntensity(1000);
-	pointLights[3].setColor(0.2, 0.6, 0.6);
-	vel[3] = 0;
-	pointLightList[3] = *pointLights[3].getLightData();
+	//pointLights[1].setPosition(0, 5, -35);
+	//pointLights[1].setRadius(50);
+	//pointLights[1].setIntensity(5000);
+	//pointLights[1].setColor(0.8, 0.1, 0.0);
+	//vel[1] = -10;
+	//pointLightList[1] = *pointLights[1].getLightData();
+
+	//pointLights[2].setPosition(-35, 65, -50);
+	//pointLights[2].setRadius(30);
+	//pointLights[2].setIntensity(15000);
+	//pointLights[2].setColor(0.2, 0.6, 0.1);
+	//vel[2] = 10;
+	//pointLightList[2] = *pointLights[2].getLightData();
 
 
-	pointLights[4].setPosition(35, 68, 0);
-	pointLights[4].setRadius(30);
-	pointLights[4].setIntensity(1000);
-	pointLights[4].setColor(0.7, 0.1, 0.6);
-	vel[4] = -10;
-	pointLightList[4] = *pointLights[4].getLightData();
+	//pointLights[3].setPosition( 3, 80, 0);
+	//pointLights[3].setRadius(50);
+	//pointLights[3].setIntensity(1000);
+	//pointLights[3].setColor(0.2, 0.6, 0.6);
+	//vel[3] = 0;
+	//pointLightList[3] = *pointLights[3].getLightData();
+
+
+	//pointLights[4].setPosition(35, 68, 0);
+	//pointLights[4].setRadius(30);
+	//pointLights[4].setIntensity(1000);
+	//pointLights[4].setColor(0.7, 0.1, 0.6);
+	//vel[4] = -10;
+	//pointLightList[4] = *pointLights[4].getLightData();
 
 
 	lightCmd.resize(pointLightNum);
@@ -959,7 +995,7 @@ void update()
 	{
 		
 		pointLights[i].addPosition(0, 0, vel[i]*delta.count());
-		if (abs(pointLights[i].getLightData()->mPosition.z) > 110.0f)
+		if (abs(pointLights[i].getLightData()->mPosition.z) > 120.0f)
 			vel[i] *= -1;
 		pointLightList[i] = *pointLights[i].getLightData();
 	}

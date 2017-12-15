@@ -49,8 +49,10 @@ void GSMain(triangle PSInput input[3], inout TriangleStream<GSOutput> stream)
     float lightrad = PointLightList[lightindex].lightradius;
     float4 maxpoint;
     float4 minpoint;
-  //  bool draw = IsSphereTriangleIntersectBackCull(input[0].position.xyz, input[1].position.xyz, input[2].position.xyz, lightpos, lightrad);
-
+    bool draw = IsSphereTriangleIntersectBackCull(input[0].position.xyz, input[1].position.xyz, input[2].position.xyz, lightpos, lightrad);
+    if(draw)
+    {
+    
 
         [unroll]
         for (int face = 0; face < 6; ++face)
@@ -61,24 +63,24 @@ void GSMain(triangle PSInput input[3], inout TriangleStream<GSOutput> stream)
             
              [unroll]
 
-                for (int i = 0; i < 3; ++i)
-                {
-                    output.position = float4(input[i].position.xyz, 1.0);
+            for (int i = 0; i < 3; ++i)
+            {
+                output.position = float4(input[i].position.xyz, 1.0);
           //          output.wposition = input[i].position.xyz;
-                    output.position = mul(PointLightList[lightindex].lightview[face], output.position);
+                output.position = mul(PointLightList[lightindex].lightview[face], output.position);
                     
-                    output.position = mul(PointLightList[lightindex].lightproj, output.position);
-                    float t = output.position.w;
+                output.position = mul(PointLightList[lightindex].lightproj, output.position);
+                float t = output.position.w;
        //             output.position /= t;
             //        output.position.w = 1.0f;
-                    output.wposition = input[i].position.xyz;
-                    output.radius = lightrad;
-                    output.lpos = lightpos.xyz;
-                    stream.Append(output);
-                }
-                stream.RestartStrip();
+                output.wposition = input[i].position.xyz;
+                output.radius = lightrad;
+                output.lpos = lightpos.xyz;
+                stream.Append(output);
+            }
+            stream.RestartStrip();
         }
-        
+    }
        
 
 }
