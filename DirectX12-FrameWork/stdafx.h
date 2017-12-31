@@ -93,13 +93,35 @@ typedef D3D12_DISPATCH_ARGUMENTS DispathArgument;
 typedef D3D12_VERTEX_BUFFER_VIEW VertexBufferView;
 typedef D3D12_INDEX_BUFFER_VIEW IndexBufferView;
 typedef D3D12_GPU_VIRTUAL_ADDRESS GpuAddress;
+
 struct ClearValue
 {
+	enum ClearType
+	{
+		CLEAR_TYPE_CUSTOME = 0,
+		CLEAR_TYPE_DEFAUTL = 1
+	};
 	union
 	{
 		FLOAT                     Color[4];
 		D3D12_DEPTH_STENCIL_VALUE DepthStencil;
 	};
+	ClearValue() :Type(CLEAR_TYPE_CUSTOME)
+	{
+
+	}
+	ClearValue(ClearType t) :Type(t)
+	{
+
+	}
+	void setColor(float r, float g, float b, float a)
+	{
+		Color[0] = r;
+		Color[1] = g;
+		Color[2] = b;
+		Color[3] = a;
+	}
+	ClearType Type;
 };
 struct RenderTargetFormat  // assume all render targt and depth buffer will need to create SRV 
 {
@@ -110,7 +132,7 @@ struct RenderTargetFormat  // assume all render targt and depth buffer will need
 		mRenderTargetflags(D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET), mDepthStencilflags(D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL), mCube(false)
 	{
 		mRenderTargetFormat[0] = DXGI_FORMAT_B8G8R8A8_UNORM;
-		mRenderTargetClearValue[0] = { 0.0,0.0,0.0,1.0 };
+		mRenderTargetClearValue[0].setColor( 0.0,0.0,0.0,1.0 );
 		if (mDepth)
 		{
 			mDepthStencilClearValue.DepthStencil.Depth = 1.0f;
@@ -121,7 +143,7 @@ struct RenderTargetFormat  // assume all render targt and depth buffer will need
 		mRenderTargetflags(D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET), mDepthStencilflags(D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL), mCube(false)
 	{
 		mRenderTargetFormat[0] = formatforrendertarget;
-		mRenderTargetClearValue[0] = { 0.0,0.0,0.0,1.0 };
+		mRenderTargetClearValue[0].setColor(0.0, 0.0, 0.0, 1.0);
 	}
 
 
@@ -130,8 +152,10 @@ struct RenderTargetFormat  // assume all render targt and depth buffer will need
 		mRenderTargetflags(D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET), mDepthStencilflags(D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL), mCube(false)
 	{
 		mRenderTargetFormat[0] = DXGI_FORMAT_B8G8R8A8_UNORM;
-		mRenderTargetClearValue[0] = { 0.0,0.0,0.0,1.0 };
+		mRenderTargetClearValue[0].setColor(0.0, 0.0, 0.0, 1.0);
 	}
+
+
 	RenderTargetFormat(UINT rendertargetnum, DXGI_FORMAT *renderTargetFormat, bool depth = false, bool cube = false, DXGI_FORMAT depthFormat = DXGI_FORMAT_R32_TYPELESS, D3D12_RESOURCE_FLAGS rendertargetflags = D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_FLAGS depthflags = D3D12_RESOURCE_FLAG_NONE)
 		:mDepth(depth), mNumofRenderTargets(rendertargetnum), mDepthStencilFormat(depthFormat),
 		mRenderTargetflags(D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET| rendertargetflags), mDepthStencilflags(D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL| depthflags), mCube(false)
@@ -139,7 +163,7 @@ struct RenderTargetFormat  // assume all render targt and depth buffer will need
 		for (unsigned int i = 0; i < rendertargetnum; ++i)
 		{
 			mRenderTargetFormat[i] = renderTargetFormat[i];
-			mRenderTargetClearValue[i] = { 0.0,0.0,0.0,1.0 };
+			mRenderTargetClearValue[0].setColor(0.0, 0.0, 0.0, 1.0);
 		}
 		if (mDepth)
 		{
@@ -163,7 +187,8 @@ const static char *Targetchars[SHADERTYPE_COUNT]
 {
 	"vs_5_1","ps_5_1","cs_5_0","gs_5_1","ds_5_1","hs_5_1"
 };
-static unsigned int HeapSizes[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES] = { 3000,10,60,30 };
+static unsigned int HeapSizes[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES] = { 3000,10,1000,1000 };
 static unsigned int HeapOffset[VIEW_COUNT] = {0,1000,2000,0,0};
 static FLOAT DefaultBorderColor[4] = { 0.0,0.0,0.0,0.0 };
-static ClearValue DefaultClearValue= {};
+static ClearValue DefaultClearValue(ClearValue::ClearType::CLEAR_TYPE_DEFAUTL);
+//DefaultClearValue.Type = ClearValue::ClearType::CLEAR_TYPE_DEFAUTL;

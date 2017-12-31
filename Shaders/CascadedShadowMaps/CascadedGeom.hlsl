@@ -1,5 +1,5 @@
-#include "GraphicsUtility/GraphicsUtility.hlsl"
-#include "GraphicsUtility/LightFunctions.hlsl"
+#include "../GraphicsUtility/GraphicsUtility.hlsl"
+#include "../GraphicsUtility/LightFunctions.hlsl"
 cbuffer CameraBuffer : register(b0)
 {
     Camera camera;

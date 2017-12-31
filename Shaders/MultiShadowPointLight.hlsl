@@ -1,5 +1,5 @@
-#include "Lightfunctions.hlsl"
-#include "GraphicsUtility.hlsl"
+#include "GraphicsUtility/Lightfunctions.hlsl"
+#include "GraphicsUtility/GraphicsUtility.hlsl"
 cbuffer CameraBuffer : register(b0)
 {
     Camera camera;
@@ -110,7 +110,7 @@ static float3 pcfs[20] =
   //  return float4(1.0, 1.0, 0.0, 1.0);
    // return float4(normal, 1.0);
     float metallic = GBufferTextures[2].Sample(g_sampler, uv).a;
-    float3 albedo = GBufferTextures[1].Sample(g_sampler, uv).rgb;
+    float3 albedo = pow(GBufferTextures[1].Sample(g_sampler, uv).rgb,2.2);
     float roughness = GBufferTextures[1].Sample(g_sampler, uv).a;
     float depth = GBufferTextures[3].Sample(g_sampler, uv).r;
     float4 projcoord;

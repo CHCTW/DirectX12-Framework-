@@ -35,6 +35,8 @@ bool Render::initialize()
 	{
 		std::cout << "Create Fail";
 	}
+
+
 	while (mDxgiFactory->EnumAdapters1(adapterIndex, &mDxgiAdaptor) != DXGI_ERROR_NOT_FOUND)
 	{
 		DXGI_ADAPTER_DESC1 desc;
@@ -42,7 +44,7 @@ bool Render::initialize()
 		if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
 		{
 			// we dont want a software device
-			adapterIndex++; // add this line here. Its not currently in the downloadable project
+			adapterIndex++; 
 			continue;
 		}
 		hr = D3D12CreateDevice(mDxgiAdaptor, D3D_FEATURE_LEVEL_11_0, _uuidof(ID3D12Device), nullptr);
@@ -93,7 +95,7 @@ bool Render::initialize()
 
 	// create pipelien for generate  mipmpaps
 
-	ShaderSet downsampleshader;
+//	ShaderSet downsampleshader;
 //	downsampleshader.shaders[CS].load()
 
 
@@ -115,12 +117,24 @@ bool Render::createSwapChain(Window &window, UINT  count, RenderTargetFormat &fo
 	swapChainDesc.BufferCount = count;
 	swapChainDesc.BufferDesc = backbufferdesc;
 	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
 	swapChainDesc.OutputWindow = glfwGetWin32Window(window.mWindow);
 	swapChainDesc.SampleDesc = samdesc;
 	swapChainDesc.Windowed = true;
 
+
+	//DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
+	//swapChainDesc.BufferCount = count;
+	//swapChainDesc.Width = window.mWidth;
+	//swapChainDesc.Height = window.mHeight;
+	//swapChainDesc.Format = format.mRenderTargetFormat[0];
+	//swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	//swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	//swapChainDesc.SampleDesc.Count = 1;
+	
+
 	HRESULT hr = mDxgiFactory->CreateSwapChain(mCommandQueue, &swapChainDesc, &tempSwapChain);
+//	HRESULT hr = mDxgiFactory->CreateSwapChainForHwnd(mCommandQueue, glfwGetWin32Window(window.mWindow), &swapChainDesc, nullptr, nullptr, &tempSwapChain);
 	if (!SUCCEEDED(hr))
 	{
 		std::cout << "Fail to Create Swap Chain" << std::endl;
@@ -144,7 +158,7 @@ bool Render::createSwapChain(Window &window, UINT  count, RenderTargetFormat &fo
 		hr = mSwapChain->GetBuffer(i, IID_PPV_ARGS(&mSwapChainRenderTarget[i].mRenderBuffers[0].mResource));
 		mSwapChainRenderTarget[i].mRenderBuffers[0].mState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 		mSwapChainRenderTarget[i].mRenderBuffers[0].mFormat = format.mRenderTargetFormat[0];
-		mSwapChainRenderTarget[i].mRenderBuffers[0].mRTV = mRTVDescriptorHeap.addResource(RTV, mSwapChainRenderTarget[i].mRenderBuffers[0].mResource, NULL);
+		mSwapChainRenderTarget[i].mRenderBuffers[0].mRTV.push_back (mRTVDescriptorHeap.addResource(RTV, mSwapChainRenderTarget[i].mRenderBuffers[0].mResource, NULL));
 		if (format.mDepth) 
 		{
 			mSwapChainRenderTarget[i].mDepthBuffer.resize(1);

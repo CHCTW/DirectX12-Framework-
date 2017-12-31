@@ -1,9 +1,9 @@
 #pragma once
 #include "stdafx.h"
-#include <glm/matrix.hpp>
-//#include <glm/gtx/transform.hpp>
-#include <glm/matrix.hpp>
-#include <glm/gtc/type_ptr.hpp>
+//#include <glm/matrix.hpp>
+////#include <glm/gtx/transform.hpp>
+//#include <glm/matrix.hpp>
+//#include <glm/gtc/type_ptr.hpp>
 #include "Camera.h"
 class GameCamera : public Camera
 {

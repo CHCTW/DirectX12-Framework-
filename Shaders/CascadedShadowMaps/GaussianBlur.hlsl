@@ -1,4 +1,4 @@
-#include "GraphicsUtility/Math.hlsl"
+#include "../GraphicsUtility/Math.hlsl"
 #define GROUPSIZE 256
 cbuffer direction : register(b1)
 {

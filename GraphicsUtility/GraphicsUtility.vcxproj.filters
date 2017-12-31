@@ -115,13 +115,13 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="..\Shaders\GraphicsUtility.hlsl">
+    <FxCompile Include="..\Shaders\GraphicsUtility\GraphicsUtility.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
-    <FxCompile Include="..\Shaders\LightFunctions.hlsl">
+    <FxCompile Include="..\Shaders\GraphicsUtility\LightFunctions.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
-    <FxCompile Include="..\Shaders\Math.hlsl">
+    <FxCompile Include="..\Shaders\GraphicsUtility\Math.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
   </ItemGroup>

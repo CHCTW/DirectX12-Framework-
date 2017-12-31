@@ -1,4 +1,4 @@
-#include "GraphicsUtility.hlsl"
+#include "GraphicsUtility/GraphicsUtility.hlsl"
 #define PI 3.14159
 struct InstancedInformation
 {

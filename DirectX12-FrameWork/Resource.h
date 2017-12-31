@@ -1,6 +1,8 @@
 #pragma once
 #include "stdafx.h"
 #include "d3dx12.h"
+#include <vector>
+using namespace std;
 class Resource
 {
 public:
@@ -8,11 +10,11 @@ public:
 	ID3D12Resource* mResource;
 	ID3D12Resource* mUploadBuffer;
 	Handles mSRV;
-	Handles mUAV;
+	vector<Handles> mUAV;
 	Handles mCBV;
-	// going move these to texture class, also make it array so it can handle lod rendertarget 
-	Handles mRTV;
-	Handles mDSV;
+	// sitll gonna keep here due to cmdlist bindding, need to think more, but it is going to be use a arrays 
+	vector<Handles> mRTV;
+	vector<Handles> mDSV;
 	//*********************************************************//
 
 	D3D12_GPU_VIRTUAL_ADDRESS GpuAddress;

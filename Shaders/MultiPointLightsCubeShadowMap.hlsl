@@ -1,6 +1,6 @@
-#include "GraphicsUtility.hlsl"
-#include "Lightfunctions.hlsl"
-#include "Math.hlsl"
+#include "GraphicsUtility/GraphicsUtility.hlsl"
+#include "GraphicsUtility/Lightfunctions.hlsl"
+#include "GraphicsUtility/Math.hlsl"
 
 
 StructuredBuffer<Object> objectList: register(t0);

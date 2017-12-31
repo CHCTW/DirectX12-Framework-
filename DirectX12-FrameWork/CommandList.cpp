@@ -99,19 +99,22 @@ bool CommandList::close()
 		return false;
 	return true;
 }
-void CommandList::bindRenderTarget(RenderTarget & rt)
+void CommandList::bindRenderTarget(RenderTarget & rt, UINT miplevel)
 {
 	CD3DX12_CPU_DESCRIPTOR_HANDLE cpus[8] = {};
 	for (int i = 0 ; i < rt.mRenderBuffers.size() ; ++i)
 	{
-		cpus[i] = rt.mRenderBuffers[i].mRTV.Cpu;
+		cpus[i] = rt.mRenderBuffers[i].mRTV[miplevel].Cpu;
 	}
 	if(rt.mFormat.mDepth)
-		mDx12CommandList->OMSetRenderTargets(rt.mRenderBuffers.size(), cpus, false, &(rt.mDepthBuffer[0].mDSV.Cpu));
+		mDx12CommandList->OMSetRenderTargets(rt.mRenderBuffers.size(), cpus, false, &(rt.mDepthBuffer[0].mDSV[miplevel].Cpu));
 	else
 	mDx12CommandList->OMSetRenderTargets(rt.mRenderBuffers.size(), cpus, false, nullptr);
 }
-
+void CommandList::bindDepthStencilBufferOnly(Texture& dsbuffer, UINT miplevel)
+{
+	mDx12CommandList->OMSetRenderTargets(0, nullptr, false, &dsbuffer.mDSV[miplevel].Cpu);
+}
 void CommandList::bindCubeRenderTarget(CubeRenderTarget & crt, UINT face,UINT level)
 {
 	if (crt.mType == (CUBE_RENDERTAERGET_TYPE_DEPTH| CUBE_RENDERTAERGET_TYPE_RENDERTARGET))
@@ -126,37 +129,45 @@ void CommandList::bindCubeRenderTarget(CubeRenderTarget & crt, UINT face,UINT le
 		mDx12CommandList->OMSetRenderTargets(1, &(crt.mFaceRTV[level].Cpu), false, nullptr);
 }
 
-void CommandList::clearRenderTarget(RenderTarget &rt, const float *color)
+void CommandList::clearRenderTarget(RenderTarget &rt, const float *color,  UINT miplevel)
 {
 //	CD3DX12_CPU_DESCRIPTOR_HANDLE cpus[8] = {};
 	for (int i = 0; i < rt.mRenderBuffers.size(); ++i)
 	{
 	//	cpus[i] = rt.mRenderBuffers[i].mRTV.Cpu;
 
-		mDx12CommandList->ClearRenderTargetView(rt.mRenderBuffers[i].mRTV.Cpu, color, 0, NULL);
+		mDx12CommandList->ClearRenderTargetView(rt.mRenderBuffers[i].mRTV[miplevel].Cpu, color, 0, NULL);
 
 	}
 //	mDx12CommandList->ClearRenderTargetView(rt.mRTV.Cpu, color, 0, NULL);
 }
-void CommandList::clearRenderTarget(RenderTarget &rt)
+void CommandList::clearRenderTarget(RenderTarget &rt,UINT miplevel)
 {
 	for (int i = 0; i < rt.mRenderBuffers.size(); ++i)
 	{
 		//	cpus[i] = rt.mRenderBuffers[i].mRTV.Cpu;
 
-		mDx12CommandList->ClearRenderTargetView(rt.mRenderBuffers[i].mRTV.Cpu, rt.mFormat.mRenderTargetClearValue[i].Color, 0, NULL);
+		mDx12CommandList->ClearRenderTargetView(rt.mRenderBuffers[i].mRTV[miplevel].Cpu, rt.mFormat.mRenderTargetClearValue[i].Color, 0, NULL);
 
 	}
 }
 
 
-void CommandList::clearDepthStencil(RenderTarget &rt, D3D12_CLEAR_FLAGS flag, float depth, UINT stencil)
+void CommandList::clearDepthStencil(RenderTarget &rt, D3D12_CLEAR_FLAGS flag, float depth, UINT stencil, UINT miplevel)
 {
 	if (rt.mFormat.mDepth)
 	{
-		mDx12CommandList->ClearDepthStencilView(rt.mDepthBuffer[0].mDSV.Cpu, flag, depth, stencil, 0, nullptr);
+		mDx12CommandList->ClearDepthStencilView(rt.mDepthBuffer[0].mDSV[miplevel].Cpu, flag, depth, stencil, 0, nullptr);
 	}
 }
+void CommandList::clearDepthStencil(Texture &dsbuffer, D3D12_CLEAR_FLAGS flag, float depth , UINT stencil, UINT miplevel)
+{
+	if (dsbuffer.mTextUsage&TEXTURE_USAGE_DSV)
+	{
+		mDx12CommandList->ClearDepthStencilView(dsbuffer.mDSV[miplevel].Cpu, flag, depth, stencil, 0, nullptr);
+	}
+}
+
 
 void CommandList::clearcubeRenderTarget(CubeRenderTarget &crt, UINT face, UINT level)
 {
@@ -351,7 +362,7 @@ void CommandList::bindGraphicsRootSigature(RootSignature& rootsig,bool bindresou
 			case PARAMETERTYPE_UAV:
 				if (rootsig.mParameters[i].mTable)
 				{
-					mDx12CommandList->SetGraphicsRootDescriptorTable(i, rootsig.mParameters[i].mResource->mUAV.Gpu);
+					mDx12CommandList->SetGraphicsRootDescriptorTable(i, rootsig.mParameters[i].mResource->mUAV[rootsig.mParameters[i].mUAVMipLevel].Gpu);
 				}
 				else
 					mDx12CommandList->SetGraphicsRootUnorderedAccessView(i, rootsig.mParameters[i].mResource->GpuAddress);
@@ -368,6 +379,14 @@ void CommandList::bindGraphicsRootSigature(RootSignature& rootsig,bool bindresou
 
 }
 void CommandList::bindGraphicsResource(UINT rootindex, Resource& res)
+{
+	if (mCurrentBindGraphicsRootSig == nullptr)
+	{
+		cout << "Need to bind Graphics Root Signature First" << endl;
+	}
+	bindGraphicsResource(rootindex,res, mCurrentBindGraphicsRootSig->mParameters[rootindex].mUAVMipLevel);
+}
+void CommandList::bindGraphicsResource(UINT rootindex, Resource& res, UINT uavmiplevel)
 {
 	if (mCurrentBindGraphicsRootSig == nullptr)
 	{
@@ -401,7 +420,7 @@ void CommandList::bindGraphicsResource(UINT rootindex, Resource& res)
 	case PARAMETERTYPE_UAV:
 		if (rootsig.mParameters[rootindex].mTable)
 		{
-			mDx12CommandList->SetGraphicsRootDescriptorTable(rootindex, res.mUAV.Gpu);
+			mDx12CommandList->SetGraphicsRootDescriptorTable(rootindex, res.mUAV[uavmiplevel].Gpu);
 		}
 		else
 			mDx12CommandList->SetGraphicsRootUnorderedAccessView(rootindex, res.GpuAddress);
@@ -475,7 +494,7 @@ void CommandList::bindComputeRootSigature(RootSignature& rootsig, bool bindresou
 			case PARAMETERTYPE_UAV:
 				if (rootsig.mParameters[i].mTable)
 				{
-					mDx12CommandList->SetComputeRootDescriptorTable(i, rootsig.mParameters[i].mResource->mUAV.Gpu);
+					mDx12CommandList->SetComputeRootDescriptorTable(i, rootsig.mParameters[i].mResource->mUAV[rootsig.mParameters[i].mUAVMipLevel].Gpu);
 				}
 				else
 					mDx12CommandList->SetComputeRootUnorderedAccessView(i, rootsig.mParameters[i].mResource->GpuAddress);
@@ -491,6 +510,14 @@ void CommandList::bindComputeRootSigature(RootSignature& rootsig, bool bindresou
 	}
 }
 void CommandList::bindComputeResource(UINT rootindex, Resource& res)
+{
+	if (mCurrentBindComputeRootSig == nullptr)
+	{
+		cout << "Need to bind Compute Root Signature First" << endl;
+	}
+	bindComputeResource(rootindex,res, mCurrentBindComputeRootSig->mParameters[rootindex].mUAVMipLevel);
+}
+void CommandList::bindComputeResource(UINT rootindex, Resource& res,UINT uavmiplevel)
 {
 	if(mCurrentBindComputeRootSig==nullptr)
 	{
@@ -521,7 +548,7 @@ void CommandList::bindComputeResource(UINT rootindex, Resource& res)
 	case PARAMETERTYPE_UAV:
 		if (rootsig.mParameters[rootindex].mTable)
 		{
-			mDx12CommandList->SetComputeRootDescriptorTable(rootindex, res.mUAV.Gpu);
+			mDx12CommandList->SetComputeRootDescriptorTable(rootindex, res.mUAV[uavmiplevel].Gpu);
 		}
 		else
 			mDx12CommandList->SetComputeRootUnorderedAccessView(rootindex, res.GpuAddress);

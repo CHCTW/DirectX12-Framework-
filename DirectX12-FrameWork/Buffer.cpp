@@ -6,44 +6,7 @@ Buffer::Buffer():mType(NONE), mBufferSize(0), mCounter(false)
 {
 
 }
-//bool Buffer::createBuffer(ID3D12Device* device, UINT buffersize, D3D12_HEAP_TYPE heaptype = D3D12_HEAP_TYPE_DEFAULT)
-//{
-//	if (mResource)
-//	{
-//		cout << "Already Create Buffer" << endl;
-//		return false;
-//	}
-//	HRESULT hr = device->CreateCommittedResource(
-//		&CD3DX12_HEAP_PROPERTIES(heaptype),
-//		D3D12_HEAP_FLAG_NONE,
-//		&CD3DX12_RESOURCE_DESC::Buffer(buffersize),
-//		D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
-//		nullptr,
-//		IID_PPV_ARGS(&mResource));
-//	if (FAILED(hr))
-//		return false;
-//
-//	mType = VERTEX;
-//	mState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
-//	mHeapType = heaptype;
-//	mBufferSize = buffersize;
-//	GpuAddress = mResource->GetGPUVirtualAddress();
-//
-//	if (mHeapType == D3D12_HEAP_TYPE_DEFAULT)  // if the buffer is in defaul area, need another heap for upload
-//	{
-//		hr = device->CreateCommittedResource(
-//			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-//			D3D12_HEAP_FLAG_NONE,
-//			&CD3DX12_RESOURCE_DESC::Buffer(buffersize),
-//			D3D12_RESOURCE_STATE_GENERIC_READ,
-//			nullptr,
-//			IID_PPV_ARGS(&mUploadBuffer));
-//		if (FAILED(hr))
-//			return false;
-//	}
-//
-//	return true;
-//}
+
 bool Buffer::createVertexBuffer(ID3D12Device* device,UINT buffersize, UINT strideSize, D3D12_HEAP_TYPE heaptype )
 {
 	
@@ -287,9 +250,9 @@ bool Buffer::createStructeredBuffer(ID3D12Device* device, DescriptorHeap &heap, 
 		if (raw)
 			uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_RAW;
 		if (counter)
-			mUAV = heap.addResource(UAV, mResource, &uavDesc, mResource);
+			mUAV.push_back( heap.addResource(UAV, mResource, &uavDesc, mResource));
 		else
-			mUAV = heap.addResource(UAV, mResource, &uavDesc, nullptr);
+			mUAV.push_back(heap.addResource(UAV, mResource, &uavDesc, nullptr));
 	}
 
 	return true;

@@ -10,7 +10,7 @@ class Sampler;
 struct RootParameter
 {
 	RootParameter():mType(PARAMETERTYPE_UNDEFINE),mTable(true), mResCounts(0), mResource(nullptr), rangeflag(D3D12_DESCRIPTOR_RANGE_FLAG_NONE), mVisibility(D3D12_SHADER_VISIBILITY_ALL),
-		mShaderSpace(0)
+		mShaderSpace(0), mUAVMipLevel(0)
 	{
 
 	}
@@ -20,6 +20,7 @@ struct RootParameter
 	UINT mBindSlot;
 	UINT mShaderSpace;
 	UINT mResCounts;
+	UINT mUAVMipLevel;
 	union  //since they both use none = 0 , we only need set  0 for flag;
 	{
 		D3D12_DESCRIPTOR_RANGE_FLAGS rangeflag;

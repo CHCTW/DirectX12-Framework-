@@ -9,7 +9,22 @@ struct PointLightData
     float lightintensity;
     float2 padding;
 };
-
+struct DirectionLightData  // should be the same with directionlight.h
+{
+    float4x4 lightView;
+    float4x4 lightProj;
+    float4 boxMax;
+    float4 boxMin;
+    float4x4 lightSliceProj[8]; // maximum cascade shadow map num
+    float4 sliceBoxMaxandZ[8];
+    float4 sliceBoxMinandZ[8];
+    float4 lightDirection;
+    float4 lightColor;
+    float virtualDistance;
+    float lightIntensity;
+    uint sliceCount;
+    float padding;
+};
 float3 Fresnel(float3 F0, float HV)
 {
     return F0 + (1.0 - F0) * pow(2, (-5.55473 * HV - 6.98316) * HV);

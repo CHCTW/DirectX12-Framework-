@@ -45,7 +45,7 @@ bool CubeRenderTarget::createCubeRenderTargets(ID3D12Device* device, UINT width,
 	else
 	{
 		mRenderBuffer.resize(1);
-		mRenderTargetClearValue = { 0.0,0.0,0.0,0.0 };
+		mRenderTargetClearValue.setColor(0.0,0.0,0.0,0.0 );
 		mRenderBuffer[0].CreateTexture(device, renderforamt, width, height, arraysize, true, miplevel, flag | D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, mRenderTargetClearValue, D3D12_RESOURCE_DIMENSION_TEXTURE2D,  D3D12_RESOURCE_STATE_RENDER_TARGET);
 		//mRenderBuffers[0].addRenderTargetView(heap);
 		mRenderBuffer[0].addSahderResorceView(srvuavheap);
@@ -105,7 +105,7 @@ bool CubeRenderTarget::createCubeRenderTargets(ID3D12Device* device, UINT width,
 	if (type & (CUBE_RENDERTAERGET_TYPE_RENDERTARGET))
 	{
 		mRenderBuffer.resize(1);
-		mRenderTargetClearValue = { 0.0,0.0,0.0,0.0 };
+		mRenderTargetClearValue.setColor(0.0,0.0,0.0,0.0);
 		mRenderBuffer[0].CreateTexture(device, renderforamt, width, height, arraysize, true, miplevel, renderflag | D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, mRenderTargetClearValue, D3D12_RESOURCE_DIMENSION_TEXTURE2D, D3D12_RESOURCE_STATE_RENDER_TARGET);
 		//mRenderBuffers[0].addRenderTargetView(srvuavheap);
 		mRenderBuffer[0].addSahderResorceView(srvuavheap);

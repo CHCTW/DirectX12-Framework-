@@ -26,6 +26,8 @@ public:
 	bool close();
 	void bindGraphicsRootSigature(RootSignature& rootsig,bool bindresource = true);
 	void bindComputeRootSigature(RootSignature& rootsig, bool bindresource = true);
+	void bindGraphicsResource(UINT rootindex, Resource& res,UINT uavmiplevel);
+	void bindComputeResource(UINT rootindex, Resource& res, UINT uavmiplevel);
 	void bindGraphicsResource(UINT rootindex, Resource& res);
 	void bindComputeResource(UINT rootindex, Resource& res);
 	void bindGraphicsConstant(UINT rootindex, void const * ConstData);
@@ -43,8 +45,11 @@ public:
 		vertexbindhelp({ std::forward<T>(buffers)... });
 	}
 	void bindIndexBuffer(Buffer& buffer);
-	void bindRenderTarget(RenderTarget & rt);
+	void bindRenderTarget(RenderTarget & rt,UINT miplevel = 0);
 	void bindCubeRenderTarget(CubeRenderTarget & crt, UINT face,UINT level = 0);
+
+	void bindDepthStencilBufferOnly(Texture& dsbuffer, UINT miplevel = 0);
+
 
 	void bindPipeline(Pipeline& pipeline);
 	void drawInstance(UINT vertexcount, UINT instancecount, UINT vertexstart, UINT instancestart);
@@ -59,9 +64,11 @@ public:
 	void unsetPrediction(D3D12_PREDICATION_OP type);
 
 
-	void clearRenderTarget(RenderTarget &rt, const float *color);
-	void clearRenderTarget(RenderTarget &rt);
-	void clearDepthStencil(RenderTarget &rt, D3D12_CLEAR_FLAGS flag = D3D12_CLEAR_FLAG_DEPTH, float depth = 1.0f, UINT stencil = 1);
+	void clearRenderTarget(RenderTarget &rt, const float *color,UINT miplevel = 0);
+	void clearRenderTarget(RenderTarget &rt, UINT miplevel = 0);
+	void clearDepthStencil(RenderTarget &rt, D3D12_CLEAR_FLAGS flag = D3D12_CLEAR_FLAG_DEPTH, float depth = 1.0f, UINT stencil = 1,UINT miplevel = 0);
+	void clearDepthStencil(Texture &dsbuffer, D3D12_CLEAR_FLAGS flag = D3D12_CLEAR_FLAG_DEPTH, float depth = 1.0f, UINT stencil = 1, UINT miplevel = 0);
+
 	void clearcubeRenderTarget(CubeRenderTarget &crt, UINT face, UINT level = 0);
 	void clearcubeDepthStencil(CubeRenderTarget &crt, UINT face, UINT level = 0,D3D12_CLEAR_FLAGS flag = D3D12_CLEAR_FLAG_DEPTH, float depth = 1.0f, UINT stencil = 1);
 	

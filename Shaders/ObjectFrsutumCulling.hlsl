@@ -1,6 +1,6 @@
-#include "GraphicsUtility.hlsl"
-#include "LightFunctions.hlsl"
-#include "Math.hlsl"
+#include "GraphicsUtility/GraphicsUtility.hlsl"
+#include "GraphicsUtility/LightFunctions.hlsl"
+#include "GraphicsUtility/Math.hlsl"
 cbuffer CameraBuffer : register(b0)
 {
     Camera camera;

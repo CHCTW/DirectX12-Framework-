@@ -6,9 +6,9 @@ void Transform::CacNewTransform()
 {
 
 	mMatrices.mModel = glm::translate(mPosition);
-	mMatrices.mModel = glm::rotate(mMatrices.mModel, mAngle.x*PI / 180, glm::vec3(1.0f, 0.0f, 0.0f));
-	mMatrices.mModel = glm::rotate(mMatrices.mModel, mAngle.y*PI / 180, glm::vec3(0.0f, 1.0f, 0.0f));
-	mMatrices.mModel = glm::rotate(mMatrices.mModel, mAngle.z*PI / 180, glm::vec3(0.0f, 0.0f, 1.0f));
+	mMatrices.mModel = glm::rotate(mMatrices.mModel, glm::radians(mAngle.x), glm::vec3(1.0f, 0.0f, 0.0f));
+	mMatrices.mModel = glm::rotate(mMatrices.mModel, glm::radians(mAngle.y), glm::vec3(0.0f, 1.0f, 0.0f));
+	mMatrices.mModel = glm::rotate(mMatrices.mModel, glm::radians(mAngle.z), glm::vec3(0.0f, 0.0f, 1.0f));
 	mMatrices.mModel = glm::scale(mMatrices.mModel, mScale);
 	glm::mat4 mInverse = glm::inverse(mMatrices.mModel);
 	mMatrices.mNormal = glm::transpose(mInverse);

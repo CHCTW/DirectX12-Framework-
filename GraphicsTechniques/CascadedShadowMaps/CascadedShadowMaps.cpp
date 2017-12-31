@@ -12,7 +12,7 @@
 #include "SpecCamera.h"
 #include "GameCamera.h"
 #include "Object.h"
-#include "PointLight.h"
+#include "DirectionLight.h"
 #include "GaussionCurve.h"
 #include <chrono>
 #include <random>
@@ -22,7 +22,6 @@ Render render;
 CommandAllocator cmdalloc;
 CommandList cmdlist;
 Window windows;
-Pipeline pipeline;
 UINT frameIndex;
 Buffer vertexBuffer;
 Buffer normalBuffer;
@@ -46,7 +45,7 @@ float curypos;
 float curxoffet;
 float curyoffet;
 bool press = false;
-
+bool shiftpress = false;
 struct IndirectDrawCmd
 {
 	VertexBufferView position;
@@ -68,7 +67,6 @@ struct IndirecShadowDrawCmd  // only need position
 	VertexBufferView position;
 	IndexBufferView index;
 	unsigned int objectindex;
-	unsigned int lightindexoffset;
 	DrawIndexedArgument argument;
 };
 
@@ -80,17 +78,13 @@ std::vector<IndirectMeshData> indirectMeshList;
 std::vector<Material> materialList;
 std::vector<Matrices> matricesList;
 std::vector<Object> objectList;
-std::vector<PointLightData> pointLightList;
-// temp data for indirect piont light cmd
-std::vector<IndirectPointLightDrawCmd> lightCmd;
+
 
 Buffer indirecrtMeshBuffer;
 Buffer materialBuffer;
 Buffer matricesBuffer;
 Buffer objectBuffer;
 Buffer indirectGeoCmdBuffer;
-Buffer pointLightBuffer;
-Buffer pointLightIndirectBuffer;
 int maxmeshcount = 1000;
 int maxobjectcount = 1000;
 Pipeline GeoCmdGenPipeline;
@@ -106,26 +100,34 @@ DescriptorHeap samplerheap;
 Sampler matsampler(D3D12_FILTER_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_WRAP, D3D12_TEXTURE_ADDRESS_MODE_WRAP);
 Sampler gbuffersampler;
 RenderTarget GBuffer;
-vector<PointLight> pointLights;
-vector<float> vel;
-CommandSignature lightCmdSig;
-//RootSignature geoCmdGenRootSig;
-RootSignature lightDrawSig;
-Pipeline lightPipeline;
-Buffer shadowlightlistBuffer;
+
+
+DirectionLight sunlight;
+float spint = 121;
+float tilt = -80.0f;
+float sunintensity = 5.0f;
+Buffer lightBuffer;
 Buffer shadowIndirectCmdBuffer;
-CubeRenderTarget cubeShadowMaps;
-unsigned int shadowwidth = 256;
-unsigned int shadowheight = 256;
-RootSignature shadowRootSig;
 CommandSignature shadowCmdSig;
-Pipeline shadowpPipeline;
+unsigned int shadowcount = 5;
+unsigned int shadowwidth = 1024;
+unsigned int shadowheight = 1024;
+Texture cascadedShadowMap;
+RootSignature shadowRootsig;
+Pipeline shadowPipeline;
 ViewPort shadowviewport;
 Scissor shadowscissor;
-RenderTarget HDRBuffer;  // another positon why seperate textue and rendertarget is wrong, should use usage approach while creating resource
+
+RootSignature lightRootsig;
+Pipeline lightPipeline;
+
+
+
+
+Texture HDRBuffer;  // another positon why seperate textue and rendertarget is wrong, should use usage approach while creating resource
 Texture BloomBuffer;
 Texture TempBuffer;
-#define GROUPSIZE 256
+
 GaussionWeight gaussdata;
 
 GaussionCurve curve(10, 3);
@@ -138,54 +140,7 @@ Pipeline brightExtractPipeline;
 Pipeline gaussianPipeline;
 Pipeline combinePipe;
 RootSignature combinesig;
-int pointLightNum = 128;
 
-std::default_random_engine generator(15);
-std::uniform_real_distribution<float> distributionXZ(-50.0, 50.0);
-std::uniform_real_distribution<float> distributionY(5.0, 100.0f);
-std::uniform_real_distribution<float> distributionintensity(100, 1500);
-std::uniform_real_distribution<float> distributionradius(15.0, 20.0);;
-std::array<double, 2> intervals{ 0.0, 1.0 };
-std::array<float, 2> weights{ 1500 , 1500.0 };
-std::piecewise_linear_distribution<double>
-distributionlightcolor(intervals.begin(), intervals.end(), weights.begin());
-
-
-
-std::array<double, 3> xintervals{-55, 0.0,55 };
-std::array<float, 3> xweights{ 1000,1000,1000 };
-std::piecewise_linear_distribution<double>
-distributionX(xintervals.begin(), xintervals.end(), xweights.begin());
-
-
-//std::uniform_real_distribution<float> distributionlightcolor(0.3, 1.5);
-std::uniform_real_distribution<float> distributionmove(-10, 10);
-
-
-// Thought: each objects is one basic draw call, each object don't have any information about material, matrics, mesh
-// it only know the index in the list, 
-//
-
-// Defered pipeline
-// First : use compute shader to generate frustum cull indirect draw call, since mesh has vertex and index buffer location, 
-// can generate indirect draw call 
-// input :  objectList that contains all objects in the scene
-// cbv : camera buffer, use for culling, 
-// output : frsutum culling indreict draw command, with a root constant, the root constant is the index of the object in the list
-
-// Second : draw the visiblity scene indirect command in  G-Buffer
- 
-// Third : lit the scene with area lights
-
-// Point light pipeline :
-//  First : use compute shader to generate the indirect litting draw call that will lit the scene, 
-//          also generate another cubeshadowmap indirect draw all for cube shadow mapping , need to cull out the objects that is not in
-//          the range of point light
-// Second : draw area volume or quad on the screen, should use very simple volume, like a box. Also, use cube shadow map to get nice shadow effect
-
-
-
-/*******************************************************/
 std::chrono::high_resolution_clock::time_point pre;
 void initializeRender()
 {
@@ -193,8 +148,8 @@ void initializeRender()
 
 	//Camera cam;
 
-	cout << sizeof(IndirecShadowDrawCmd) << endl;
-//	system("pause");
+//	cout << sizeof(IndirecShadowDrawCmd) << endl;
+	//	system("pause");
 
 	render.initialize();
 	RenderTargetFormat retformat;
@@ -214,11 +169,14 @@ void initializeRender()
 	formats[2] = DXGI_FORMAT_R8G8B8A8_UNORM; // emmersive + metalic
 	RenderTargetFormat gBufferFormat(3, formats, true);
 	GBuffer.createRenderTargets(render.mDevice, windows.mWidth, windows.mHeight, gBufferFormat, rtvheap, dsvheap, srvheap);
-	
+
 	//DXGI_FORMAT hdrformat = DXGI_FORMAT_R32G32B32A32_FLOAT;
 	RenderTargetFormat hdrFormat(DXGI_FORMAT_R32G32B32A32_FLOAT);
-	HDRBuffer.createRenderTargets(render.mDevice, windows.mWidth, windows.mHeight, hdrFormat, rtvheap, srvheap);
-	BloomBuffer.CreateTexture(render.mDevice, DXGI_FORMAT_R32G32B32A32_FLOAT, windows.mWidth/2, windows.mHeight/2, 1, false, 1, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+//	HDRBuffer.createRenderTargets(render.mDevice, windows.mWidth, windows.mHeight, hdrFormat, rtvheap, srvheap);
+
+	HDRBuffer.CreateTexture(render, srvheap, DXGI_FORMAT_R32G32B32A32_FLOAT, windows.mWidth, windows.mHeight, 1, 1, TEXURE_SRV_TYPE_2D, TEXTURE_USAGE_SRV_UAV,D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE|D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+
+	BloomBuffer.CreateTexture(render.mDevice, DXGI_FORMAT_R32G32B32A32_FLOAT, windows.mWidth / 2, windows.mHeight / 2, 1, false, 1, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 	BloomBuffer.addUnorderedAccessView(srvheap);
 	BloomBuffer.addSahderResorceView(srvheap);
 
@@ -247,45 +205,34 @@ void initializeRender()
 
 	rootsig.initialize(render.mDevice);
 
-	shaderset.shaders[VS].load("Shaders/ModelLoading.hlsl", "VSMain", VS);
-	shaderset.shaders[PS].load("Shaders/ModelLoading.hlsl", "PSMain", PS);
-
-
-	pipeline.createGraphicsPipeline(render.mDevice, rootsig, shaderset, retformat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(), VERTEX_LAYOUT_TYPE_SPLIT_ALL);
+	
 
 
 
 	geoCmdGenRootSig.mParameters.resize(4);
-	geoCmdGenRootSig.mParameters[0].mType = PARAMETERTYPE_UAV; // indirect command + shadow light list + shadow command
-	geoCmdGenRootSig.mParameters[0].mResCounts = 3;
+	geoCmdGenRootSig.mParameters[0].mType = PARAMETERTYPE_UAV; // indirect command + shadow command
+	geoCmdGenRootSig.mParameters[0].mResCounts = 2;
 	geoCmdGenRootSig.mParameters[0].mBindSlot = 0;
 	geoCmdGenRootSig.mParameters[0].mResource = &indirectGeoCmdBuffer;
 	geoCmdGenRootSig.mParameters[1].mType = PARAMETERTYPE_SRV; //objct + mac + mesh
 	geoCmdGenRootSig.mParameters[1].mResCounts = 3;
 	geoCmdGenRootSig.mParameters[1].mBindSlot = 0;
 	geoCmdGenRootSig.mParameters[1].mResource = &objectBuffer;
-	geoCmdGenRootSig.mParameters[2].mType = PARAMETERTYPE_SRV; 
+	geoCmdGenRootSig.mParameters[2].mType = PARAMETERTYPE_CBV;
 	geoCmdGenRootSig.mParameters[2].mResCounts = 1;
-	geoCmdGenRootSig.mParameters[2].mBindSlot = 3;
-	geoCmdGenRootSig.mParameters[2].mResource = &pointLightBuffer;
-	//geoCmdGenRootSig.mParameters[2].mType = PARAMETERTYPE_SRV;
-	//geoCmdGenRootSig.mParameters[2].mResCounts = 1;
-	//geoCmdGenRootSig.mParameters[2].mBindSlot = 1;
-	//geoCmdGenRootSig.mParameters[2].mResource = &indirecrtMeshBuffer;
-	//geoCmdGenRootSig.mParameters[3].mType = PARAMETERTYPE_SRV;
-	//geoCmdGenRootSig.mParameters[3].mResCounts = 1;
-	//geoCmdGenRootSig.mParameters[3].mBindSlot = 2;
-	//geoCmdGenRootSig.mParameters[3].mResource = &matricesBuffer;
+	geoCmdGenRootSig.mParameters[2].mBindSlot = 0;
+	geoCmdGenRootSig.mParameters[2].mResource = &cameraBuffer;
 	geoCmdGenRootSig.mParameters[3].mType = PARAMETERTYPE_CBV;
 	geoCmdGenRootSig.mParameters[3].mResCounts = 1;
-	geoCmdGenRootSig.mParameters[3].mBindSlot = 0;
-	geoCmdGenRootSig.mParameters[3].mResource = &cameraBuffer;
+	geoCmdGenRootSig.mParameters[3].mBindSlot = 1;
+	geoCmdGenRootSig.mParameters[3].mResource = &lightBuffer;
+
 
 
 	geoCmdGenRootSig.initialize(render.mDevice);
 
 	ShaderSet geocmdgencs;
-	geocmdgencs.shaders[CS].load("Shaders/ObjectFrsutumCulling.hlsl", "CSMain", CS);
+	geocmdgencs.shaders[CS].load("Shaders/CascadedShadowMaps/ObjectFrsutumCulling.hlsl", "CSMain", CS);
 	GeoCmdGenPipeline.createComputePipeline(render.mDevice, geoCmdGenRootSig, geocmdgencs);
 
 
@@ -313,12 +260,12 @@ void initializeRender()
 	geoDrawSig.mParameters[4].mBindSlot = 0;
 	geoDrawSig.mParameters[4].mResource = &cameraBuffer;
 	geoDrawSig.mParameters[4].mVisibility = D3D12_SHADER_VISIBILITY_ALL;
-	geoDrawSig.mParameters[5].mType = PARAMETERTYPE_SAMPLER; 
+	geoDrawSig.mParameters[5].mType = PARAMETERTYPE_SAMPLER;
 	geoDrawSig.mParameters[5].mResCounts = 1;
 	geoDrawSig.mParameters[5].mBindSlot = 0;
 	geoDrawSig.mParameters[5].mSampler = &matsampler;
 	geoDrawSig.mParameters[5].mVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-	geoDrawSig.mParameters[6].mType = PARAMETERTYPE_SRV; 
+	geoDrawSig.mParameters[6].mType = PARAMETERTYPE_SRV;
 	geoDrawSig.mParameters[6].mResCounts = -1;
 	geoDrawSig.mParameters[6].mBindSlot = 0;
 	geoDrawSig.mParameters[6].mShaderSpace = 1;
@@ -329,9 +276,8 @@ void initializeRender()
 	geoDrawSig.initialize(render.mDevice);
 
 	ShaderSet geoDrawShader;
-	geoDrawShader.shaders[VS].load("Shaders/MultipleShadowGeom.hlsl", "VSMain", VS);
-//	geoDrawShader.shaders[GS].load("Shaders/MultipleShadowGeom.hlsl", "GSMain", GS);
-	geoDrawShader.shaders[PS].load("Shaders/MultipleShadowGeom.hlsl", "PSMain", PS);
+	geoDrawShader.shaders[VS].load("Shaders/CascadedShadowMaps/CascadedGeom.hlsl", "VSMain", VS);
+	geoDrawShader.shaders[PS].load("Shaders/CascadedShadowMaps/CascadedGeom.hlsl", "PSMain", PS);
 
 	GeoDrawPipeline.createGraphicsPipeline(render.mDevice, geoDrawSig, geoDrawShader, gBufferFormat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(D3D12_CULL_MODE_FRONT), VERTEX_LAYOUT_TYPE_SPLIT_ALL);
 
@@ -350,7 +296,7 @@ void initializeRender()
 	geomCmdSig.mParameters[5].Type = D3D12_INDIRECT_ARGUMENT_TYPE_INDEX_BUFFER_VIEW;
 	geomCmdSig.mParameters[6].Type = D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT;
 	geomCmdSig.mParameters[6].Constant.Num32BitValuesToSet = 1; // first paramenter in root sig
-	geomCmdSig.mParameters[6].Constant.RootParameterIndex = 0; 
+	geomCmdSig.mParameters[6].Constant.RootParameterIndex = 0;
 	geomCmdSig.mParameters[6].Constant.DestOffsetIn32BitValues = 0;
 	geomCmdSig.mParameters[7].Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED;
 	geomCmdSig.initialize(render.mDevice, geoDrawSig);
@@ -358,35 +304,41 @@ void initializeRender()
 
 	// shadow pass
 
-
-	shadowRootSig.mParameters.resize(5);
-	shadowRootSig.mParameters[0].mType = PARAMETERTYPE_ROOTCONSTANT; // obj index + shaddow light index offset
-	shadowRootSig.mParameters[0].mResCounts = 2;
-	shadowRootSig.mParameters[0].mBindSlot = 0;
-	shadowRootSig.mParameters[0].mVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
-	shadowRootSig.mParameters[1].mType = PARAMETERTYPE_SRV; // objct 
-	shadowRootSig.mParameters[1].mResCounts = 1;
-	shadowRootSig.mParameters[1].mBindSlot = 0;
-	shadowRootSig.mParameters[1].mResource = &objectBuffer;
-	shadowRootSig.mParameters[1].mVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
-	shadowRootSig.mParameters[2].mType = PARAMETERTYPE_SRV; // matrices
-	shadowRootSig.mParameters[2].mResCounts = 1;
-	shadowRootSig.mParameters[2].mBindSlot = 1;
-	shadowRootSig.mParameters[2].mResource = &matricesBuffer;
-	shadowRootSig.mParameters[2].mVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
-	shadowRootSig.mParameters[3].mType = PARAMETERTYPE_SRV; // shadow light list 
-	shadowRootSig.mParameters[3].mResCounts = 1;
-	shadowRootSig.mParameters[3].mBindSlot = 2;
-	shadowRootSig.mParameters[3].mResource = &shadowlightlistBuffer;
-	shadowRootSig.mParameters[3].mVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
-	shadowRootSig.mParameters[4].mType = PARAMETERTYPE_SRV; // point light buffer
-	shadowRootSig.mParameters[4].mResCounts = 1;
-	shadowRootSig.mParameters[4].mBindSlot = 3;
-	shadowRootSig.mParameters[4].mResource = &pointLightBuffer;
-	//shadowRootSig.mParameters[4].mVisibility = D3D12_SHADER_VISIBILITY_GEOMETRY;
-	shadowRootSig.initialize(render.mDevice);
+	cascadedShadowMap.CreateTexture(render, srvheap, DXGI_FORMAT_R32_TYPELESS, shadowwidth, shadowheight, 8, 1, TEXURE_SRV_TYPE_2D, TEXTURE_USAGE_SRV_DSV, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
 
+	//RenderTargetFormat shadowformat(0, nullptr, true,false, DXGI_FORMAT_R16_TYPELESS);
+	//cascadedShadowMap.createRenderTargets(render.mDevice, shadowwidth, shadowheight, shadowformat, dsvheap, srvheap);
+	shadowviewport.setup(0.0f, 0.0f, (float)shadowwidth, (float)shadowheight);
+	shadowscissor.setup(0, shadowwidth, 0, shadowheight);
+
+	shadowRootsig.mParameters.resize(4);
+	shadowRootsig.mParameters[0].mType = PARAMETERTYPE_ROOTCONSTANT; // object index
+	shadowRootsig.mParameters[0].mResCounts = 1;
+	shadowRootsig.mParameters[0].mBindSlot = 1;
+	shadowRootsig.mParameters[0].mVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+	shadowRootsig.mParameters[1].mType = PARAMETERTYPE_SRV; // objct 
+	shadowRootsig.mParameters[1].mResCounts = 1;
+	shadowRootsig.mParameters[1].mBindSlot = 0;
+	shadowRootsig.mParameters[1].mResource = &objectBuffer;
+	shadowRootsig.mParameters[2].mType = PARAMETERTYPE_SRV; // matrices
+	shadowRootsig.mParameters[2].mResCounts = 1;
+	shadowRootsig.mParameters[2].mBindSlot = 1;
+	shadowRootsig.mParameters[2].mResource = &matricesBuffer;
+	shadowRootsig.mParameters[2].mVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+	shadowRootsig.mParameters[3].mType = PARAMETERTYPE_CBV;
+	shadowRootsig.mParameters[3].mResCounts = 1;
+	shadowRootsig.mParameters[3].mBindSlot = 0;
+	shadowRootsig.mParameters[3].mResource = &lightBuffer;
+	shadowRootsig.mParameters[3].mVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	shadowRootsig.initialize(render.mDevice);
+
+	ShaderSet shadowshaders;
+	shadowshaders.shaders[VS].load("Shaders/CascadedShadowMaps/CascadedShadowMap.hlsl", "VSMain", VS);
+	shadowshaders.shaders[GS].load("Shaders/CascadedShadowMaps/CascadedShadowMap.hlsl", "GSMain", GS);
+
+	RenderTargetFormat shadowformat(0, nullptr, true,false, DXGI_FORMAT_R32_TYPELESS);
+	shadowPipeline.createGraphicsPipeline(render.mDevice, shadowRootsig, shadowshaders, shadowformat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(0.0005f,10.0f,0.01f, D3D12_CULL_MODE_FRONT), VERTEX_LAYOUT_TYPE_SPLIT_ALL);
 
 
 	shadowCmdSig.mParameters.resize(4);
@@ -394,75 +346,43 @@ void initializeRender()
 	shadowCmdSig.mParameters[0].VertexBuffer.Slot = 0;
 	shadowCmdSig.mParameters[1].Type = D3D12_INDIRECT_ARGUMENT_TYPE_INDEX_BUFFER_VIEW;
 	shadowCmdSig.mParameters[2].Type = D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT;
-	shadowCmdSig.mParameters[2].Constant.Num32BitValuesToSet = 2; // first paramenter in root sig
+	shadowCmdSig.mParameters[2].Constant.Num32BitValuesToSet = 1; // first paramenter in root sig
 	shadowCmdSig.mParameters[2].Constant.RootParameterIndex = 0;
 	shadowCmdSig.mParameters[2].Constant.DestOffsetIn32BitValues = 0;
 	shadowCmdSig.mParameters[3].Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED;
-	shadowCmdSig.initialize(render.mDevice, shadowRootSig);
+	shadowCmdSig.initialize(render.mDevice, shadowRootsig);
 
+	// light pass
+	lightRootsig.mParameters.resize(6);
+	lightRootsig.mParameters[0].mType = PARAMETERTYPE_CBV;
+	lightRootsig.mParameters[0].mResCounts = 1;
+	lightRootsig.mParameters[0].mBindSlot = 0;
+	lightRootsig.mParameters[0].mResource = &cameraBuffer;
+	lightRootsig.mParameters[1].mType = PARAMETERTYPE_CBV;
+	lightRootsig.mParameters[1].mResCounts = 1;
+	lightRootsig.mParameters[1].mBindSlot = 1;
+	lightRootsig.mParameters[1].mResource = &lightBuffer;
+	lightRootsig.mParameters[2].mType = PARAMETERTYPE_SRV;
+	lightRootsig.mParameters[2].mResCounts = 4;
+	lightRootsig.mParameters[2].mBindSlot = 1;
+	lightRootsig.mParameters[2].mResource = &GBuffer.mRenderBuffers[0];
+	lightRootsig.mParameters[3].mType = PARAMETERTYPE_UAV;
+	lightRootsig.mParameters[3].mResCounts = 1;
+	lightRootsig.mParameters[3].mBindSlot = 0;
+	lightRootsig.mParameters[3].mResource = &HDRBuffer;
+	lightRootsig.mParameters[4].mType = PARAMETERTYPE_SRV;
+	lightRootsig.mParameters[4].mResCounts = 1;
+	lightRootsig.mParameters[4].mBindSlot = 0;
+	lightRootsig.mParameters[4].mResource = &cascadedShadowMap;
+	lightRootsig.mParameters[5].mType = PARAMETERTYPE_SAMPLER;
+	lightRootsig.mParameters[5].mResCounts = 1;
+	lightRootsig.mParameters[5].mBindSlot = 0;
+	lightRootsig.mParameters[5].mSampler = &bilinear;
+	lightRootsig.initialize(render.mDevice);
 
-	ShaderSet ShadowShader;
-	ShadowShader.shaders[VS].load("Shaders/MultiPointLightsCubeShadowMap.hlsl", "VSMain", VS);
-	ShadowShader.shaders[GS].load("Shaders/MultiPointLightsCubeShadowMap.hlsl", "GSMain", GS);
-	ShadowShader.shaders[PS].load("Shaders/MultiPointLightsCubeShadowMap.hlsl", "PSMain", PS);
-
-	cubeShadowMaps.createCubeRenderTargets(render.mDevice, shadowwidth, shadowheight, pointLightNum, 1, CUBE_RENDERTAERGET_TYPE_DEPTH, dsvheap, srvheap, D3D12_RESOURCE_FLAG_NONE, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R16_TYPELESS);
-	RenderTargetFormat shadowformat(0, nullptr, true, true, DXGI_FORMAT_R16_TYPELESS);
-	shadowpPipeline.createGraphicsPipeline(render.mDevice, shadowRootSig, ShadowShader, shadowformat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(), VERTEX_LAYOUT_TYPE_SPLIT_ALL);
-	//shadowpPipeline.createGraphicsPipeline()
-
-	shadowviewport.setup(0, 0, (float)shadowwidth, (float)shadowheight);
-	shadowscissor.setup(0, shadowwidth, 0, shadowheight);
-	//Light pass 
-
-
-	lightDrawSig.mParameters.resize(6);
-	lightDrawSig.mParameters[0].mType = PARAMETERTYPE_ROOTCONSTANT;  // light index
-	lightDrawSig.mParameters[0].mResCounts = 1;
-	lightDrawSig.mParameters[0].mBindSlot = 1;
-	lightDrawSig.mParameters[0].mVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
-	lightDrawSig.mParameters[1].mType = PARAMETERTYPE_CBV;  // camera buffer
-	lightDrawSig.mParameters[1].mResCounts = 1;
-	lightDrawSig.mParameters[1].mBindSlot = 0;
-	lightDrawSig.mParameters[1].mResource = &cameraBuffer;
-	lightDrawSig.mParameters[2].mType = PARAMETERTYPE_SRV;
-	lightDrawSig.mParameters[2].mResCounts = 4;
-	lightDrawSig.mParameters[2].mBindSlot = 0;
-	lightDrawSig.mParameters[2].mResource = &GBuffer.mRenderBuffers[0]; // wrong apporach for render targerts, going to change some day
-	lightDrawSig.mParameters[2].mVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-	lightDrawSig.mParameters[3].mType = PARAMETERTYPE_SRV;
-	lightDrawSig.mParameters[3].mResCounts = 1;
-	lightDrawSig.mParameters[3].mBindSlot = 4;
-	lightDrawSig.mParameters[3].mResource = &pointLightBuffer; 
-	lightDrawSig.mParameters[4].mType = PARAMETERTYPE_SAMPLER;
-	lightDrawSig.mParameters[4].mResCounts = 1;
-	lightDrawSig.mParameters[4].mBindSlot = 0;
-	lightDrawSig.mParameters[4].mSampler = &gbuffersampler;
-	lightDrawSig.mParameters[4].mVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-	lightDrawSig.mParameters[5].mType = PARAMETERTYPE_SRV;
-	lightDrawSig.mParameters[5].mResCounts = 1;
-	lightDrawSig.mParameters[5].mBindSlot = 5;
-	lightDrawSig.mParameters[5].mResource = &cubeShadowMaps.mDepthBuffer[0];
-	lightDrawSig.mParameters[5].mVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-
-	lightDrawSig.initialize(render.mDevice);
-
-	ShaderSet lightshader;
-	lightshader.shaders[VS].load("Shaders/MultiShadowPointLight.hlsl", "VSMain", VS);
-	lightshader.shaders[GS].load("Shaders/MultiShadowPointLight.hlsl", "GSMain", GS);
-	lightshader.shaders[PS].load("Shaders/MultiShadowPointLight.hlsl", "PSMain", PS);
-
-	lightPipeline.createGraphicsPipeline(render.mDevice, lightDrawSig, lightshader, hdrFormat, DepthStencilState::DepthStencilState(), BlendState::BlendState(true), RasterizerState::RasterizerState(D3D12_CULL_MODE_NONE), VERTEX_LAYOUT_TYPE_SPLIT_ALL, D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT);
-	 
-
-	lightCmdSig.mParameters.resize(2);
-	lightCmdSig.mParameters[0].Type = D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT;
-	lightCmdSig.mParameters[0].Constant.Num32BitValuesToSet = 1; // first paramenter in root sig
-	lightCmdSig.mParameters[0].Constant.RootParameterIndex = 0;
-	lightCmdSig.mParameters[0].Constant.DestOffsetIn32BitValues = 0;
-	lightCmdSig.mParameters[1].Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW;
-	lightCmdSig.initialize(render.mDevice, lightDrawSig);
-
+	ShaderSet ambeintdirshader;
+	ambeintdirshader.shaders[CS].load("Shaders/CascadedShadowMaps/AmbientandDirectionLight.hlsl", "CSMain", CS);
+	lightPipeline.createComputePipeline(render.mDevice, lightRootsig, ambeintdirshader);
 
 
 	brightextsig.mParameters.resize(4);
@@ -472,7 +392,7 @@ void initializeRender()
 	brightextsig.mParameters[1].mType = PARAMETERTYPE_SRV;
 	brightextsig.mParameters[1].mResCounts = 1;
 	brightextsig.mParameters[1].mBindSlot = 0;
-	brightextsig.mParameters[1].mResource = &HDRBuffer.mRenderBuffers[0];
+	brightextsig.mParameters[1].mResource = &HDRBuffer;
 	brightextsig.mParameters[2].mType = PARAMETERTYPE_UAV;
 	brightextsig.mParameters[2].mResCounts = 1;
 	brightextsig.mParameters[2].mBindSlot = 0;
@@ -486,7 +406,7 @@ void initializeRender()
 
 	// post process pass;
 	ShaderSet brightshader;
-	brightshader.shaders[CS].load("Shaders/BrightExtract.hlsl", "CSMain", CS);
+	brightshader.shaders[CS].load("Shaders/CascadedShadowMaps/BrightExtract.hlsl", "CSMain", CS);
 	brightExtractPipeline.createComputePipeline(render.mDevice, brightextsig, brightshader);
 
 
@@ -511,7 +431,7 @@ void initializeRender()
 
 
 	ShaderSet gaussianshader;
-	gaussianshader.shaders[CS].load("Shaders/GaussianBlur.hlsl", "CSMain", CS);
+	gaussianshader.shaders[CS].load("Shaders/CascadedShadowMaps/GaussianBlur.hlsl", "CSMain", CS);
 	gaussianPipeline.createComputePipeline(render.mDevice, gaussiansig, gaussianshader);
 
 
@@ -522,7 +442,7 @@ void initializeRender()
 	combinesig.mParameters[0].mType = PARAMETERTYPE_SRV;
 	combinesig.mParameters[0].mResCounts = 1;
 	combinesig.mParameters[0].mBindSlot = 0;
-	combinesig.mParameters[0].mResource = &HDRBuffer.mRenderBuffers[0];
+	combinesig.mParameters[0].mResource = &HDRBuffer;
 	combinesig.mParameters[1].mType = PARAMETERTYPE_SRV;
 	combinesig.mParameters[1].mResCounts = 1;
 	combinesig.mParameters[1].mBindSlot = 1;
@@ -536,28 +456,35 @@ void initializeRender()
 
 
 	ShaderSet combineshader;
-	combineshader.shaders[VS].load("Shaders/CombineDraw.hlsl", "VSMain", VS);
-	combineshader.shaders[PS].load("Shaders/CombineDraw.hlsl", "PSMain", PS);
-	combinePipe.createGraphicsPipeline(render.mDevice,combinesig,combineshader,retformat, DepthStencilState::DepthStencilState(), BlendState::BlendState(), RasterizerState::RasterizerState());
-	
+	combineshader.shaders[VS].load("Shaders/CascadedShadowMaps/CombineDraw.hlsl", "VSMain", VS);
+	combineshader.shaders[PS].load("Shaders/CascadedShadowMaps/CombineDraw.hlsl", "PSMain", PS);
+	combinePipe.createGraphicsPipeline(render.mDevice, combinesig, combineshader, retformat, DepthStencilState::DepthStencilState(), BlendState::BlendState(), RasterizerState::RasterizerState());
+
 
 
 	viewport.setup(0.0f, 0.0f, (float)windows.mWidth, (float)windows.mHeight);
 	scissor.setup(0, windows.mWidth, 0, windows.mHeight);
 
 	camera.setRatio((float)windows.mWidth / (float)windows.mHeight);
-	camera.setBack(2000);
+	camera.setBack(200);
 	camera.updateViewProj();
 
 
 	gamecamera.setRatio((float)windows.mWidth / (float)windows.mHeight);
-	gamecamera.setBack(2000);
+	gamecamera.setBack(300);
 	gamecamera.updateViewProj();
 
 }
 
 void loadAsset()
 {
+
+	sunlight.setSliceNumber(shadowcount);
+	sunlight.setIntensity(sunintensity);
+	float dirx = sin(spint*PI / 180.0f)*cos(tilt*PI / 180.0f);
+	float diry = sin(spint*PI / 180.0f)*sin(tilt*PI / 180.0f);
+	float dirz = cos(spint*PI / 180.0f);
+	sunlight.setDirection(dirx, diry, dirz);
 
 
 
@@ -606,7 +533,7 @@ void loadAsset()
 
 
 	Assimp::Importer sponzaimport;
-	sponzaimport.ReadFile("Assets/sponza.obj", aiProcess_CalcTangentSpace|aiProcess_Triangulate | aiProcess_FlipUVs);
+	sponzaimport.ReadFile("Assets/sponza.obj", aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_FlipUVs);
 	aiScene const * sponzascene = nullptr;
 	sponzascene = sponzaimport.GetScene();
 
@@ -619,80 +546,9 @@ void loadAsset()
 
 	// continuous create buffer and register in the heap
 	indirectGeoCmdBuffer.createStructeredBuffer(render.mDevice, srvheap, sizeof(IndirectDrawCmd), objectList.size(), STRUCTERED_BUFFER_TYPE_READ_WRITE, true);
-	shadowlightlistBuffer.createStructeredBuffer(render.mDevice, srvheap, sizeof(unsigned int), objectList.size()*pointLightNum+1, STRUCTERED_BUFFER_TYPE_READ_WRITE);
 	shadowIndirectCmdBuffer.createStructeredBuffer(render.mDevice, srvheap, sizeof(IndirecShadowDrawCmd), objectList.size(), STRUCTERED_BUFFER_TYPE_READ_WRITE, true);
-	// use the first one as a counter, but since countr doesn't offer add over 1 in one time, just need to use interlock
-
-	// light data 
-	vel.resize(pointLightNum);
-	pointLights.resize(pointLightNum);
-	pointLightList.resize(pointLightNum);
-	pointLightBuffer.createStructeredBuffer(render.mDevice, srvheap, sizeof(PointLightData), pointLightNum, STRUCTERED_BUFFER_TYPE_READ);
-	PointLight light;
-	//for(int i = 0 ; i < pointLightNum ; ++i)
-	for (int i = 0; i < pointLightNum; ++i)
-	{
-		pointLights[i].setPosition(distributionX(generator), distributionY(generator), distributionXZ(generator));
-		pointLights[i].setRadius(distributionradius(generator));
-		pointLights[i].setColor(distributionlightcolor(generator), distributionlightcolor(generator), distributionlightcolor(generator));
-		pointLights[i].setIntensity(distributionintensity(generator));
-		vel[i] = distributionmove(generator);
-		pointLightList[i] = *pointLights[i].getLightData();
-	}
 
 
-	//pointLights[0].setPosition(-35, 2, 0);
-	//pointLights[0].setRadius(40);
-	//pointLights[0].setColor(0.1, 0.1, 0.8);
-	//pointLights[0].setIntensity(1000);
-	//vel[0] = -10;
-	//pointLightList[0] = *pointLights[0].getLightData();
-
-
-	//pointLights[1].setPosition(0, 5, -35);
-	//pointLights[1].setRadius(50);
-	//pointLights[1].setIntensity(5000);
-	//pointLights[1].setColor(0.8, 0.1, 0.0);
-	//vel[1] = -10;
-	//pointLightList[1] = *pointLights[1].getLightData();
-
-	//pointLights[2].setPosition(-35, 65, -50);
-	//pointLights[2].setRadius(30);
-	//pointLights[2].setIntensity(15000);
-	//pointLights[2].setColor(0.2, 0.6, 0.1);
-	//vel[2] = 10;
-	//pointLightList[2] = *pointLights[2].getLightData();
-
-
-	//pointLights[3].setPosition( 3, 80, 0);
-	//pointLights[3].setRadius(50);
-	//pointLights[3].setIntensity(1000);
-	//pointLights[3].setColor(0.2, 0.6, 0.6);
-	//vel[3] = 0;
-	//pointLightList[3] = *pointLights[3].getLightData();
-
-
-	//pointLights[4].setPosition(35, 68, 0);
-	//pointLights[4].setRadius(30);
-	//pointLights[4].setIntensity(1000);
-	//pointLights[4].setColor(0.7, 0.1, 0.6);
-	//vel[4] = -10;
-	//pointLightList[4] = *pointLights[4].getLightData();
-
-
-	lightCmd.resize(pointLightNum);
-	pointLightIndirectBuffer.createStructeredBuffer(render.mDevice, srvheap, sizeof(IndirectPointLightDrawCmd), pointLightNum, STRUCTERED_BUFFER_TYPE_READ);
-	for (int i = 0; i < pointLightNum; ++i)
-	{
-		lightCmd[i].lightindex = i;
-		lightCmd[i].argument.VertexCountPerInstance = 1; // invoke one vertex
-		lightCmd[i].argument.InstanceCount = 1;
-		lightCmd[i].argument.StartVertexLocation = 0;
-		lightCmd[i].argument.StartInstanceLocation = i;
-	}
-
-
-	
 
 	//create the first defualt texture, a 1*1 texture with value(0.5,0.5,1.0), which can use as defualt value for normal mapping that has no normal map
 	textureList.resize(maxtexturecount);
@@ -713,7 +569,7 @@ void loadAsset()
 
 	// read all texture file and register to srv heap continuously
 
-	cout<<"Number of Mateirlas" << sponzascene->mNumMaterials << endl;
+	cout << "Number of Mateirlas" << sponzascene->mNumMaterials << endl;
 	aiColor3D color;
 	string Path = "Assets/Textures/";
 
@@ -723,10 +579,10 @@ void loadAsset()
 		Material mat;
 		if (sponzascene->mMaterials[i]->GetTextureCount(aiTextureType_DIFFUSE)>0)
 		{
-		
+
 			aiString tex;
 			aiTextureMapMode mode = aiTextureMapMode_Wrap;
-			sponzascene->mMaterials[i]->GetTexture(aiTextureType_DIFFUSE, 0, &tex,nullptr,nullptr,nullptr,nullptr,&mode);
+			sponzascene->mMaterials[i]->GetTexture(aiTextureType_DIFFUSE, 0, &tex, nullptr, nullptr, nullptr, nullptr, &mode);
 			//if (mode == aiTextureMapMode_Wrap)
 			//	cout << "A Wrap Texture" << endl;
 			//if (mode == aiTextureMapMode_Clamp)
@@ -735,16 +591,16 @@ void loadAsset()
 			//	cout << "A Mirror Texture" << endl;
 			//if (mode == aiTextureMapMode_Decal)
 			//	cout << "A Decal Texture" << endl;
-	//		cout << mode << endl;
+			//		cout << mode << endl;
 			//sponzascene->mMaterials[i]->GetTexture
-//			cout << "Diffuse: " << tex.C_Str() << endl;
+			//			cout << "Diffuse: " << tex.C_Str() << endl;
 			string fullpath = Path + string(tex.C_Str());
-//			cout << fullpath << endl;
+			//			cout << fullpath << endl;
 			imageList[texturecount].load(fullpath.c_str());
 			textureList[texturecount].CreateTexture(render.mDevice, DXGI_FORMAT_R8G8B8A8_UNORM, imageList[texturecount].mWidth, imageList[texturecount].mHeight);
 			textureList[texturecount].addSahderResorceView(srvheap);
 			mat.mChoose[MATERIALMAP_INDEX_COLOR] = 0.0;
-			mat.mTextureIndex[MATERIALMAP_INDEX_COLOR] = texturecount+1;// always +1 since 0 is default
+			mat.mTextureIndex[MATERIALMAP_INDEX_COLOR] = texturecount + 1;// always +1 since 0 is default
 			++texturecount;
 		}
 		else
@@ -753,16 +609,16 @@ void loadAsset()
 			mat.mAlbedo.x = color[0];
 			mat.mAlbedo.y = color[1];
 			mat.mAlbedo.z = color[2];
-	//		cout << color[0] << "," << color[1] << "," << color[2] << endl;
+			//		cout << color[0] << "," << color[1] << "," << color[2] << endl;
 		}
 		if (sponzascene->mMaterials[i]->GetTextureCount(aiTextureType_NORMALS)>0)
 		{
 
 			aiString tex;
 			sponzascene->mMaterials[i]->GetTexture(aiTextureType_NORMALS, 0, &tex);
-	//		cout << "Diffuse: " << tex.C_Str() << endl;
+			//		cout << "Diffuse: " << tex.C_Str() << endl;
 			string fullpath = Path + string(tex.C_Str());
-	//		cout << fullpath << endl;
+			//		cout << fullpath << endl;
 			imageList[texturecount].load(fullpath.c_str());
 			textureList[texturecount].CreateTexture(render.mDevice, DXGI_FORMAT_R8G8B8A8_UNORM, imageList[texturecount].mWidth, imageList[texturecount].mHeight);
 			textureList[texturecount].addSahderResorceView(srvheap);
@@ -777,9 +633,9 @@ void loadAsset()
 
 			aiString tex;
 			sponzascene->mMaterials[i]->GetTexture(aiTextureType_SHININESS, 0, &tex);
-//			cout << "Diffuse: " << tex.C_Str() << endl;
+			//			cout << "Diffuse: " << tex.C_Str() << endl;
 			string fullpath = Path + string(tex.C_Str());
-//			cout << fullpath << endl;
+			//			cout << fullpath << endl;
 			imageList[texturecount].load(fullpath.c_str());
 			textureList[texturecount].CreateTexture(render.mDevice, DXGI_FORMAT_R8G8B8A8_UNORM, imageList[texturecount].mWidth, imageList[texturecount].mHeight);
 			textureList[texturecount].addSahderResorceView(srvheap);
@@ -794,9 +650,9 @@ void loadAsset()
 
 			aiString tex;
 			sponzascene->mMaterials[i]->GetTexture(aiTextureType_SPECULAR, 0, &tex);
-	//		cout << "Diffuse: " << tex.C_Str() << endl;
+			//		cout << "Diffuse: " << tex.C_Str() << endl;
 			string fullpath = Path + string(tex.C_Str());
-//			cout << fullpath << endl;
+			//			cout << fullpath << endl;
 			imageList[texturecount].load(fullpath.c_str());
 			textureList[texturecount].CreateTexture(render.mDevice, DXGI_FORMAT_R8G8B8A8_UNORM, imageList[texturecount].mWidth, imageList[texturecount].mHeight);
 			textureList[texturecount].addSahderResorceView(srvheap);
@@ -816,22 +672,25 @@ void loadAsset()
 	matricesList[0] = trans.getMatrices();
 	for (int i = 0; i < sponzascene->mNumMeshes; ++i)
 	{
-		meshList[i].loadMesh(sponzascene->mMeshes[i],render,cmdalloc,cmdlist);
+		meshList[i].loadMesh(sponzascene->mMeshes[i], render, cmdalloc, cmdlist);
 		indirectMeshList[i] = meshList[i].getIndirectData();
-		if (sponzascene->mMeshes[i]->mMaterialIndex==0)
+		if (sponzascene->mMeshes[i]->mMaterialIndex == 0)
 			cout << "Default Material" << endl;
 		objectList[i].mMeshID = i;
 		objectList[i].mMaterialID = sponzascene->mMeshes[i]->mMaterialIndex;
 		objectList[i].mMatricesID = 0;
-	
+
 	}
-	//meshList[0].loadMesh(sponzascene->mMeshes[0], render, cmdalloc, cmdlist);
 	
+	lightBuffer.createConstantBuffer(render.mDevice,srvheap,sizeof(DirectionLightData));
+	lightBuffer.maptoCpu();
+	
+
 
 	gaussdata = curve.generateNormalizeWeight();
-	
 
-	gaussianconst.createConstantBuffer(render.mDevice,srvheap,sizeof(GaussionWeight));
+
+	gaussianconst.createConstantBuffer(render.mDevice, srvheap, sizeof(GaussionWeight));
 	gaussianconst.maptoCpu();
 	gaussianconst.updateBufferfromCpu(&gaussdata, sizeof(GaussionWeight));
 	gaussianconst.unMaptoCpu();
@@ -841,12 +700,11 @@ void loadAsset()
 	cmdlist.resourceBarrier(vertexBuffer.mResource, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
 	cmdlist.resourceBarrier(normalBuffer.mResource, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
 	cmdlist.resourceBarrier(indexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-	
+
 	cmdlist.resourceBarrier(indirecrtMeshBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
 	cmdlist.resourceBarrier(materialBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
 	cmdlist.resourceBarrier(matricesBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
 	cmdlist.resourceBarrier(objectBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceBarrier(pointLightBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
 
 
 	cmdlist.updateBufferData(vertexBuffer, mesh->mVertices, mesh->mNumVertices * 3 * sizeof(float));
@@ -854,18 +712,17 @@ void loadAsset()
 	cmdlist.updateBufferData(normalBuffer, mesh->mNormals, mesh->mNumVertices * 3 * sizeof(float));
 
 
-	cmdlist.updateBufferData(indirecrtMeshBuffer, indirectMeshList.data(), indirectMeshList.size()*sizeof(IndirectMeshData));
-	cmdlist.updateBufferData(materialBuffer, materialList.data(), materialList.size()*sizeof(Material));
-	cmdlist.updateBufferData(matricesBuffer, matricesList.data(), matricesList.size()*sizeof(Matrices));
-	cmdlist.updateBufferData(objectBuffer, objectList.data(), objectList.size()*sizeof(Object));
-	cmdlist.updateBufferData(pointLightBuffer, pointLightList.data(), pointLightList.size() * sizeof(PointLightData));
+	cmdlist.updateBufferData(indirecrtMeshBuffer, indirectMeshList.data(), indirectMeshList.size() * sizeof(IndirectMeshData));
+	cmdlist.updateBufferData(materialBuffer, materialList.data(), materialList.size() * sizeof(Material));
+	cmdlist.updateBufferData(matricesBuffer, matricesList.data(), matricesList.size() * sizeof(Matrices));
+	cmdlist.updateBufferData(objectBuffer, objectList.data(), objectList.size() * sizeof(Object));
 
 
-	cmdlist.resourceBarrier(indirecrtMeshBuffer,D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	cmdlist.resourceBarrier(indirecrtMeshBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 	cmdlist.resourceBarrier(materialBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 	cmdlist.resourceBarrier(objectBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 	cmdlist.resourceBarrier(matricesBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	cmdlist.resourceBarrier(pointLightBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	
 
 	cmdlist.resourceBarrier(vertexBuffer.mResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 	cmdlist.resourceBarrier(normalBuffer.mResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
@@ -873,6 +730,7 @@ void loadAsset()
 	cmdlist.resourceBarrier(indirectGeoCmdBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
 	cmdlist.resourceBarrier(shadowIndirectCmdBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
 
+	
 
 	// start to load image data to texture
 	cmdlist.resourceBarrier(DefualtTexture, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
@@ -886,24 +744,15 @@ void loadAsset()
 		cmdlist.resourceBarrier(textureList[i], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	}
 	cmdlist.renderTargetBarrier(GBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	cmdlist.depthBufferBarrier(GBuffer, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE );
+	cmdlist.depthBufferBarrier(GBuffer, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 
-	//temporoay update data from cpu, not sure whether should keep this 
-	cmdlist.resourceBarrier(pointLightIndirectBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.updateBufferData(pointLightIndirectBuffer, lightCmd.data(), lightCmd.size() * sizeof(IndirectPointLightDrawCmd));
-
-	cmdlist.resourceBarrier(pointLightIndirectBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
-
-	cmdlist.resourceBarrier(shadowlightlistBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,  D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-
-	cmdlist.cubeDepthBufferBarrier(cubeShadowMaps, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 
-	cmdlist.renderTargetBarrier(HDRBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	//cmdlist.renderTargetBarrier(HDRBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-//	cmdlist.resourceBarrier(BloomBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-//	cmdlist.resourceBarrier(BloomBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	//	cmdlist.resourceBarrier(BloomBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	//	cmdlist.resourceBarrier(BloomBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
@@ -913,7 +762,7 @@ void loadAsset()
 
 void releaseRender()
 {
-	
+
 	combinePipe.release();
 	combinesig.realease();
 
@@ -927,19 +776,16 @@ void releaseRender()
 	BloomBuffer.release();
 	HDRBuffer.release();
 
-	shadowpPipeline.release();
-	shadowCmdSig.release();
-	shadowRootSig.realease();
-	cubeShadowMaps.release();
+	lightRootsig.realease();
+	lightPipeline.release();
 
 	shadowIndirectCmdBuffer.release();
-	shadowlightlistBuffer.release();
+	shadowCmdSig.release();
 
-	lightCmdSig.release();
-	lightPipeline.release();
-	lightDrawSig.realease();
-	pointLightIndirectBuffer.release();
-	pointLightBuffer.release();
+	shadowRootsig.realease();
+	shadowPipeline.release();
+	cascadedShadowMap.release();
+	lightBuffer.release();
 
 
 	GBuffer.release();
@@ -968,15 +814,14 @@ void releaseRender()
 	indexBuffer.release();
 	normalBuffer.release();
 	srvheap.release();
-	pipeline.release();
 	rootsig.realease();
 	vertexBuffer.release();
-	
+
 	cmdlist.release();
 	cmdalloc.release();
 	render.releaseSwapChain();
 	render.release();
-	
+
 }
 
 void update()
@@ -990,77 +835,64 @@ void update()
 
 
 
-	float dir = -1;
-	for (int i = 0; i < pointLightNum; ++i)
-	{
-		
-		pointLights[i].addPosition(0, 0, vel[i]*delta.count());
-		if (abs(pointLights[i].getLightData()->mPosition.z) > 120.0f)
-			vel[i] *= -1;
-		pointLightList[i] = *pointLights[i].getLightData();
-	}
 
-//	cout << delta.count() << endl;
+	//	cout << delta.count() << endl;
 
 	gamecamera.updateViewProj();
+	sunlight.updatewithCamera(gamecamera);
+	lightBuffer.updateBufferfromCpu(sunlight.getData(), sizeof(DirectionLightData));
 	cameraBuffer.updateBufferfromCpu(gamecamera.getMatrix(), sizeof(ViewProjection));
 	frameIndex = render.getCurrentSwapChainIndex();
 	cmdalloc.reset();
 	cmdlist.reset(GeoCmdGenPipeline);
-	cmdlist.bindDescriptorHeaps(&srvheap,&samplerheap);
+	cmdlist.bindDescriptorHeaps(&srvheap, &samplerheap);
+
+
+
+
+
 
 
 
 
 	
 
-
-
-
-
-
-	cmdlist.resourceBarrier(pointLightBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
 	cmdlist.resourceBarrier(indirectGeoCmdBuffer, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT, D3D12_RESOURCE_STATE_COPY_DEST); //reset count
 	cmdlist.resourceBarrier(shadowIndirectCmdBuffer, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT, D3D12_RESOURCE_STATE_COPY_DEST);
 	cmdlist.setCounterforStructeredBuffer(indirectGeoCmdBuffer, 0);
 	cmdlist.setCounterforStructeredBuffer(shadowIndirectCmdBuffer, 0);
-	cmdlist.updateBufferData(pointLightBuffer, pointLightList.data(), pointLightList.size() * sizeof(PointLightData));
 	cmdlist.resourceBarrier(indirectGeoCmdBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 	cmdlist.resourceBarrier(shadowIndirectCmdBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-	cmdlist.resourceBarrier(pointLightBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-	cmdlist.resourceBarrier(shadowlightlistBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 	cmdlist.bindComputeRootSigature(geoCmdGenRootSig);
-	cmdlist.dispatch(objectList.size() , 1, 1);
+	cmdlist.dispatch(objectList.size(), 1, 1);
 	cmdlist.resourceBarrier(indirectGeoCmdBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
-	cmdlist.resourceBarrier(shadowlightlistBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 	cmdlist.resourceBarrier(shadowIndirectCmdBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
 
 	cmdlist.setTopolgy(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	// shadow pass
-	cmdlist.bindPipeline(shadowpPipeline);
-	cmdlist.bindGraphicsRootSigature(shadowRootSig);
+	// shadowpass
+	cmdlist.resourceBarrier(cascadedShadowMap, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	cmdlist.bindDepthStencilBufferOnly(cascadedShadowMap);
+	cmdlist.clearDepthStencil(cascadedShadowMap);
 	cmdlist.setViewPort(shadowviewport);
 	cmdlist.setScissor(shadowscissor);
-	cmdlist.cubeDepthBufferBarrier(cubeShadowMaps, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
-	cmdlist.bindCubeRenderTarget(cubeShadowMaps, 0, 0);
-	cmdlist.clearcubeDepthStencil(cubeShadowMaps, 0, 0);
-
-	cmdlist.executeIndirect(shadowCmdSig, objectList.size(), shadowIndirectCmdBuffer, 0, shadowIndirectCmdBuffer, shadowIndirectCmdBuffer.mBufferSize - sizeof(UINT));
+	cmdlist.bindPipeline(shadowPipeline);
+	cmdlist.bindGraphicsRootSigature(shadowRootsig);
+	cmdlist.executeIndirect(shadowCmdSig, objectList.size(), shadowIndirectCmdBuffer, 0,shadowIndirectCmdBuffer,shadowIndirectCmdBuffer.mBufferSize - sizeof(UINT));
 
 
-	cmdlist.cubeDepthBufferBarrier(cubeShadowMaps, D3D12_RESOURCE_STATE_DEPTH_WRITE,D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	cmdlist.resourceBarrier(cascadedShadowMap, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+
 	// G Pass
-	cmdlist.bindPipeline(pipeline);
 	cmdlist.bindGraphicsRootSigature(rootsig);
 	cmdlist.setViewPort(viewport);
 	cmdlist.setScissor(scissor);
-	
 
 
-	cmdlist.renderTargetBarrier(GBuffer, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	cmdlist.depthBufferBarrier(GBuffer, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE , D3D12_RESOURCE_STATE_DEPTH_WRITE);
+
+	cmdlist.renderTargetBarrier(GBuffer, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE| D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	cmdlist.depthBufferBarrier(GBuffer, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE| D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
 	cmdlist.bindRenderTarget(GBuffer);
 	cmdlist.clearRenderTarget(GBuffer);
@@ -1072,8 +904,8 @@ void update()
 	cmdlist.bindPipeline(GeoDrawPipeline);
 	cmdlist.bindGraphicsRootSigature(geoDrawSig);
 	cmdlist.executeIndirect(geomCmdSig, objectList.size(), indirectGeoCmdBuffer, 0, indirectGeoCmdBuffer, indirectGeoCmdBuffer.mBufferSize - sizeof(UINT));
-	cmdlist.renderTargetBarrier(GBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET,D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	cmdlist.depthBufferBarrier(GBuffer, D3D12_RESOURCE_STATE_DEPTH_WRITE,D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE );
+	cmdlist.renderTargetBarrier(GBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE| D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	cmdlist.depthBufferBarrier(GBuffer, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE| D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
 
 
@@ -1082,44 +914,27 @@ void update()
 
 
 	// LightPass
-	
-	cmdlist.renderTargetBarrier(HDRBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,D3D12_RESOURCE_STATE_RENDER_TARGET);
-	//cmdlist.bindRenderTarget(render.mSwapChainRenderTarget[frameIndex]);
-	//const float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	//cmdlist.clearRenderTarget(render.mSwapChainRenderTarget[frameIndex], clearColor);
-	//cmdlist.clearDepthStencil(render.mSwapChainRenderTarget[frameIndex]);
 
-	cmdlist.bindRenderTarget(HDRBuffer);
-	const float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	cmdlist.clearRenderTarget(HDRBuffer, clearColor);
-
-
-
-
+	cmdlist.resourceBarrier(HDRBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	cmdlist.bindComputeRootSigature(lightRootsig);
 	cmdlist.bindPipeline(lightPipeline);
-	cmdlist.bindGraphicsRootSigature(lightDrawSig);
-	/*int i = 0;
-	cmdlist.bindGraphicsConstant(0, &i);
-	cmdlist.drawInstance(3, 1, 0, 0);*/
+	cmdlist.dispatch((HDRBuffer.textureDesc.Width / 16) + 1, (HDRBuffer.textureDesc.Height / 16) + 1, 1);
+	cmdlist.resourceBarrier(HDRBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 
-	cmdlist.setTopolgy(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
-
-	cmdlist.executeIndirect(lightCmdSig, pointLightNum, pointLightIndirectBuffer, 0);
-	cmdlist.renderTargetBarrier(HDRBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE| D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	//Post processing pass
 
-	cmdlist.resourceBarrier(BloomBuffer, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE| D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-	cmdlist.resourceBarrier(TempBuffer, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE| D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	cmdlist.resourceBarrier(BloomBuffer, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	cmdlist.resourceBarrier(TempBuffer, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 	cmdlist.bindComputeRootSigature(brightextsig);
 	cmdlist.bindPipeline(brightExtractPipeline);
 	cmdlist.bindComputeConstant(0, &bloomthreash);
-	cmdlist.dispatch((BloomBuffer.textureDesc.Width / 256)+1, BloomBuffer.textureDesc.Height, 1);
+	cmdlist.dispatch((BloomBuffer.textureDesc.Width / 256) + 1, BloomBuffer.textureDesc.Height, 1);
 
-	cmdlist.resourceBarrier(BloomBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE| D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	cmdlist.resourceBarrier(BloomBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 	// gaussian blur use temp to store hor res
-	
+
 	//TempBuffer
 	unsigned int direc = 0;
 	unsigned int direc2 = 1;
@@ -1130,11 +945,11 @@ void update()
 	cmdlist.bindComputeResource(3, TempBuffer);
 	cmdlist.dispatch((BloomBuffer.textureDesc.Width / 256) + 1, BloomBuffer.textureDesc.Height, 1);
 
-//	cmdlist.dispatch(BloomBuffer.textureDesc.Width, (BloomBuffer.textureDesc.Height / 256) + 1, 1);
+	//	cmdlist.dispatch(BloomBuffer.textureDesc.Width, (BloomBuffer.textureDesc.Height / 256) + 1, 1);
 
-	cmdlist.resourceBarrier(TempBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE| D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	cmdlist.resourceBarrier(TempBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 	cmdlist.resourceBarrier(BloomBuffer, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-//	direc = 1;
+	//	direc = 1;
 	cmdlist.bindComputeRootSigature(gaussiansig);
 	cmdlist.bindPipeline(gaussianPipeline);
 	cmdlist.bindComputeConstant(1, &direc2);
@@ -1175,8 +990,18 @@ void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
 	curxpos = xpos;
 	curypos = ypos;
 
-	if (press)
+	if (press&&!shiftpress)
 		gamecamera.addAngle(curxoffet / 5.0, curyoffet / 5.0);
+	if (press&&shiftpress)
+	{
+		tilt += curxoffet / 5.0;
+		spint += curyoffet / 5.0;
+		float dirx = sin(spint*PI / 180.0f)*cos(tilt*PI / 180.0f);
+		float diry = sin(spint*PI / 180.0f)*sin(tilt*PI / 180.0f);
+		float dirz = cos(spint*PI / 180.0f);
+		//cout << spint << "   " << tilt << endl;
+		sunlight.setDirection(dirx, diry, dirz);
+	}
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
@@ -1210,12 +1035,28 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	if (key == GLFW_KEY_Q)
 		gamecamera.moveUpDown(-0.5f);
 
+	if (key == GLFW_KEY_LEFT_SHIFT && action == GLFW_PRESS)
+		shiftpress = true;
+	if (key == GLFW_KEY_LEFT_SHIFT && action == GLFW_RELEASE)
+		shiftpress = false;
+
+	if (key == GLFW_KEY_RIGHT)
+	{
+		sunintensity += 0.1f;
+		sunlight.setIntensity(sunintensity);
+	}
+	if (key == GLFW_KEY_LEFT)
+	{
+		sunintensity -= 0.1f;
+		sunintensity = max(0.0f, sunintensity);
+		sunlight.setIntensity(sunintensity);
+	}
 
 }
 int main()
 {
 	int testnumber = 3;
-	windows.initialize(1600, 900, "MultiplePointLightShadow");
+	windows.initialize(1600, 900, "CascadedShadowMaps");
 	windows.openWindow();
 	glfwSetCursorPosCallback(windows.mWindow, cursor_pos_callback);
 	glfwSetMouseButtonCallback(windows.mWindow, mouse_button_callback);
