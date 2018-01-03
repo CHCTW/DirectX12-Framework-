@@ -102,63 +102,65 @@ void CSMain(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID, uint3 
     shadowcoord.y = 1 - shadowcoord.y;
     float pixdepth = shadowcoord.z;
     shadowcoord.z = slidenum;
-    float test = 0.0f;
-
-    int looksize = 3-slidenum;
-    looksize = clamp(looksize, 1, 3);
-
     float3 vShadowMapDims; // need to keep in sync with .cpp file
     uint ele, level;
     ShadowMap.GetDimensions(0, vShadowMapDims.x, vShadowMapDims.y, ele, level);
     float2 texsize = 1.0f / float2(vShadowMapDims.x, vShadowMapDims.y);
-    float total = 0.0f;
-//    [unroll]
-    for (int x = -looksize; x <= looksize; ++x)
-    {
-  //      [unroll]
-        for (int y = -looksize; y <= looksize; ++y)
-        {
-            float lightdepth = ShadowMap.SampleLevel(g_sampler, shadowcoord.xyz + float3(texsize * float2(x, y), 0.0f), 0);
-            if ((pixdepth) > lightdepth)
-                test += 1.0f;
-        }
 
-    }
-    test /= (looksize * 2 + 1) * (looksize * 2 + 1);
-   // test /= total;
-    test = 1.0f - test;
 
+    float test = 1.0f;
+
+    float center = pixdepth>ShadowMap.SampleLevel(g_sampler, shadowcoord.xyz, 0).r + 0.005f;
+    float left = pixdepth>ShadowMap.SampleLevel(g_sampler, shadowcoord.xyz + float3(texsize * float2(-1.0, 0.0), 0.0f), 0).r + 0.005f;
+    float right = pixdepth>ShadowMap.SampleLevel(g_sampler, shadowcoord.xyz + float3(texsize * float2(1.0, 0.0), 0.0f), 0).r + 0.005f;
+    float top = pixdepth>ShadowMap.SampleLevel(g_sampler, shadowcoord.xyz + float3(texsize * float2(0.0, -1.0), 0.0f), 0).r + 0.005f;
+    float bot = pixdepth>ShadowMap.SampleLevel(g_sampler, shadowcoord.xyz + float3(texsize * float2(0.0, 1.0), 0.0f), 0).r + 0.005f;
+
+
+    float4 disc = abs(float4(left, right, bot, top) - center) ;
+	
+    float2 dxdy = 0.75f + (-disc.xz + disc.yw) * 0.25f;
+    dxdy = center*dxdy * step(1.0f, float2(dot(disc.xy, 1.0f), dot(disc.zw, 1.0f)));
 
 
 
 
-   // test = saturate(test);
- //   float4 vSubPixelCoords = float4(1.0f, 1.0f, 1.0f, 1.0f);
- //   vSubPixelCoords.xy = frac(vShadowMapDims.xy * shadowcoord.xy);
- //   vSubPixelCoords.zw = 1.0f - vSubPixelCoords.xy;
- //   float4 vBilinearWeights = vSubPixelCoords.zxzx * vSubPixelCoords.wwyy;
 
- //   2x2
- //   percentage closer
- //   filtering.
- //   float2 vTexelUnits = 1.0f / vShadowMapDims;
- //   float4 vShadowDepths;
- //   vShadowDepths.x = ShadowMap.SampleLevel(g_sampler, shadowcoord.xyz, 0);
- //   vShadowDepths.y = ShadowMap.SampleLevel(g_sampler, shadowcoord.xyz + float3(vTexelUnits.x, 0.0f, 0.0f), 0);
- //   vShadowDepths.z = ShadowMap.SampleLevel(g_sampler, shadowcoord.xyz + float3(0.0f, vTexelUnits.y, 0.0f), 0);
- //   vShadowDepths.w = ShadowMap.SampleLevel(g_sampler, shadowcoord.xyz + float3(vTexelUnits, 0.0f), 0);
+//    int looksize = 3-slidenum;
+//    looksize = clamp(looksize, 1, 3);
 
-	//// What weighted fraction of the 4 samples are nearer to the light than this pixel?
- //   float4 vShadowTests = (vShadowDepths >= pixdepth - 0.0f) ? 1.0f : 0.0f;
- //   test = dot(vBilinearWeights, vShadowTests);
+
+    
+
+
+//    float total = 0.0f;
+////    [unroll]
+//    for (int x = -looksize; x <= looksize; ++x)
+//    {
+//  //      [unroll]
+//        for (int y = -looksize; y <= looksize; ++y)
+//        {
+//            float lightdepth = ShadowMap.SampleLevel(g_sampler, shadowcoord.xyz + float3(texsize * float2(x, y), 0.0f), 0);
+//            if ((pixdepth) > lightdepth)
+//                test += 1.0f;
+//        }
+
+//    }
+//    test /= (looksize * 2 + 1) * (looksize * 2 + 1);
+//   // test /= total;
+//    test = 1.0f - test;
+
+
+    float2 vTexelUnits = 1.0f / vShadowMapDims;
+
 
 
 
 
    
 
-    //if ((pixdepth) > ShadowMap.SampleLevel(g_sampler, shadowcoord.xyz, 0).r + 0.005f)
-    //    test = 0.0f;
+    if ((pixdepth) > ShadowMap.SampleLevel(g_sampler, shadowcoord.xyz, 0).r + 0.005f)
+        test = 0.0f;
 
 //    test = exp(-120.0f * pixdepth) * exp(120.0f * ShadowMap.SampleLevel(g_sampler, shadowcoord.xyz, 0).r);
 
@@ -184,4 +186,7 @@ void CSMain(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID, uint3 
    //    HDR[pos] = float4(-shadowcoord.z.rrrr);
  //   HDR[pos] = float4(ShadowMap.SampleLevel(g_sampler, shadowcoord.xy, 0).r.xxxx);
     HDR[pos] = float4(final, 1.0) /*+ debugcolor[slidenum] * 0.5f*/;
+ //   if ((pixdepth) > ShadowMap.SampleLevel(g_sampler, shadowcoord.xyz, 0).r + 0.005f)
+        HDR[pos] = float4(dxdy, 0.0, 1.0) + float4(final, 1.0);
+
 }

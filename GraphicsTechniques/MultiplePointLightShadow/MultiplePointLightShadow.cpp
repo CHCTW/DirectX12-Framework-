@@ -140,7 +140,7 @@ Pipeline combinePipe;
 RootSignature combinesig;
 int pointLightNum = 128;
 
-std::default_random_engine generator(15);
+std::default_random_engine generator(3);
 std::uniform_real_distribution<float> distributionXZ(-50.0, 50.0);
 std::uniform_real_distribution<float> distributionY(5.0, 100.0f);
 std::uniform_real_distribution<float> distributionintensity(100, 1500);

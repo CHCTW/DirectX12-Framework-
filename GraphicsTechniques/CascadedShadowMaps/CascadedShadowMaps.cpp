@@ -110,13 +110,17 @@ Buffer lightBuffer;
 Buffer shadowIndirectCmdBuffer;
 CommandSignature shadowCmdSig;
 unsigned int shadowcount = 5;
-unsigned int shadowwidth = 1024;
-unsigned int shadowheight = 1024;
+unsigned int shadowwidth = 512;
+unsigned int shadowheight = 512;
 Texture cascadedShadowMap;
+Texture disconMap;
 RootSignature shadowRootsig;
 Pipeline shadowPipeline;
 ViewPort shadowviewport;
 Scissor shadowscissor;
+
+
+
 
 RootSignature lightRootsig;
 Pipeline lightPipeline;
@@ -305,7 +309,7 @@ void initializeRender()
 	// shadow pass
 
 	cascadedShadowMap.CreateTexture(render, srvheap, DXGI_FORMAT_R32_TYPELESS, shadowwidth, shadowheight, 8, 1, TEXURE_SRV_TYPE_2D, TEXTURE_USAGE_SRV_DSV, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-
+	disconMap.CreateTexture(render, srvheap, DXGI_FORMAT_R16G16_FLOAT, windows.mWidth, windows.mHeight, 1, 1, TEXURE_SRV_TYPE_2D, TEXTURE_USAGE_SRV_UAV, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
 	//RenderTargetFormat shadowformat(0, nullptr, true,false, DXGI_FORMAT_R16_TYPELESS);
 	//cascadedShadowMap.createRenderTargets(render.mDevice, shadowwidth, shadowheight, shadowformat, dsvheap, srvheap);
@@ -338,7 +342,7 @@ void initializeRender()
 	shadowshaders.shaders[GS].load("Shaders/CascadedShadowMaps/CascadedShadowMap.hlsl", "GSMain", GS);
 
 	RenderTargetFormat shadowformat(0, nullptr, true,false, DXGI_FORMAT_R32_TYPELESS);
-	shadowPipeline.createGraphicsPipeline(render.mDevice, shadowRootsig, shadowshaders, shadowformat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(0.0005f,10.0f,0.01f, D3D12_CULL_MODE_FRONT), VERTEX_LAYOUT_TYPE_SPLIT_ALL);
+	shadowPipeline.createGraphicsPipeline(render.mDevice, shadowRootsig, shadowshaders, shadowformat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(0.0005f,2.0f,0.01f, D3D12_CULL_MODE_FRONT), VERTEX_LAYOUT_TYPE_SPLIT_ALL);
 
 
 	shadowCmdSig.mParameters.resize(4);
@@ -762,6 +766,8 @@ void loadAsset()
 
 void releaseRender()
 {
+
+	disconMap.release();
 
 	combinePipe.release();
 	combinesig.realease();

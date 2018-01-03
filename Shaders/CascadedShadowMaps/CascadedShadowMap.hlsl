@@ -39,18 +39,34 @@ GSInput VSMain(float3 position : POSITION)
 void GSMain(triangle GSInput input[3], inout TriangleStream<GSOutput> stream)
 {
     GSOutput outres;
+    float4 outpoints[3];
+
     [unroll]
     for (uint slice = 0; slice < directionlight.sliceCount; ++slice) //choose casacade shadow map here
     {
     
         outres.targetindex = slice;
+        float3 maxpoint = directionlight.sliceBoxMinandZ[slice].xyz;
+        float3 minpoint = directionlight.sliceBoxMaxandZ[slice].xyz;
         [unroll]
-        for (int i = 0; i < 3; ++i) 
+        for (int i = 0; i < 3; ++i)
         {
-            outres.position = mul(directionlight.lightSliceProj[slice], input[i].position);
-            stream.Append(outres);
+            maxpoint = max(input[i].position.xyz, maxpoint);
+            minpoint = min(input[i].position.xyz, minpoint);
         }
-        stream.RestartStrip();
+        bool draw = all(maxpoint.xy > directionlight.sliceBoxMinandZ[slice].xy) && all(minpoint.xyz < float3(directionlight.sliceBoxMaxandZ[slice].xy, -directionlight.sliceBoxMinandZ[slice].z));
 
+        if (draw)
+        {
+        
+            for (int i = 0; i < 3; ++i)
+            {
+                outres.position = mul(directionlight.lightSliceProj[slice], input[i].position);
+                outres.position = outres.position / outres.position.w;
+                stream.Append(outres);
+            }
+            stream.RestartStrip();
+        }
+    
     }
 }

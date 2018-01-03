@@ -82,6 +82,8 @@ PSInput VSMain(float3 position : POSITION, float3 normal : NORMAL,float2 uv : TE
     float metalicrate = input.mat.chooses.w;
     float metalic = MaterialTextures[input.mat.texutres.w].Sample(mat_text_sampler, input.uv).r * (1 - roughrate) + roughrate * input.mat.metallic;
 
+
+
     half2 en = encode(normal);
     res.normal = en;
 
