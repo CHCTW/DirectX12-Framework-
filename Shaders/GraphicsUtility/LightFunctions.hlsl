@@ -26,6 +26,8 @@ struct DirectionLightData  // should be the same with directionlight.h
     float lightIntensity;
     uint sliceCount;
     float padding;
+    float2 shadowMapRes;
+    float2 padding2;
 };
 float3 Fresnel(float3 F0, float HV)
 {

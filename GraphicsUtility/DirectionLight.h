@@ -38,6 +38,7 @@ public:
 		mData.mSliceNumber = 3;
 		mData.mVirtualDistance = 250.0f;
 	};
+	
 	void setDirection(float x,float y, float z)
 	{
 		mData.mDirection = glm::normalize(glm::vec4(x, y, z, 0.0));
@@ -54,7 +55,7 @@ public:
 	{
 		mData.mIntensity = intensity;
 	}
-	void updatewithCamera(Camera& camera);
+	void updatewithCamera(Camera& camera,float shadowResX,float shadowResY);
 	DirectionLightData* getData()
 	{
 		return &mData;

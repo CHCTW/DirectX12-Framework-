@@ -894,7 +894,7 @@ void update()
 	//	cout << delta.count() << endl;
 
 	gamecamera.updateViewProj();
-	sunlight.updatewithCamera(gamecamera);
+	sunlight.updatewithCamera(gamecamera, shadowwidth, shadowheight);
 	lightBuffer.updateBufferfromCpu(sunlight.getData(), sizeof(DirectionLightData));
 	cameraBuffer.updateBufferfromCpu(gamecamera.getMatrix(), sizeof(ViewProjection));
 	frameIndex = render.getCurrentSwapChainIndex();

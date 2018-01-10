@@ -18,7 +18,7 @@ static glm::vec4 ndccornerpoints[8] = // ndc space corner point
 	glm::vec4(-1.0f,1.0f,0.0f,1.0f),
 	glm::vec4(1.0f,1.0f,0.0f,1.0f),
 };
-void DirectionLight::updatewithCamera(Camera& camera)
+void DirectionLight::updatewithCamera(Camera& camera,float shadowResX, float shadowResY)
 {
 	glm::vec3 eye = -glm::vec3(mData.mDirection.x*mData.mVirtualDistance, mData.mDirection.y*mData.mVirtualDistance, mData.mDirection.z*mData.mVirtualDistance);
 	mData.mView = glm::lookAt(eye, glm::vec3(0.0f,0.0,0.0), glm::vec3(0.0, 1.0, 0.0));
@@ -72,7 +72,7 @@ void DirectionLight::updatewithCamera(Camera& camera)
 		calLightBoundingSphereforFrus(center, rad, camera.getMatrix()->mViewInverse, prevzi, zi, camera.getMatrix()->ratio,camera.getMatrix()->fov);
 		
 
-		glm::vec2 offset(rad*2 / 512.0f, rad*2 / 512.0f); // offset for fix pixel
+		glm::vec2 offset(rad*2 / shadowResX, rad*2 / shadowResY); // offset for fix pixel
 		glm::vec2 rem(-fmod(center.x,offset.x), -fmod(center.y, offset.y));
 		center.x += rem.x;
 		center.y += rem.y;
