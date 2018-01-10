@@ -58,6 +58,7 @@ struct Camera
     float4x4 viewinverseyranspose;
     float front;
     float back;
+    float ratio;
 };
 float3 normalMapCal(in float rate,in float3 objnormal,in float3 tangent,in float3 bitangent,in float3 textnormal)
 {

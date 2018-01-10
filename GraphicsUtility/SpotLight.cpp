@@ -41,7 +41,7 @@ void SpotLight::setIntensity(float i)
 }
 void SpotLight::setConeAngle(float degree)
 {
-	mLightData.mConeAngle = cos(degree*(3.14159f) / 360.0f);
+	mLightData.mConeAngle = cos(degree*(3.14159f) / 360.0f); 
 	mFOV = degree;
 	mLightData.mProjection = glm::perspective(mFOV*(3.14159f) / 180.0f, 1.0f, 0.1f, mLightData.mRadius);
 }

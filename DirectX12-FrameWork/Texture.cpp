@@ -35,16 +35,22 @@ UINT getSize(DXGI_FORMAT format)
 		size = 12;
 		break;
 	case DXGI_FORMAT_R16G16B16A16_TYPELESS:
+		size = 8;
 		break;
 	case DXGI_FORMAT_R16G16B16A16_FLOAT:
+		size = 8;
 		break;
 	case DXGI_FORMAT_R16G16B16A16_UNORM:
+		size = 8;
 		break;
 	case DXGI_FORMAT_R16G16B16A16_UINT:
+		size = 8;
 		break;
 	case DXGI_FORMAT_R16G16B16A16_SNORM:
+		size = 8;
 		break;
 	case DXGI_FORMAT_R16G16B16A16_SINT:
+		size = 8;
 		break;
 	case DXGI_FORMAT_R32G32_TYPELESS:
 		size = 8;

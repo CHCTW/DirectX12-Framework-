@@ -44,5 +44,8 @@
     <FxCompile Include="..\..\Shaders\CascadedShadowMaps\CascadedShadowMap.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="..\..\Shaders\CascadedShadowMaps\SilhouetteEdgeExtract.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

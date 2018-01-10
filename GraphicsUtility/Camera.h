@@ -29,6 +29,8 @@ struct ViewProjection
 	glm::mat4x4 mViewInverseTranspose;
 	float front;
 	float back;
+	float fov;
+	float ratio;
 };
 class Camera
 {
@@ -41,6 +43,8 @@ public:
 		mViewProjection.mViewInverse = glm::inverse(mViewProjection.mView);
 		mViewProjection.front = mFront;
 		mViewProjection.back = mBack;
+		mViewProjection.ratio = mRatio;
+		mViewProjection.fov = mFOV;
 		frustumPlaneCal();
 	//	glm::mat4x4 test = mViewProjection.mProjection*mViewProjection.mProjInverse;
 	}

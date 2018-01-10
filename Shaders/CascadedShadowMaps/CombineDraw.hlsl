@@ -23,7 +23,7 @@ float3 ToneMapACES(float3 hdr)
 float4 PSMain(PSInput input) : SV_TARGET
 {
 	//return float4(input.uv,0.0f,0.0f);
-    float3 final = littexture.Sample(g_sampler, input.uv).xyz + bloomtexure.Sample(g_sampler, input.uv).xyz;
+    float3 final = littexture.Sample(g_sampler, input.uv).xyz /*+ bloomtexure.Sample(g_sampler, input.uv).xyz*/;
    // final = final / (1.0f + final);
     final = ToneMapACES(final);
     final = pow(final, 1.0f / 2.2f);

@@ -13,9 +13,11 @@ struct DirectionLightData  // should be the same with directionlight.h
 {
     float4x4 lightView;
     float4x4 lightProj;
+    float4x4 lightProjtoViewProj;
     float4 boxMax;
     float4 boxMin;
     float4x4 lightSliceProj[8]; // maximum cascade shadow map num
+    float4x4 lightSliceProjtoViewProj[8];
     float4 sliceBoxMaxandZ[8];
     float4 sliceBoxMinandZ[8];
     float4 lightDirection;

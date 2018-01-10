@@ -13,9 +13,11 @@ struct DirectionLightData
 {
 	glm::mat4x4 mView; 
 	glm::mat4x4 mProjection; // projection to cover all view frustum
+	glm::mat4x4 mLightProjtoViewProj;
 	glm::vec4 mBoxMax;  // a bounding box for othogoanl projection, also this store the z value 
 	glm::vec4 mBoxMin;
 	glm::mat4x4 mSliceProjection[MAX_CASCADENUM]; // maximum projection for cascade shadow map
+	glm::mat4x4 mSliceLightProjtoViewProj[MAX_CASCADENUM];
 	glm::vec4 mSliceBoxMaxandZ[MAX_CASCADENUM];  // a bounding box for othogoanl projection for each slice
 	glm::vec4 mSliceBoxMinandZ[MAX_CASCADENUM];
 	glm::vec4 mDirection; 
@@ -60,5 +62,6 @@ public:
 	DirectionLightData mData;
 private:
 	void calLightBoundingBoxforFrus(glm::vec4& min, glm::vec4& max, glm::mat4x4& viewproj, float near, float far);
+	void calLightBoundingSphereforFrus(glm::vec4& center, float& radius, glm::mat4x4 const & camviewinv, float near, float far, float ratio, float fov);
 
 };

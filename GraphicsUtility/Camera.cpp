@@ -12,6 +12,8 @@ void Camera::updateViewProj()
 	mViewProjection.mPosition = mPosition;
 	mViewProjection.front = mFront;
 	mViewProjection.back = mBack;
+	mViewProjection.fov = mFOV;
+	mViewProjection.ratio = mRatio;
 	mViewProjection.mViewInverseTranspose = glm::transpose(mViewProjection.mViewInverse);
 	frustumPlaneCal();
 }
@@ -132,6 +134,7 @@ ViewProjection const * Camera::getMatrix()
 void Camera::setRatio(float ratio)
 {
 	mRatio = ratio;
+	mViewProjection.ratio = mRatio;
 	mViewProjection.mProjection = glm::perspective(mFOV*(3.14159f) / 180.0f, mRatio, mFront, mBack);
 	mViewProjection.mProjInverse = glm::inverse(mViewProjection.mProjection);
 }
@@ -150,6 +153,7 @@ void Camera::setUp(float x, float y, float z)
 void Camera::setFOV(float fov)
 {
 	mFOV = fov;
+	mViewProjection.fov = mFOV;
 }
 void Camera::setBack(float f)
 {

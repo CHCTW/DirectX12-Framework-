@@ -109,9 +109,9 @@ float sunintensity = 5.0f;
 Buffer lightBuffer;
 Buffer shadowIndirectCmdBuffer;
 CommandSignature shadowCmdSig;
-unsigned int shadowcount = 5;
-unsigned int shadowwidth = 512;
-unsigned int shadowheight = 512;
+unsigned int shadowcount = 4;
+unsigned int shadowwidth = 1024;
+unsigned int shadowheight = 1024;
 Texture cascadedShadowMap;
 Texture disconMap;
 RootSignature shadowRootsig;
@@ -124,6 +124,9 @@ Scissor shadowscissor;
 
 RootSignature lightRootsig;
 Pipeline lightPipeline;
+
+RootSignature depthDiscRootsig;
+Pipeline depthDiscPipeline;
 
 
 
@@ -139,7 +142,7 @@ float bloomthreash = 1.0f;
 RootSignature brightextsig;
 RootSignature gaussiansig;
 Buffer gaussianconst;
-Sampler bilinear(D3D12_FILTER_MIN_LINEAR_MAG_MIP_POINT);
+Sampler pointsam(D3D12_FILTER_MIN_MAG_MIP_POINT);
 Pipeline brightExtractPipeline;
 Pipeline gaussianPipeline;
 Pipeline combinePipe;
@@ -197,7 +200,7 @@ void initializeRender()
 	samplerheap.ininitialize(render.mDevice, 1, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 	matsampler.createSampler(samplerheap);
 	gbuffersampler.createSampler(samplerheap);
-	bilinear.createSampler(samplerheap);
+	pointsam.createSampler(samplerheap);
 
 	rootsig.mParameters.resize(1);
 	rootsig.mParameters[0].mType = PARAMETERTYPE_CBV;
@@ -309,7 +312,7 @@ void initializeRender()
 	// shadow pass
 
 	cascadedShadowMap.CreateTexture(render, srvheap, DXGI_FORMAT_R32_TYPELESS, shadowwidth, shadowheight, 8, 1, TEXURE_SRV_TYPE_2D, TEXTURE_USAGE_SRV_DSV, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-	disconMap.CreateTexture(render, srvheap, DXGI_FORMAT_R16G16_FLOAT, windows.mWidth, windows.mHeight, 1, 1, TEXURE_SRV_TYPE_2D, TEXTURE_USAGE_SRV_UAV, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	disconMap.CreateTexture(render, srvheap, DXGI_FORMAT_R16G16B16A16_FLOAT, windows.mWidth, windows.mHeight, 1, 1, TEXURE_SRV_TYPE_2D, TEXTURE_USAGE_SRV_UAV, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
 	//RenderTargetFormat shadowformat(0, nullptr, true,false, DXGI_FORMAT_R16_TYPELESS);
 	//cascadedShadowMap.createRenderTargets(render.mDevice, shadowwidth, shadowheight, shadowformat, dsvheap, srvheap);
@@ -342,7 +345,7 @@ void initializeRender()
 	shadowshaders.shaders[GS].load("Shaders/CascadedShadowMaps/CascadedShadowMap.hlsl", "GSMain", GS);
 
 	RenderTargetFormat shadowformat(0, nullptr, true,false, DXGI_FORMAT_R32_TYPELESS);
-	shadowPipeline.createGraphicsPipeline(render.mDevice, shadowRootsig, shadowshaders, shadowformat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(0.0005f,2.0f,0.01f, D3D12_CULL_MODE_FRONT), VERTEX_LAYOUT_TYPE_SPLIT_ALL);
+	shadowPipeline.createGraphicsPipeline(render.mDevice, shadowRootsig, shadowshaders, shadowformat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(0.0f,0.01f,0.1f, D3D12_CULL_MODE_FRONT), VERTEX_LAYOUT_TYPE_SPLIT_ALL);
 
 
 	shadowCmdSig.mParameters.resize(4);
@@ -356,8 +359,44 @@ void initializeRender()
 	shadowCmdSig.mParameters[3].Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED;
 	shadowCmdSig.initialize(render.mDevice, shadowRootsig);
 
+
+	// depth disc pass
+
+	depthDiscRootsig.mParameters.resize(6);
+	depthDiscRootsig.mParameters[0].mType = PARAMETERTYPE_CBV;
+	depthDiscRootsig.mParameters[0].mResCounts = 1;
+	depthDiscRootsig.mParameters[0].mBindSlot = 0;
+	depthDiscRootsig.mParameters[0].mResource = &cameraBuffer;
+	depthDiscRootsig.mParameters[1].mType = PARAMETERTYPE_CBV;
+	depthDiscRootsig.mParameters[1].mResCounts = 1;
+	depthDiscRootsig.mParameters[1].mBindSlot = 1;
+	depthDiscRootsig.mParameters[1].mResource = &lightBuffer;
+	depthDiscRootsig.mParameters[2].mType = PARAMETERTYPE_SRV;
+	depthDiscRootsig.mParameters[2].mResCounts = 4;
+	depthDiscRootsig.mParameters[2].mBindSlot = 1;
+	depthDiscRootsig.mParameters[2].mResource = &GBuffer.mRenderBuffers[0];
+	depthDiscRootsig.mParameters[3].mType = PARAMETERTYPE_UAV;
+	depthDiscRootsig.mParameters[3].mResCounts = 1;
+	depthDiscRootsig.mParameters[3].mBindSlot = 0;
+	depthDiscRootsig.mParameters[3].mResource = &disconMap;
+	depthDiscRootsig.mParameters[4].mType = PARAMETERTYPE_SRV;
+	depthDiscRootsig.mParameters[4].mResCounts = 1;
+	depthDiscRootsig.mParameters[4].mBindSlot = 0;
+	depthDiscRootsig.mParameters[4].mResource = &cascadedShadowMap;
+	depthDiscRootsig.mParameters[5].mType = PARAMETERTYPE_SAMPLER;
+	depthDiscRootsig.mParameters[5].mResCounts = 1;
+	depthDiscRootsig.mParameters[5].mBindSlot = 0;
+	depthDiscRootsig.mParameters[5].mSampler = &pointsam;
+	depthDiscRootsig.initialize(render.mDevice);
+
+
+	ShaderSet depthextdirshader;
+	depthextdirshader.shaders[CS].load("Shaders/CascadedShadowMaps/SilhouetteEdgeExtract.hlsl", "CSMain", CS);
+	depthDiscPipeline.createComputePipeline(render.mDevice, depthDiscRootsig, depthextdirshader);
+
+
 	// light pass
-	lightRootsig.mParameters.resize(6);
+	lightRootsig.mParameters.resize(7);
 	lightRootsig.mParameters[0].mType = PARAMETERTYPE_CBV;
 	lightRootsig.mParameters[0].mResCounts = 1;
 	lightRootsig.mParameters[0].mBindSlot = 0;
@@ -381,12 +420,21 @@ void initializeRender()
 	lightRootsig.mParameters[5].mType = PARAMETERTYPE_SAMPLER;
 	lightRootsig.mParameters[5].mResCounts = 1;
 	lightRootsig.mParameters[5].mBindSlot = 0;
-	lightRootsig.mParameters[5].mSampler = &bilinear;
+	lightRootsig.mParameters[5].mSampler = &pointsam;
+	lightRootsig.mParameters[6].mType = PARAMETERTYPE_SRV;
+	lightRootsig.mParameters[6].mResCounts = 1;
+	lightRootsig.mParameters[6].mBindSlot = 5;
+	lightRootsig.mParameters[6].mResource = &disconMap;
 	lightRootsig.initialize(render.mDevice);
 
 	ShaderSet ambeintdirshader;
 	ambeintdirshader.shaders[CS].load("Shaders/CascadedShadowMaps/AmbientandDirectionLight.hlsl", "CSMain", CS);
 	lightPipeline.createComputePipeline(render.mDevice, lightRootsig, ambeintdirshader);
+
+
+	
+
+	//depthDiscPipeline
 
 
 	brightextsig.mParameters.resize(4);
@@ -404,7 +452,7 @@ void initializeRender()
 	brightextsig.mParameters[3].mType = PARAMETERTYPE_SAMPLER;
 	brightextsig.mParameters[3].mResCounts = 1;
 	brightextsig.mParameters[3].mBindSlot = 0;
-	brightextsig.mParameters[3].mSampler = &bilinear;
+	brightextsig.mParameters[3].mSampler = &pointsam;
 	brightextsig.initialize(render.mDevice);
 
 
@@ -766,7 +814,7 @@ void loadAsset()
 
 void releaseRender()
 {
-
+	depthDiscRootsig.realease();
 	disconMap.release();
 
 	combinePipe.release();
@@ -784,6 +832,7 @@ void releaseRender()
 
 	lightRootsig.realease();
 	lightPipeline.release();
+	depthDiscPipeline.release();
 
 	shadowIndirectCmdBuffer.release();
 	shadowCmdSig.release();
@@ -913,6 +962,14 @@ void update()
 	cmdlist.renderTargetBarrier(GBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE| D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 	cmdlist.depthBufferBarrier(GBuffer, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE| D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
+
+	//depht disc pass
+
+	cmdlist.resourceBarrier(disconMap, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	cmdlist.bindComputeRootSigature(depthDiscRootsig);
+	cmdlist.bindPipeline(depthDiscPipeline);
+	cmdlist.dispatch((disconMap.textureDesc.Width / 16) + 1, (disconMap.textureDesc.Height / 16) + 1, 1);
+	cmdlist.resourceBarrier(disconMap, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 
 
