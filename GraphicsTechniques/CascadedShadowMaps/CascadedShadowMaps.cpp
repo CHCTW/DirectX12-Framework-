@@ -16,6 +16,7 @@
 #include "GaussionCurve.h"
 #include <chrono>
 #include <random>
+#include <algorithm>
 #include <array>
 using namespace std;
 Render render;
@@ -109,6 +110,8 @@ float sunintensity = 5.0f;
 Buffer lightBuffer;
 Buffer shadowIndirectCmdBuffer;
 CommandSignature shadowCmdSig;
+bool showcascaded = false;
+bool usesmsr = true;
 unsigned int shadowcount = 4;
 unsigned int shadowwidth = 1024;
 unsigned int shadowheight = 1024;
@@ -532,6 +535,7 @@ void loadAsset()
 {
 
 	sunlight.setSliceNumber(shadowcount);
+	sunlight.usesmsr(usesmsr);
 	sunlight.setIntensity(sunintensity);
 	float dirx = sin(spint*PI / 180.0f)*cos(tilt*PI / 180.0f);
 	float diry = sin(spint*PI / 180.0f)*sin(tilt*PI / 180.0f);
@@ -1102,6 +1106,37 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		shiftpress = true;
 	if (key == GLFW_KEY_LEFT_SHIFT && action == GLFW_RELEASE)
 		shiftpress = false;
+
+	if (key == GLFW_KEY_UP && action == GLFW_RELEASE)
+	{
+		++shadowcount;
+		shadowcount = std::min(shadowcount, 8u);
+		sunlight.setSliceNumber(shadowcount);
+	}
+
+	if (key == GLFW_KEY_DOWN && action == GLFW_RELEASE)
+	{
+	
+		--shadowcount;
+		shadowcount = std::max(shadowcount, 1u);
+		sunlight.setSliceNumber(shadowcount);
+	}
+
+
+	if (key == GLFW_KEY_1 && action == GLFW_RELEASE)
+	{
+		showcascaded =!showcascaded;
+		sunlight.setshowcascadedcolor(showcascaded);
+	}
+
+	if (key == GLFW_KEY_2 && action == GLFW_RELEASE)
+	{
+		usesmsr = !usesmsr;
+		sunlight.usesmsr(usesmsr);
+	}
+
+
+
 
 	if (key == GLFW_KEY_RIGHT)
 	{

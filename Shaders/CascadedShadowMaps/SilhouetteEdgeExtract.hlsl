@@ -82,7 +82,7 @@ void CSMain(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID, uint3 
 
     float test = 1.0f;
 
-    float center = pixdepth>ShadowMap.SampleLevel(g_sampler, shadowcoord.xyz, 0).r + 0.008f;
+    float center = pixdepth>ShadowMap.SampleLevel(g_sampler, shadowcoord.xyz, 0).r + 0.003f;
     float left = pixdepth>ShadowMap.SampleLevel(g_sampler, shadowcoord.xyz + float3(texsize * float2(-1.0, 0.0), 0.0f), 0).r + 0.008f;
     float right = pixdepth>ShadowMap.SampleLevel(g_sampler, shadowcoord.xyz + float3(texsize * float2(1.0, 0.0), 0.0f), 0).r + 0.008f;
     float top = pixdepth>ShadowMap.SampleLevel(g_sampler, shadowcoord.xyz + float3(texsize * float2(0.0, -1.0), 0.0f), 0).r + 0.008f;

@@ -9,6 +9,8 @@ struct PointLightData
     float lightintensity;
     float2 padding;
 };
+#define CASCADEDCOLOR 1u
+#define SMSRUSED 2u
 struct DirectionLightData  // should be the same with directionlight.h
 {
     float4x4 lightView;
@@ -25,9 +27,7 @@ struct DirectionLightData  // should be the same with directionlight.h
     float virtualDistance;
     float lightIntensity;
     uint sliceCount;
-    float padding;
-    float2 shadowMapRes;
-    float2 padding2;
+    uint debugmask;
 };
 float3 Fresnel(float3 F0, float HV)
 {

@@ -66,7 +66,8 @@ PSInput VSMain(float3 position : POSITION, float3 normal : NORMAL,float2 uv : TE
     uint diffid = input.mat.texutres.x;
     float rate = input.mat.chooses.x;
     float4 difftext = MaterialTextures[diffid].Sample(mat_text_sampler, input.uv).rgba;
-    if(difftext.a==0)
+    uint mask = step(0.0001, difftext.a);
+    if(mask==0)
         discard;
     float3 diffuse = difftext.xyz * (1.0 - rate) + input.mat.albedo * rate;
 

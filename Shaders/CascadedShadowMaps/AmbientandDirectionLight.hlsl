@@ -367,7 +367,9 @@ void CSMain(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID, uint3 
     if ((pixdepth) > ShadowMap.SampleLevel(pointsampler, shadowcoord.xyz, 0).r + 0.003f)
         test = 0.0f;
 
-    test = test * interres;
+
+    if (directionlight.debugmask & SMSRUSED)
+        test = test * interres;
 ////    test = exp(-120.0f * pixdepth) * exp(120.0f * ShadowMap.SampleLevel(pointsampler, shadowcoord.xyz, 0).r);
 
 //    test = saturate(test);
@@ -391,6 +393,11 @@ void CSMain(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID, uint3 
   //  if (lightwcoord.z<0.0)
    //    HDR[pos] = float4(-shadowcoord.z.rrrr);
  //   HDR[pos] = float4(ShadowMap.SampleLevel(pointsampler, shadowcoord.xy, 0).r.xxxx);
+
+    if (directionlight.debugmask & CASCADEDCOLOR)
+    {
+        final += (debugcolor[slidenum] * 0.5f).rgb;
+    }
     HDR[pos] = float4(final, 1.0)/* + debugcolor[slidenum] * 0.5f*/;
  //   if ((pixdepth) > ShadowMap.SampleLevel(pointsampler, shadowcoord.xyz, 0).r + 0.005f)
   //  HDR[pos] = float4(final, 1.0);
@@ -406,7 +413,7 @@ void CSMain(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID, uint3 
 
   //  HDR[pos] = (dot(disc, 1.0) == 0.0f) * float4(final, 0.0) + float4(right, 0.0, 0.0);
 
- //   HDR[pos] = (dot(disc, 1.0) == 0.0f) * float4(final, 0.0) + float4(normalizedCoordinate, 0.0, 0.0);
+//    HDR[pos] = (dot(disc, 1.0) == 0.0f) * float4(final, 0.0) + float4(normalizedCoordinate, 0.0, 0.0);
  //   HDR[pos] = (dot(disc, 1.0) == 0.0f) * float4(final, 1.0) + float4(disc, 0.0, 0.0);
    // HDR[pos] = (dot(disc, 1.0) == 0.0f) * float4(final, 0.0)+subCoord;
 

@@ -4,6 +4,8 @@
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define MAX_CASCADENUM 8
+#define CASCADEDCOLOR 1u
+#define SMSRUSED 2u
 class Camera;
 #include <glm/matrix.hpp>
 #include <glm/gtx/transform.hpp>
@@ -25,7 +27,7 @@ struct DirectionLightData
 	float mVirtualDistance;
 	float mIntensity;
 	unsigned int mSliceNumber;
-	float padding;
+	unsigned int debug;
 };
 class DirectionLight
 {
@@ -37,6 +39,7 @@ public:
 		mData.mIntensity = 15.0f;
 		mData.mSliceNumber = 3;
 		mData.mVirtualDistance = 250.0f;
+		mData.debug = 0u;
 	};
 	
 	void setDirection(float x,float y, float z)
@@ -60,6 +63,19 @@ public:
 	{
 		return &mData;
 	}
+	void setshowcascadedcolor(bool t)
+	{
+		unsigned int set = t*CASCADEDCOLOR;
+		mData.debug = mData.debug&~CASCADEDCOLOR;
+		mData.debug |= set;
+	}
+	void usesmsr(bool t)
+	{
+		unsigned int set = t*SMSRUSED;
+		mData.debug = mData.debug&~SMSRUSED;
+		mData.debug |= set;
+	}
+
 	DirectionLightData mData;
 private:
 	void calLightBoundingBoxforFrus(glm::vec4& min, glm::vec4& max, glm::mat4x4& viewproj, float near, float far);
