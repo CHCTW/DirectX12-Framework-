@@ -74,6 +74,10 @@ public:
 	
 	void resourceBarrier(Resource& res, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
 		D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
+	void resourceTransition(Resource& res,D3D12_RESOURCE_STATES stataf, bool barrier = false,UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
+		D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
+	void setBarrier();
+
 	// This one should not be used after finish frame buffering, or could change this to use via swapchain's render target
     void resourceBarrier(ID3D12Resource* res, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
 		D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
@@ -101,6 +105,7 @@ public:
 	RootSignature* mCurrentBindGraphicsRootSig;
 	RootSignature* mCurrentBindComputeRootSig;
 private:
+	vector<D3D12_RESOURCE_BARRIER> mAccuBarriers;
 	template <typename T>
 	void vertexbindhelp(std::initializer_list<T>&& bufferlist) {
 		// do something

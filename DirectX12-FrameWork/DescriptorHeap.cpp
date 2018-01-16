@@ -127,7 +127,18 @@ Handles DescriptorHeap::addResource(ViewType type,ID3D12Resource* res, void* des
 	return handle;
 	
 }
-
+Handles DescriptorHeap::getHandles(ViewType type, UINT index)
+{
+	Handles handle;
+	CD3DX12_GPU_DESCRIPTOR_HANDLE gpuview(mDescHeap->GetGPUDescriptorHandleForHeapStart());
+	CD3DX12_CPU_DESCRIPTOR_HANDLE cpuview(mDescHeap->GetCPUDescriptorHandleForHeapStart());
+	gpuview.Offset(HeapOffset[type]+index, mDescSize);
+	cpuview.Offset(HeapOffset[type]+index, mDescSize);
+	handle.Gpu = gpuview;
+	handle.Cpu = cpuview;
+	return handle;
+	
+}
 Handles DescriptorHeap::addSampler(D3D12_SAMPLER_DESC& samplerdesc)
 {
 	Handles handle;

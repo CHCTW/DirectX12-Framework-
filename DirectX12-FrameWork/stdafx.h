@@ -192,3 +192,16 @@ static unsigned int HeapOffset[VIEW_COUNT] = {0,1000,2000,0,0};
 static FLOAT DefaultBorderColor[4] = { 0.0,0.0,0.0,0.0 };
 static ClearValue DefaultClearValue(ClearValue::ClearType::CLEAR_TYPE_DEFAUTL);
 //DefaultClearValue.Type = ClearValue::ClearType::CLEAR_TYPE_DEFAUTL;
+
+
+// Mip_map generate type
+
+enum Mip_Map_Generate_Type
+{
+	MIP_MAP_GEN_SRGB_A_BOX,
+	MIP_MAP_GEN_COUNT
+};
+const static char *MipMapShadersName[MIP_MAP_GEN_COUNT]
+{
+	"DownScale_Srgba_Box.hlsl"
+};

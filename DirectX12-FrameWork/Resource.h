@@ -6,7 +6,7 @@ using namespace std;
 class Resource
 {
 public:
-	D3D12_RESOURCE_STATES mState;
+	vector<D3D12_RESOURCE_STATES> mState;
 	ID3D12Resource* mResource;
 	ID3D12Resource* mUploadBuffer;
 	Handles mSRV;

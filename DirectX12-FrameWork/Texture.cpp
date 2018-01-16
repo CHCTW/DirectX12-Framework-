@@ -366,7 +366,8 @@ void Texture::CreateTexture(ID3D12Device* device, DXGI_FORMAT format, UINT width
 		state,
 		tempclear,
 		IID_PPV_ARGS(&mResource)));
-	mState = state;
+	int totalsub = mipLevel*textureDesc.DepthOrArraySize;
+	mState.resize(totalsub, state);
 	//GpuAddress = mResource->GetGPUVirtualAddress();  because only buffer can read with out descriptor, so texture can't use gpuvirtualadress. Intereseting stuff
 	const UINT64 uploadBufferSize = GetRequiredIntermediateSize(mResource, 0, textureDesc.DepthOrArraySize*textureDesc.MipLevels);
 
@@ -560,7 +561,10 @@ void Texture::CreateTexture(Render& render, DescriptorHeap& srvuavheap, DXGI_FOR
 		state,
 		tempclear,
 		IID_PPV_ARGS(&mResource)));
-	mState = state;
+	//mState = state;
+	int totalsub = mipLevel*textureDesc.DepthOrArraySize;
+	mState.resize(totalsub, state);
+
 	//GpuAddress = mResource->GetGPUVirtualAddress();  because only buffer can read with out descriptor, so texture can't use gpuvirtualadress. Intereseting stuff
 	const UINT64 uploadBufferSize = GetRequiredIntermediateSize(mResource, 0, textureDesc.DepthOrArraySize*textureDesc.MipLevels);
 
@@ -747,7 +751,7 @@ void Texture::createDSVs(DescriptorHeap& heap)
 }
 void Texture::createUAVs(DescriptorHeap& heap)
 {
-	cout << "UAV TEXTURE still Undone " << endl;
+//	cout << "UAV TEXTURE still Undone " << endl;
 	D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
 	uavDesc.Format = textureDesc.Format;
 	if (uavDesc.Format == DXGI_FORMAT_R32_TYPELESS)

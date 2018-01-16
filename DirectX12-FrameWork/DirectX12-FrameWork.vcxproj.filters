@@ -28,6 +28,9 @@
     <Filter Include="Render\RenderState">
       <UniqueIdentifier>{7e1e0052-5b35-485a-b47e-6173753dfaad}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Render\Shader">
+      <UniqueIdentifier>{de1fd3b5-1c8f-4c2c-8b46-be45038cf4af}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -188,5 +191,15 @@
     <ClCompile Include="QueryHeap.cpp">
       <Filter>Render\Structers</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\DirectX12-Framework\DownScale.hlsli">
+      <Filter>Render\Shader</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\Shaders\DirectX12-Framework\DownScale_Srgba_Box.hlsl">
+      <Filter>Render\Shader</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

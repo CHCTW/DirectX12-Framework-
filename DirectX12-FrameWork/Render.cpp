@@ -1,8 +1,8 @@
 #include "Render.h"
 #include "Window.h"
 #include "stdafx.h"
-
-
+#include <string>
+#include <algorithm>
 //WCHAR* downSampleShader = "";
 
 
@@ -94,11 +94,27 @@ bool Render::initialize()
 
 
 	// create pipelien for generate  mipmpaps
+	
+	mMipmapsig.mParameters.resize(3);
+	mMipmapsig.mParameters[0].mType = PARAMETERTYPE_ROOTCONSTANT; // mips level
+	mMipmapsig.mParameters[0].mBindSlot = 0;
+	mMipmapsig.mParameters[0].mResCounts = 1;
+	mMipmapsig.mParameters[1].mType = PARAMETERTYPE_SRV; // input
+	mMipmapsig.mParameters[1].mBindSlot = 0;
+	mMipmapsig.mParameters[1].mResCounts = 1;
+	mMipmapsig.mParameters[2].mType = PARAMETERTYPE_UAV; // ouput
+	mMipmapsig.mParameters[2].mBindSlot = 0;
+	mMipmapsig.mParameters[2].mResCounts = 1;
+	mMipmapsig.initialize(this->mDevice);
 
-//	ShaderSet downsampleshader;
-//	downsampleshader.shaders[CS].load()
+	std::string shaderpath("Shaders/DirectX12-Framework/");
 
-
+	ShaderSet downsampleshaders[MIP_MAP_GEN_COUNT];
+	for (int i = 0; i < MIP_MAP_GEN_COUNT; ++i)
+	{
+		downsampleshaders[i].shaders[CS].load((shaderpath + MipMapShadersName[i]).c_str(), "CSMain", CS);
+		mMipmapPipelines[i].createComputePipeline(this->mDevice, mMipmapsig, downsampleshaders[i]);
+	}
 	return true;
 }
 bool Render::createSwapChain(Window &window, UINT  count, RenderTargetFormat &format)
@@ -156,7 +172,7 @@ bool Render::createSwapChain(Window &window, UINT  count, RenderTargetFormat &fo
 		mSwapChainRenderTarget[i].mFormat = format;
 		mSwapChainRenderTarget[i].mRenderBuffers.resize(1);
 		hr = mSwapChain->GetBuffer(i, IID_PPV_ARGS(&mSwapChainRenderTarget[i].mRenderBuffers[0].mResource));
-		mSwapChainRenderTarget[i].mRenderBuffers[0].mState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		mSwapChainRenderTarget[i].mRenderBuffers[0].mState.push_back(D3D12_RESOURCE_STATE_RENDER_TARGET);
 		mSwapChainRenderTarget[i].mRenderBuffers[0].mFormat = format.mRenderTargetFormat[0];
 		mSwapChainRenderTarget[i].mRenderBuffers[0].mRTV.push_back (mRTVDescriptorHeap.addResource(RTV, mSwapChainRenderTarget[i].mRenderBuffers[0].mResource, NULL));
 		if (format.mDepth) 
@@ -182,6 +198,13 @@ UINT Render::getCurrentSwapChainIndex()
 
 void Render::release()
 {
+
+	for (int i = 0; i < MIP_MAP_GEN_COUNT; ++i)
+	{
+		mMipmapPipelines->release();
+	}
+	mMipmapsig.realease();
+
 	CloseHandle(mFenceEvent);
 	mFence.release();
 	mDSVDescriptorHeap.release();
@@ -238,4 +261,62 @@ bool Render::present()
 		return false;
 	}
 	return true;
+}
+
+void Render::generateMipMapOffline(Texture& texture, Mip_Map_Generate_Type type, UINT baselevel, UINT gentolevel)
+{
+
+	
+	unsigned int levelto = min(gentolevel, texture.textureDesc.MipLevels-1);
+	DescriptorHeap tempHeaps;
+	tempHeaps.ininitialize(this->mDevice, 1); // a temp descriptor heap
+	CommandAllocator cmdalloc;
+	CommandList cmdlist;
+	cmdalloc.initialize(this->mDevice);
+	cmdlist.initial(this->mDevice, cmdalloc);
+
+
+//	Texture gentexture;
+
+
+	//vector<Handles> uavs;
+	//D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+	//D3D12_RESOURCE_BARRIER barrier;
+	//barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	//barrier.Transition.pResource = texture.mResource;
+	//barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_GENERIC_READ;
+	//barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_GENERIC_READ;
+	//vector<D3D12_RESOURCE_BARRIER> barriers;
+	//uavDesc.Format = texture.textureDesc.Format;
+	//if (uavDesc.Format == DXGI_FORMAT_R32_TYPELESS)
+	//	uavDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	//if (uavDesc.Format == DXGI_FORMAT_R16_TYPELESS)
+	//	uavDesc.Format = DXGI_FORMAT_R16_UNORM;
+
+
+	//if (texture.textureDesc.DepthOrArraySize > 1)
+	//{
+	//	cout << "Only Simple Texture 2D is supported now" << endl;
+	//}
+	//else
+	//{
+	//	// allocate temporary uav for each level
+	//	uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+	//	uavDesc.Texture2D.PlaneSlice = 0;
+	//	for (int j = baselevel+1; j <= levelto; ++j)
+	//	{
+	//		uavDesc.Texture2D.MipSlice = j;
+	//		uavs.push_back(tempHeaps.addResource(UAV, texture.mResource, &uavDesc, nullptr));
+	//	}
+	//}
+
+	////cmdlist.mDx12CommandList->CopyResource
+
+
+	tempHeaps.release();
+	cmdalloc.release();
+	cmdlist.release();
+
+	
+
 }

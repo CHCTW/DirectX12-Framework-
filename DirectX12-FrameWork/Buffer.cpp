@@ -29,7 +29,7 @@ bool Buffer::createVertexBuffer(ID3D12Device* device,UINT buffersize, UINT strid
 	mVertexBuffer.StrideInBytes = strideSize;
 	mVertexBuffer.SizeInBytes = buffersize;
 	mType = VERTEX;
-	mState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+	mState.push_back(D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 	mHeapType = heaptype;
 	mBufferSize = buffersize;
 	GpuAddress = mResource->GetGPUVirtualAddress();
@@ -74,7 +74,7 @@ bool Buffer::createIndexBuffer(ID3D12Device* device, UINT buffersize, IndexBuffe
 		mIndexBuffer.Format = DXGI_FORMAT_R16_UINT;
 	mIndexBuffer.SizeInBytes = buffersize;
 	mType = INDEX;
-	mState = D3D12_RESOURCE_STATE_INDEX_BUFFER;
+	mState.push_back(D3D12_RESOURCE_STATE_INDEX_BUFFER);
 	mHeapType = heaptype;
 	mBufferSize = buffersize;
 	GpuAddress = mResource->GetGPUVirtualAddress();
@@ -113,7 +113,7 @@ bool Buffer::createConstantBuffer(ID3D12Device* device, DescriptorHeap &heap, UI
 	if (FAILED(hr))
 		return false;
 	mType = CONSTANT;
-	mState = D3D12_RESOURCE_STATE_GENERIC_READ;
+	mState.push_back(D3D12_RESOURCE_STATE_GENERIC_READ);
 	mHeapType = D3D12_HEAP_TYPE_UPLOAD;
 	GpuAddress = mResource->GetGPUVirtualAddress();
 
@@ -142,7 +142,7 @@ bool Buffer::createConstantBuffer(ID3D12Device* device, UINT buffersize)
 	if (FAILED(hr))
 		return false;
 	mType = CONSTANT;
-	mState = D3D12_RESOURCE_STATE_GENERIC_READ;
+	mState.push_back(D3D12_RESOURCE_STATE_GENERIC_READ);
 	mHeapType = D3D12_HEAP_TYPE_UPLOAD;
 	GpuAddress = mResource->GetGPUVirtualAddress();
 
@@ -157,12 +157,12 @@ bool Buffer::createStructeredBuffer(ID3D12Device* device, DescriptorHeap &heap, 
 	
 	//if(type == STRUCTERED_BUFFER_TYPE_READ)
 
-	mState = D3D12_RESOURCE_STATE_GENERIC_READ;
+	mState.push_back(D3D12_RESOURCE_STATE_GENERIC_READ);
 	D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
 	
 	if (type == STRUCTERED_BUFFER_TYPE_READ_WRITE)
 	{
-		mState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+		mState.push_back(D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 		flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 	}
 
@@ -194,7 +194,7 @@ bool Buffer::createStructeredBuffer(ID3D12Device* device, DescriptorHeap &heap, 
 		&CD3DX12_HEAP_PROPERTIES(heaptype),
 		D3D12_HEAP_FLAG_NONE,
 		&CD3DX12_RESOURCE_DESC::Buffer(buffersize, flags),
-		mState,
+		mState[0],
 		nullptr,
 		IID_PPV_ARGS(&mResource));
 	if (FAILED(hr))

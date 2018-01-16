@@ -2,7 +2,7 @@
 #include "StructureHeaders.h"
 CommandList::CommandList():mDx12CommandList(nullptr), mDx12Allocater(nullptr), mCurrentBindGraphicsRootSig(nullptr), mCurrentBindComputeRootSig(nullptr)
 {
-
+	mAccuBarriers.reserve(16); //ask for 16 first
 }
 bool CommandList::initial(ID3D12Device* device, CommandAllocator &alloc)
 {
@@ -44,8 +44,56 @@ void CommandList::resourceBarrier(Resource& res, D3D12_RESOURCE_STATES statbef, 
 {
 	
 	mDx12CommandList->ResourceBarrier(1,&CD3DX12_RESOURCE_BARRIER::Transition(res.mResource,statbef,stataf,subresource,flags));
-	res.mState = stataf;
+	if (subresource == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)
+		std::fill(res.mState.begin(), res.mState.end(), stataf);
+	else
+		res.mState[subresource] = stataf;
 }
+
+void CommandList::resourceTransition(Resource& res, D3D12_RESOURCE_STATES stataf, bool barrier, UINT subresource,D3D12_RESOURCE_BARRIER_FLAGS flags)
+{
+	if (subresource == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)
+	{
+		if (res.mState[0] == stataf)   // same state no transition 
+			return;
+	}
+	else
+	{
+		if (res.mState[subresource] == stataf)
+			return;
+	}
+
+	D3D12_RESOURCE_BARRIER transition;
+	transition.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	transition.Flags = flags;
+	transition.Transition.pResource = res.mResource;
+	transition.Transition.StateAfter = stataf;
+	transition.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+	if (subresource == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)
+	{
+		
+		transition.Transition.StateBefore = res.mState[0];// all subresource transition, doesn't matter which one..., what if not all subresource in the same state?
+		std::fill(res.mState.begin(), res.mState.end(), stataf);
+	}
+	else
+	{
+		transition.Transition.StateBefore = res.mState[subresource];
+		res.mState[subresource] = stataf;
+	}
+	mAccuBarriers.push_back(transition); // add to current
+	if (barrier) // if set barrier
+	{
+		mDx12CommandList->ResourceBarrier(mAccuBarriers.size(), mAccuBarriers.data());
+		mAccuBarriers.clear();  // clear current accumulate transition
+	}
+
+}
+void CommandList::setBarrier()
+{
+	mDx12CommandList->ResourceBarrier(mAccuBarriers.size(), mAccuBarriers.data());
+	mAccuBarriers.clear();
+}
+
 void CommandList::resourceBarrier(ID3D12Resource* res, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource,
 	D3D12_RESOURCE_BARRIER_FLAGS flags)
 {

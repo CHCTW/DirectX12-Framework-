@@ -8,7 +8,7 @@ Shader::Shader():mType(SHADERTYPE_COUNT), mShader(NULL)
 {
 
 }
-bool Shader::load(char* filepath, char* entryPoint, ShaderType type)
+bool Shader::load(char const* filepath, char* entryPoint, ShaderType type)
 {
 	std::wstring strins;
 	strins.resize(256);
