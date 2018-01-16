@@ -1,6 +1,6 @@
 # DirectX12-Framework-
 A framework for learning DirectX12 and demonstrate graphics techniques 
-![image](https://user-images.githubusercontent.com/30221942/34026871-cfa18ebe-e10d-11e7-8080-4effde1b179d.png)
+![image](https://user-images.githubusercontent.com/30221942/34930601-1682d296-f97f-11e7-9211-8c52055a1d42.png)
 
 
 ## All Unitest and Graphic Techniques pojects files working space is incorrect. Right click the project file and select properties.Click Debugging and find Working Directory area. Change it to $(SolutionDir) .
@@ -55,8 +55,12 @@ The whole scene consist with 128 point lights. The fame time is about 70ms.
 I use cube shadow map but make the whole pass with execute indirect to largely decrease the draw commands. 
 Also I am adding the bloom effect. The bloom effect is learned from dx12 mini engine.
 https://www.youtube.com/watch?v=YpxZGnVfkb4&feature=youtu.be
-
 ![image](https://user-images.githubusercontent.com/30221942/34026871-cfa18ebe-e10d-11e7-8080-4effde1b179d.png)
+Cascaded shadow map : Use stable cascaded shadow map to largely add shadow quality, also combined with SMSR to decrease aliasing of shadows. SMSR can be found in :GPU Pro6: http://gpupro.blogspot.com 
+This is directional light version. Each shadow maps resolution is 1024*1024
+https://www.youtube.com/watch?v=plOWDfTVvpE&t=16s&list=PLvLvpclrF-V2Mdev5MhF7zl5RDFbaqnBF&index=12
+![image](https://user-images.githubusercontent.com/30221942/34930601-1682d296-f97f-11e7-9211-8c52055a1d42.png)
+
 
 ### 3. Direcx12 Framework : This project is included by all the Unitests and Graphics Techniques. It is the core of this framework. It only generate lib file.
 ### 4. Graphics Utility : This project is included by part Unitests and Graphics Techniques. It contains some helper structer like spot light, Transform, Camera.... It only generate lib file.
