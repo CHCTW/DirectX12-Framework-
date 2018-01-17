@@ -83,14 +83,38 @@ void CommandList::resourceTransition(Resource& res, D3D12_RESOURCE_STATES stataf
 	mAccuBarriers.push_back(transition); // add to current
 	if (barrier) // if set barrier
 	{
-		mDx12CommandList->ResourceBarrier(mAccuBarriers.size(), mAccuBarriers.data());
-		mAccuBarriers.clear();  // clear current accumulate transition
+		setBarrier();
 	}
 
 }
+void CommandList::swapChainBufferTransition(SwapChainBuffer& res, D3D12_RESOURCE_STATES stataf, bool barrier,
+	D3D12_RESOURCE_BARRIER_FLAGS flags)
+{
+	if (res.mState[0] != stataf)   // same state no transition 
+	{
+		D3D12_RESOURCE_BARRIER transition;
+		transition.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		transition.Flags = flags;
+		transition.Transition.pResource = res.mResource;
+		transition.Transition.StateAfter = stataf;
+		transition.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+		transition.Transition.StateBefore = res.mState[0];// all subresource transition, doesn't matter which one..., what if not all subresource in the same state?
+		res.mState[0] = stataf;
+		mAccuBarriers.push_back(transition); // add to current
+	}
+	if (barrier) // if set barrier
+	{
+		setBarrier();
+	}
+
+}
+
+
+
 void CommandList::setBarrier()
 {
-	mDx12CommandList->ResourceBarrier(mAccuBarriers.size(), mAccuBarriers.data());
+	if(mAccuBarriers.size()>0)
+		mDx12CommandList->ResourceBarrier(mAccuBarriers.size(), mAccuBarriers.data());
 	mAccuBarriers.clear();
 }
 
@@ -159,10 +183,82 @@ void CommandList::bindRenderTarget(RenderTarget & rt, UINT miplevel)
 	else
 	mDx12CommandList->OMSetRenderTargets(rt.mRenderBuffers.size(), cpus, false, nullptr);
 }
+void CommandList::bindRenderTarget(SwapChainBuffer & rt)
+{
+	mDx12CommandList->OMSetRenderTargets(1, &rt.mRTV[0].Cpu, false, nullptr);
+}
+void CommandList::bindRenderTarget(SwapChainBuffer & rt, Texture & depthstencilbuffer, UINT depthstecmip)
+{
+	mDx12CommandList->OMSetRenderTargets(1, &rt.mRTV[0].Cpu, false, &depthstencilbuffer.mDSV[depthstecmip].Cpu);
+}
+
 void CommandList::bindDepthStencilBufferOnly(Texture& dsbuffer, UINT miplevel)
 {
 	mDx12CommandList->OMSetRenderTargets(0, nullptr, false, &dsbuffer.mDSV[miplevel].Cpu);
 }
+
+void CommandList::bindRenderTargetsOnly(Texture& t1, UINT mip)
+{
+	mDx12CommandList->OMSetRenderTargets(1, &t1.mRTV[mip].Cpu, false, nullptr);
+}
+void CommandList::bindRenderTargetsOnly(Texture& t1, Texture& t2, UINT mip)
+{
+	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvs[2];
+	rtvs[0] = t1.mRTV[mip].Cpu;
+	rtvs[1] = t2.mRTV[mip].Cpu;
+	mDx12CommandList->OMSetRenderTargets(2, rtvs, false, nullptr);
+}
+void CommandList::bindRenderTargetsOnly(Texture& t1, Texture& t2, Texture& t3, UINT mip)
+{
+	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvs[3];
+	rtvs[0] = t1.mRTV[mip].Cpu;
+	rtvs[1] = t2.mRTV[mip].Cpu;
+	rtvs[2] = t3.mRTV[mip].Cpu;
+	mDx12CommandList->OMSetRenderTargets(3, rtvs, false, nullptr);
+}
+void CommandList::bindRenderTargetsOnly(Texture& t1, Texture& t2, Texture& t3, Texture& t4, UINT mip)
+{
+	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvs[4];
+	rtvs[0] = t1.mRTV[mip].Cpu;
+	rtvs[1] = t2.mRTV[mip].Cpu;
+	rtvs[2] = t3.mRTV[mip].Cpu;
+	rtvs[3] = t4.mRTV[mip].Cpu;
+	mDx12CommandList->OMSetRenderTargets(4, rtvs, false, nullptr);
+}
+void CommandList::bindRenderTargetsDepthStencil(Texture& t1, Texture& ds, UINT retmip, UINT dsmip)
+{
+	mDx12CommandList->OMSetRenderTargets(1, &t1.mRTV[retmip].Cpu, false, &ds.mDSV[dsmip].Cpu);
+}
+void CommandList::bindRenderTargetsDepthStencil(Texture& t1, Texture& t2, Texture& ds, UINT retmip, UINT dsmip)
+{
+	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvs[2];
+	rtvs[0] = t1.mRTV[retmip].Cpu;
+	rtvs[1] = t2.mRTV[retmip].Cpu;
+	mDx12CommandList->OMSetRenderTargets(2, rtvs, false, &ds.mDSV[dsmip].Cpu);
+}
+void CommandList::bindRenderTargetsDepthStencil(Texture& t1, Texture& t2, Texture& t3, Texture& ds, UINT retmip, UINT dsmip)
+{
+	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvs[3];
+	rtvs[0] = t1.mRTV[retmip].Cpu;
+	rtvs[1] = t2.mRTV[retmip].Cpu;
+	rtvs[2] = t3.mRTV[retmip].Cpu;
+	mDx12CommandList->OMSetRenderTargets(3, rtvs, false, &ds.mDSV[dsmip].Cpu);
+}
+void CommandList::bindRenderTargetsDepthStencil(Texture& t1, Texture& t2, Texture& t3, Texture& t4, Texture& ds, UINT retmip, UINT dsmip)
+{
+	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvs[4];
+	rtvs[0] = t1.mRTV[retmip].Cpu;
+	rtvs[1] = t2.mRTV[retmip].Cpu;
+	rtvs[2] = t3.mRTV[retmip].Cpu;
+	rtvs[3] = t4.mRTV[retmip].Cpu;
+	mDx12CommandList->OMSetRenderTargets(3, rtvs, false, &ds.mDSV[dsmip].Cpu);
+}
+
+
+
+
+
+
 void CommandList::bindCubeRenderTarget(CubeRenderTarget & crt, UINT face,UINT level)
 {
 	if (crt.mType == (CUBE_RENDERTAERGET_TYPE_DEPTH| CUBE_RENDERTAERGET_TYPE_RENDERTARGET))
@@ -198,6 +294,18 @@ void CommandList::clearRenderTarget(RenderTarget &rt,UINT miplevel)
 		mDx12CommandList->ClearRenderTargetView(rt.mRenderBuffers[i].mRTV[miplevel].Cpu, rt.mFormat.mRenderTargetClearValue[i].Color, 0, NULL);
 
 	}
+}
+void CommandList::clearRenderTarget(Texture &rt, const float *color, UINT miplevel)
+{
+	mDx12CommandList->ClearRenderTargetView(rt.mRTV[miplevel].Cpu, color, 0, NULL);
+}
+void CommandList::clearRenderTarget(Texture &rt, UINT miplevel)
+{
+	mDx12CommandList->ClearRenderTargetView(rt.mRTV[miplevel].Cpu, rt.mClearVal.Color, 0, NULL);
+}
+void CommandList::clearRenderTarget(SwapChainBuffer &rt, const float *color)
+{
+	mDx12CommandList->ClearRenderTargetView(rt.mRTV[0].Cpu, color, 0, NULL);
 }
 
 
@@ -329,7 +437,7 @@ bool CommandList::updateTextureData(Texture& texture, void const * data)
 }
 bool CommandList::updateTextureCubeData(Texture& texture, void  const ** data)
 {
-	if (!texture.mResource || !texture.mUploadBuffer || !texture.mCubeMap)
+	if (!texture.mResource || !texture.mUploadBuffer || !(texture.mSRVType&TEXURE_SRV_TYPE_CUBE))
 		return false;
 
 	texture.textureDesc.MipLevels;

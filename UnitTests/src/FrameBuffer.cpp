@@ -21,7 +21,7 @@ Scissor scissor;
 DescriptorHeap srvheap;
 DescriptorHeap rtvheap;
 DescriptorHeap dsvheap;
-RenderTarget framebuffer;
+Texture framebuffer;
 
 DescriptorHeap samplerheap;
 Texture texture;
@@ -36,7 +36,7 @@ void initializeRender()
 {
 	render.initialize();
 	RenderTargetFormat retformat(DXGI_FORMAT_R8G8B8A8_UNORM);
-	render.createSwapChain(windows, swapChainCount, retformat);
+	render.createSwapChain(windows, swapChainCount, retformat.mRenderTargetFormat[0]);
 	cmdalloc.initialize(render.mDevice);
 	cmdlist.initial(render.mDevice, cmdalloc);
 
@@ -62,10 +62,11 @@ void initializeRender()
 	//RenderTargetFormat framefomat(1,&firstformat,false, DXGI_FORMAT_D32_FLOAT);
 	
 
-	framebuffer.createRenderTargets(render.mDevice,windows.mWidth, windows.mHeight,retformat,rtvheap,srvheap);
+	framebuffer.CreateTexture(render,srvheap, retformat.mRenderTargetFormat[0],windows.mWidth, windows.mHeight,1,1, TEXURE_SRV_TYPE_2D, TEXTURE_USAGE_SRV_RTV);
 
-	texture.CreateTexture(render.mDevice, DXGI_FORMAT_R8G8B8A8_UNORM, TextureWidth, TextureHeight, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET  | D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-	texture.addSahderResorceView(srvheap);
+	//texture.CreateTexture(render.mDevice, DXGI_FORMAT_R8G8B8A8_UNORM, TextureWidth, TextureHeight, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET  | D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+	texture.CreateTexture(render,srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, TextureWidth, TextureHeight);
+	//texture.addSahderResorceView(srvheap);
 
 	rootsig.mParameters.resize(2);
 	rootsig.mParameters[0].mType = PARAMETERTYPE_SRV;
@@ -149,7 +150,7 @@ void loadAsset()
 
 
 
-	cmdlist.renderTargetBarrier(framebuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ);
+	//cmdlist.renderTargetBarrier(framebuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ);
 
 
 
@@ -216,28 +217,28 @@ void update()
 
 
 
-	cmdlist.renderTargetBarrier(framebuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	cmdlist.bindRenderTarget(framebuffer);
+	cmdlist.resourceTransition(framebuffer, D3D12_RESOURCE_STATE_RENDER_TARGET,true);
+	cmdlist.bindRenderTargetsOnly(framebuffer);
 	cmdlist.clearRenderTarget(framebuffer);
 	cmdlist.setTopolgy(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	cmdlist.bindVertexBuffer(vertexBuffer);
 	cmdlist.drawInstance(3, 1, 0, 0);
-	cmdlist.renderTargetBarrier(framebuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ);
+	cmdlist.resourceTransition(framebuffer, D3D12_RESOURCE_STATE_GENERIC_READ,true);
 
 
 
-	cmdlist.renderTargetBarrier(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET,true);
 
 	cmdlist.bindPipeline(pipeline);
 	cmdlist.bindRenderTarget(render.mSwapChainRenderTarget[frameIndex]);
-	cmdlist.bindGraphicsResource(0, framebuffer.mRenderBuffers[0]);
+	cmdlist.bindGraphicsResource(0, framebuffer);
 
 	const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
 	cmdlist.clearRenderTarget(render.mSwapChainRenderTarget[frameIndex], clearColor);
 //	cmdlist.setTopolgy(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	cmdlist.bindVertexBuffer(vertexBuffer);
 	cmdlist.drawInstance(3, 1, 0, 0);
-	cmdlist.renderTargetBarrier(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT,true);
 
 
 

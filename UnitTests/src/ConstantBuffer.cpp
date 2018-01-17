@@ -37,7 +37,7 @@ void initializeRender()
 {
 	render.initialize();
 	RenderTargetFormat rtformat;
-	render.createSwapChain(windows, swapChainCount, rtformat);
+	render.createSwapChain(windows, swapChainCount, rtformat.mRenderTargetFormat[0]);
 	cmdalloc.initialize(render.mDevice);
 	cmdlist.initial(render.mDevice, cmdalloc);
 
@@ -59,8 +59,10 @@ void initializeRender()
 	
 
 
-	texture.CreateTexture(render.mDevice, DXGI_FORMAT_R8G8B8A8_UNORM, TextureWidth, TextureHeight);
-	texture.addSahderResorceView(cbvsrvheap);
+//	texture.CreateTexture(render.mDevice, DXGI_FORMAT_R8G8B8A8_UNORM, TextureWidth, TextureHeight);
+	texture.CreateTexture(render, cbvsrvheap, DXGI_FORMAT_R8G8B8A8_UNORM, TextureWidth, TextureHeight);
+
+//	texture.addSahderResorceView(cbvsrvheap);
 	rootsig.mParameters.resize(3);
 	rootsig.mParameters[0].mType = PARAMETERTYPE_SRV;
 	rootsig.mParameters[0].mResCounts = 1;
@@ -136,12 +138,12 @@ void loadAsset()
 
 	cmdalloc.reset();
 	cmdlist.reset(Pipeline());
-	cmdlist.resourceBarrier(vertexBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceBarrier(texture, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(vertexBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(texture, D3D12_RESOURCE_STATE_COPY_DEST, true);
 	cmdlist.updateBufferData(vertexBuffer, tridata, 3 * 4 * sizeof(float));
 	cmdlist.updateTextureData(texture, &(data[0]));
-	cmdlist.resourceBarrier(vertexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceBarrier(texture, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	cmdlist.resourceTransition(vertexBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist.resourceTransition(texture, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, true);
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
 	const UINT64 fenval = fence.fenceValue;
@@ -194,14 +196,14 @@ void update()
 	cmdlist.bindGraphicsRootSigature(rootsig);
 	cmdlist.setViewPort(viewport);
 	cmdlist.setScissor(scissor);
-	cmdlist.renderTargetBarrier(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, true);
 	cmdlist.bindRenderTarget(render.mSwapChainRenderTarget[frameIndex]);
 	const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
 	cmdlist.clearRenderTarget(render.mSwapChainRenderTarget[frameIndex], clearColor);
 	cmdlist.setTopolgy(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	cmdlist.bindVertexBuffer(vertexBuffer);
 	cmdlist.drawInstance(3, 1, 0, 0);
-	cmdlist.renderTargetBarrier(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT, true);
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
 	render.present();

@@ -163,6 +163,7 @@
     <ClInclude Include="Shader.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="StructureHeaders.h" />
+    <ClInclude Include="SwapChainBuffer.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="ViewPort.h" />
@@ -195,6 +196,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="SwapChainBuffer.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="ViewPort.cpp" />
     <ClCompile Include="Window.cpp" />

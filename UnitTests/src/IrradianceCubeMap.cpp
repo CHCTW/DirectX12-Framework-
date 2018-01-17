@@ -31,6 +31,7 @@ Scissor scissor;
 DescriptorHeap srvheap;
 DescriptorHeap rtvheap;
 static uint32_t swapChainCount = 3;
+vector<Texture> depthBuffer;
 ShaderSet shaderset;
 Assimp::Importer import;
 SpecCamera camera;
@@ -47,7 +48,7 @@ Texture skyBox;
 Sampler sampler;
 DescriptorHeap samplerheap;
 
-CubeRenderTarget IrradianceMap;
+Texture IrradianceMap;
 const UINT mapWidth = 256;
 const UINT mapHeight = 256;
 bool irr = true;
@@ -63,7 +64,7 @@ void initializeRender()
 
 	render.initialize();
 	RenderTargetFormat retformat(true);
-	render.createSwapChain(windows, swapChainCount, retformat);
+	render.createSwapChain(windows, swapChainCount, retformat.mRenderTargetFormat[0]);
 	cmdalloc.initialize(render.mDevice);
 	cmdlist.initial(render.mDevice, cmdalloc);
 
@@ -72,7 +73,17 @@ void initializeRender()
 	fenceEvet = CreateEvent(NULL, FALSE, FALSE, NULL);
 
 	srvheap.ininitialize(render.mDevice, 1);
+
+	depthBuffer.resize(swapChainCount);
+	depthBuffer[0].CreateTexture(render, srvheap, retformat.mDepthStencilFormat, windows.mWidth, windows.mHeight, 1, 1, TEXURE_SRV_TYPE_2D, TEXTURE_USAGE_DSV);
+	depthBuffer[1].CreateTexture(render, srvheap, retformat.mDepthStencilFormat, windows.mWidth, windows.mHeight, 1, 1, TEXURE_SRV_TYPE_2D, TEXTURE_USAGE_DSV);
+	depthBuffer[2].CreateTexture(render, srvheap, retformat.mDepthStencilFormat, windows.mWidth, windows.mHeight, 1, 1, TEXURE_SRV_TYPE_2D, TEXTURE_USAGE_DSV);
+
+
 	samplerheap.ininitialize(render.mDevice, 1, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+
+
+
 	rtvheap.ininitialize(render.mDevice, 1, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 	rootsig.mParameters.resize(4);
@@ -117,8 +128,8 @@ void loadAsset()
 	cameraBuffer.createConstantBuffer(render.mDevice, srvheap, sizeof(ViewProjection));
 	cameraBuffer.maptoCpu();
 
-	IrradianceMap.createCubeRenderTargets(render.mDevice, mapWidth, mapHeight,1,1, CUBE_RENDERTAERGET_TYPE_RENDERTARGET, rtvheap, srvheap, D3D12_RESOURCE_FLAG_NONE, DXGI_FORMAT_R32G32B32A32_FLOAT);
-
+//	IrradianceMap.createCubeRenderTargets(render.mDevice, mapWidth, mapHeight,1,1, CUBE_RENDERTAERGET_TYPE_RENDERTARGET, rtvheap, srvheap, D3D12_RESOURCE_FLAG_NONE, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	IrradianceMap.CreateTexture(render, srvheap, DXGI_FORMAT_R32G32B32A32_FLOAT, mapWidth, mapHeight, 1, 1, TEXURE_SRV_TYPE_CUBE, TEXTURE_USAGE_SRV_RTV);
 
 	int width, height, bpp;
 	//	unsigned char* rgb = stbi_load("Assets/Textures/front.jpg", &width, &height, &bpp, 4);
@@ -161,9 +172,12 @@ void loadAsset()
 
 
 //	skyBox.CreateTexture(render.mDevice, DXGI_FORMAT_R8G8B8A8_UNORM, img[0].mWidth, img[0].mHeight, 6, true);
-	skyBox.CreateTexture(render.mDevice, DXGI_FORMAT_R32G32B32A32_FLOAT, img[0].mWidth, img[0].mHeight, 6, true,5);
+	//skyBox.CreateTexture(render.mDevice, DXGI_FORMAT_R32G32B32A32_FLOAT, img[0].mWidth, img[0].mHeight, 6, true,5);
 
-	skyBox.addSahderResorceView(srvheap);
+	//skyBox.addSahderResorceView(srvheap);
+
+	skyBox.CreateTexture(render, srvheap, DXGI_FORMAT_R32G32B32A32_FLOAT, img[0].mWidth, img[0].mHeight, 1, 5, TEXURE_SRV_TYPE_CUBE);
+
 
 
 
@@ -195,12 +209,13 @@ void loadAsset()
 
 	cmdalloc.reset();
 	cmdlist.reset(Pipeline());
-	cmdlist.resourceBarrier(vertexBuffer.mResource, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceBarrier(normalBuffer.mResource, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceBarrier(indexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-
-
-	cmdlist.resourceBarrier(skyBox, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(depthBuffer[0], D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	cmdlist.resourceTransition(depthBuffer[1], D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	cmdlist.resourceTransition(depthBuffer[2], D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	cmdlist.resourceTransition(vertexBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(normalBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(indexBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(skyBox, D3D12_RESOURCE_STATE_COPY_DEST, true);
 
 	cmdlist.updateBufferData(vertexBuffer, mesh->mVertices, mesh->mNumVertices * 3 * sizeof(float));
 	cmdlist.updateBufferData(indexBuffer, indexdata.data(), mesh->mNumFaces * 3 * sizeof(unsigned int));
@@ -208,12 +223,11 @@ void loadAsset()
 	cmdlist.updateTextureCubeData(skyBox, (void const **)skyboxdata);
 
 
-	cmdlist.resourceBarrier(vertexBuffer.mResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceBarrier(normalBuffer.mResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceBarrier(indexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
-
-	cmdlist.resourceBarrier(skyBox, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	cmdlist.cubeRenderTargetBarrier(IrradianceMap, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ);
+	cmdlist.resourceTransition(vertexBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist.resourceTransition(normalBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist.resourceTransition(indexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+	cmdlist.resourceTransition(skyBox, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	cmdlist.resourceTransition(IrradianceMap, D3D12_RESOURCE_STATE_GENERIC_READ, true);
 
 
 	cmdlist.close();
@@ -292,21 +306,23 @@ void generateIrrMap()
 		cmdalloc.reset();
 		cmdlist.reset(IrraidancePipeline);
 
-		cmdlist.cubeRenderTargetBarrier(IrradianceMap, D3D12_RESOURCE_STATE_GENERIC_READ
-		,D3D12_RESOURCE_STATE_RENDER_TARGET);
+		cmdlist.resourceTransition(IrradianceMap,D3D12_RESOURCE_STATE_RENDER_TARGET,true,face);
 
 		cmdlist.setViewPort(tempviewport);
 		cmdlist.setScissor(tempscissor);
 		cmdlist.bindDescriptorHeaps(&srvheap, &samplerheap);
 		cmdlist.bindGraphicsRootSigature(rootsig);
 		cameraBuffer.updateBufferfromCpu(views[face].getMatrix(), sizeof(ViewProjection));
-		cmdlist.bindCubeRenderTarget(IrradianceMap, face);
+		//cmdlist.bindCubeRenderTarget(IrradianceMap, face);
+		cmdlist.bindRenderTargetsOnly(IrradianceMap);
 		cmdlist.setTopolgy(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		cmdlist.bindIndexBuffer(indexBuffer);
 		cmdlist.bindVertexBuffers(vertexBuffer, normalBuffer);
 		cmdlist.drawIndexedInstanced(mesh->mNumFaces * 3, 1, 0, 0);
 
-		cmdlist.cubeRenderTargetBarrier(IrradianceMap, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ);
+	//	cmdlist.cubeRenderTargetBarrier(IrradianceMap, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ);
+
+		cmdlist.resourceTransition(IrradianceMap, D3D12_RESOURCE_STATE_GENERIC_READ, true, face);
 
 		cmdlist.close();
 		render.executeCommands(&cmdlist);
@@ -329,6 +345,9 @@ void generateIrrMap()
 }
 void releaseRender()
 {
+	depthBuffer[2].release();
+	depthBuffer[1].release();
+	depthBuffer[0].release();
 	IrradianceMap.release();
 	rtvheap.release();
 	samplerheap.release();
@@ -361,19 +380,19 @@ void update()
 	cmdlist.setViewPort(viewport);
 	cmdlist.setScissor(scissor);
 	if(irr)
-		cmdlist.bindGraphicsResource(1, IrradianceMap.mRenderBuffer[0]);
+		cmdlist.bindGraphicsResource(1, IrradianceMap);
 	else 
 		cmdlist.bindGraphicsResource(1, skyBox);
-	cmdlist.renderTargetBarrier(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	cmdlist.bindRenderTarget(render.mSwapChainRenderTarget[frameIndex]);
+	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET,true);
+	cmdlist.bindRenderTarget(render.mSwapChainRenderTarget[frameIndex],depthBuffer[frameIndex]);
 	const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
 	cmdlist.clearRenderTarget(render.mSwapChainRenderTarget[frameIndex], clearColor);
-	cmdlist.clearDepthStencil(render.mSwapChainRenderTarget[frameIndex]);
+	cmdlist.clearDepthStencil(depthBuffer[frameIndex]);
 	cmdlist.setTopolgy(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	cmdlist.bindIndexBuffer(indexBuffer);
 	cmdlist.bindVertexBuffers(vertexBuffer, normalBuffer);
 	cmdlist.drawIndexedInstanced(mesh->mNumFaces * 3, 1, 0, 0);
-	cmdlist.renderTargetBarrier(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT,true);
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
 	render.present();

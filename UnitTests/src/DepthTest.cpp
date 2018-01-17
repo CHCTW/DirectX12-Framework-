@@ -18,7 +18,7 @@ Buffer constBuffer;
 RootSignature rootsig;
 ViewPort viewport;
 Scissor scissor;
-
+vector<Texture> depthBuffer;
 DescriptorHeap srvheap;
 
 static uint32_t swapChainCount = 3;
@@ -32,7 +32,7 @@ void initializeRender()
 {
 	render.initialize();
 	RenderTargetFormat rtformat(true);
-	render.createSwapChain(windows, swapChainCount, rtformat);
+	render.createSwapChain(windows, swapChainCount, rtformat.mRenderTargetFormat[0]);
 	cmdalloc.initialize(render.mDevice);
 	cmdlist.initial(render.mDevice, cmdalloc);
 
@@ -44,6 +44,13 @@ void initializeRender()
 
 	//dsvheap.ininitialize(render.mDevice,1, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 	srvheap.ininitialize(render.mDevice, 1);
+
+
+	depthBuffer.resize(swapChainCount);
+	depthBuffer[0].CreateTexture(render, srvheap, rtformat.mDepthStencilFormat, windows.mWidth, windows.mHeight, 1, 1, TEXURE_SRV_TYPE_2D, TEXTURE_USAGE_DSV);
+	depthBuffer[1].CreateTexture(render, srvheap, rtformat.mDepthStencilFormat, windows.mWidth, windows.mHeight, 1, 1, TEXURE_SRV_TYPE_2D, TEXTURE_USAGE_DSV);
+	depthBuffer[2].CreateTexture(render, srvheap, rtformat.mDepthStencilFormat, windows.mWidth, windows.mHeight, 1, 1, TEXURE_SRV_TYPE_2D, TEXTURE_USAGE_DSV);
+
 
 	if (!vertexBuffer.createVertexBuffer(render.mDevice, 6 * 6 * sizeof(float), 6 * sizeof(float)))
 	{
@@ -90,10 +97,12 @@ void loadAsset()
 
 	cmdalloc.reset();
 	cmdlist.reset(Pipeline());
-	cmdlist.resourceBarrier(vertexBuffer.mResource, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(depthBuffer[0], D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	cmdlist.resourceTransition(depthBuffer[1], D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	cmdlist.resourceTransition(depthBuffer[2], D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	cmdlist.resourceTransition(vertexBuffer, D3D12_RESOURCE_STATE_COPY_DEST,true);
 	cmdlist.updateBufferData(vertexBuffer, tridata, 6 * 6 * sizeof(float));
-
-	cmdlist.resourceBarrier(vertexBuffer.mResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist.resourceTransition(vertexBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, true);
 
 
 	
@@ -112,6 +121,9 @@ void loadAsset()
 
 void releaseRender()
 {
+	depthBuffer[0].release();
+	depthBuffer[1].release();
+	depthBuffer[2].release();
 	constBuffer.release();
 	srvheap.release();
 	pipeline.release();
@@ -142,23 +154,23 @@ void update()
 	cmdlist.bindGraphicsRootSigature(rootsig);
 	cmdlist.setViewPort(viewport);
 	cmdlist.setScissor(scissor);
-	cmdlist.renderTargetBarrier(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET,true);
 //	cmdlist.mDx12CommandList->OMSetRenderTargets(1, &(render.mSwapChainRenderTarget[frameIndex].mRTV.Cpu), false, &(depthbuffer.mDSV.Cpu));
 
 //	cmdlist.mDx12CommandList->ClearDepthStencilView(depthbuffer.mDSV.Cpu, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0,nullptr);
 
 //	cmdlist.mDx12CommandList->OMSetRenderTargets(render.mSwapChainRenderTarget[frameIndex].mRTV.Cpu, true, dept)
 
-	cmdlist.bindRenderTarget(render.mSwapChainRenderTarget[frameIndex]);
+	cmdlist.bindRenderTarget(render.mSwapChainRenderTarget[frameIndex],depthBuffer[frameIndex]);
 
 	const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
 	cmdlist.clearRenderTarget(render.mSwapChainRenderTarget[frameIndex], clearColor);
-	cmdlist.clearDepthStencil(render.mSwapChainRenderTarget[frameIndex]);
+	cmdlist.clearDepthStencil(depthBuffer[frameIndex]);
 	cmdlist.setTopolgy(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	cmdlist.bindVertexBuffer(vertexBuffer);
 	cmdlist.drawInstance(6, 1, 0, 0);
 	
-	cmdlist.renderTargetBarrier(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT,true);
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
 	render.present();

@@ -37,7 +37,7 @@ void initializeRender()
 {
 	render.initialize();
 	RenderTargetFormat rtformat;
-	render.createSwapChain(windows, swapChainCount, rtformat);
+	render.createSwapChain(windows, swapChainCount, rtformat.mRenderTargetFormat[0]);
 	cmdalloc.initialize(render.mDevice);
 	cmdlist.initial(render.mDevice, cmdalloc);
 
@@ -60,8 +60,8 @@ void initializeRender()
 	consumeBuffer.createStructeredBuffer(render.mDevice, cbvsrvuavheap, sizeof(float) * 5, 4, STRUCTERED_BUFFER_TYPE_READ_WRITE, true);
 	appendBuffer.createStructeredBuffer(render.mDevice, cbvsrvuavheap, sizeof(float) * 5, 4, STRUCTERED_BUFFER_TYPE_READ_WRITE,true);
 
-	texture.CreateTexture(render.mDevice, DXGI_FORMAT_R8G8B8A8_UNORM, TextureWidth, TextureHeight);
-	texture.addSahderResorceView(cbvsrvuavheap);
+	texture.CreateTexture(render, cbvsrvuavheap, DXGI_FORMAT_R8G8B8A8_UNORM, TextureWidth, TextureHeight);
+//	texture.addSahderResorceView(cbvsrvuavheap);
 
 	rootsig.mParameters.resize(3);
 	rootsig.mParameters[0].mType = PARAMETERTYPE_SRV;
@@ -166,17 +166,17 @@ void loadAsset()
 
 	cmdalloc.reset();
 	cmdlist.reset(Pipeline());
-	cmdlist.resourceBarrier(vertexBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceBarrier(texture, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceBarrier(appendBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceBarrier(consumeBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(vertexBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(texture, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(appendBuffer,  D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(consumeBuffer,D3D12_RESOURCE_STATE_COPY_DEST,true);
 	cmdlist.updateBufferData(vertexBuffer, tridata, 3 * 4 * sizeof(float));
 	cmdlist.updateTextureData(texture, &(data[0]));
 	cmdlist.updateBufferData(consumeBuffer, structdata, 5 * 4 * sizeof(float));
-	cmdlist.resourceBarrier(vertexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceBarrier(texture, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	cmdlist.resourceBarrier(appendBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
-	cmdlist.resourceBarrier(consumeBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	cmdlist.resourceTransition(vertexBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist.resourceTransition(texture, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	cmdlist.resourceTransition(appendBuffer, D3D12_RESOURCE_STATE_GENERIC_READ);
+	cmdlist.resourceTransition(consumeBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,true);
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
 	const UINT64 fenval = fence.fenceValue;
@@ -230,16 +230,13 @@ void rendscene()
 	cmdalloc.reset();
 	cmdlist.reset();
 
-	cmdlist.resourceBarrier(consumeBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(consumeBuffer,D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(appendBuffer, D3D12_RESOURCE_STATE_COPY_DEST,true); //reset counter to 0
 	cmdlist.setCounterforStructeredBuffer(consumeBuffer, movingcount);
-
-	cmdlist.resourceBarrier(consumeBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-
-
-	cmdlist.resourceBarrier(appendBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST); //reset counter to 0
 	cmdlist.setCounterforStructeredBuffer(appendBuffer, 0);
-	cmdlist.resourceBarrier(appendBuffer,D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-
+	
+	cmdlist.resourceTransition(appendBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	cmdlist.resourceTransition(consumeBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, true);
 
 	cmdlist.bindDescriptorHeaps(&cbvsrvuavheap, &samplerheap);
 
@@ -248,14 +245,14 @@ void rendscene()
 	cmdlist.bindComputeRootSigature(comprootsig);
 	//cmdlist.resourceBarrier(appendBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS); // update position of the position of the triangle
 	cmdlist.dispatch(1, 1, 1);
-	cmdlist.resourceBarrier(appendBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
+	cmdlist.resourceTransition(appendBuffer, D3D12_RESOURCE_STATE_GENERIC_READ,true);
 
 
 	cmdlist.bindPipeline(pipeline);
 	cmdlist.bindGraphicsRootSigature(rootsig);
 	cmdlist.setViewPort(viewport);
 	cmdlist.setScissor(scissor);
-	cmdlist.renderTargetBarrier(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, true);
 	cmdlist.bindRenderTarget(render.mSwapChainRenderTarget[frameIndex]);
 	const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
 	cmdlist.clearRenderTarget(render.mSwapChainRenderTarget[frameIndex], clearColor);
@@ -263,7 +260,7 @@ void rendscene()
 	cmdlist.bindVertexBuffer(vertexBuffer);
 	
 	cmdlist.drawInstance(3, 4, 0, 0); // use instance id to choose different offset and color in structure buffer
-	cmdlist.renderTargetBarrier(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT, true);
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
 	render.present();

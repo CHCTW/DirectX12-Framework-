@@ -13,7 +13,7 @@ class Resource;
 class CubeRenderTarget;
 class CommandSignature;
 class QueryHeap;
-
+class SwapChainBuffer;
 
 class CommandList
 {
@@ -46,9 +46,33 @@ public:
 	}
 	void bindIndexBuffer(Buffer& buffer);
 	void bindRenderTarget(RenderTarget & rt,UINT miplevel = 0);
-	void bindCubeRenderTarget(CubeRenderTarget & crt, UINT face,UINT level = 0);
+	/*************************/
+	void bindRenderTarget(SwapChainBuffer & rt);
+	
+	void bindRenderTarget(SwapChainBuffer & rt,Texture & depthstencilbuffer,UINT depthstecmip = 0);
+	void clearRenderTarget(SwapChainBuffer &rt, const float *color);
 
 	void bindDepthStencilBufferOnly(Texture& dsbuffer, UINT miplevel = 0);
+	// should only use texture here, try to figure out not template version
+	/*template <typename... T,typename U, typename = void>
+	void bindRenderTargetsOnly(Texture&... rendertargets, U mip = 0)
+	{
+		bindrendertargetsonlyhelp({ std::forward<Texture>(rendertargets)... }, 0);
+	}*/
+
+	void bindRenderTargetsOnly(Texture& t1, UINT mip = 0);
+	void bindRenderTargetsOnly(Texture& t1, Texture& t2, UINT mip = 0);
+	void bindRenderTargetsOnly(Texture& t1, Texture& t2, Texture& t3, UINT mip = 0);
+	void bindRenderTargetsOnly(Texture& t1, Texture& t2, Texture& t3, Texture& t4, UINT mip = 0);
+	void bindRenderTargetsDepthStencil(Texture& t1, Texture& ds, UINT retmip = 0, UINT dsmip = 0);
+	void bindRenderTargetsDepthStencil(Texture& t1, Texture& t2, Texture& ds, UINT retmip = 0, UINT dsmip = 0);
+	void bindRenderTargetsDepthStencil(Texture& t1, Texture& t2, Texture& t3, Texture& ds, UINT retmip = 0, UINT dsmip = 0);
+	void bindRenderTargetsDepthStencil(Texture& t1, Texture& t2, Texture& t3, Texture& t4, Texture& ds, UINT retmip = 0, UINT dsmip = 0);
+
+	/********************************/
+
+	void bindCubeRenderTarget(CubeRenderTarget & crt, UINT face,UINT level = 0);
+
 
 
 	void bindPipeline(Pipeline& pipeline);
@@ -67,8 +91,16 @@ public:
 	void clearRenderTarget(RenderTarget &rt, const float *color,UINT miplevel = 0);
 	void clearRenderTarget(RenderTarget &rt, UINT miplevel = 0);
 	void clearDepthStencil(RenderTarget &rt, D3D12_CLEAR_FLAGS flag = D3D12_CLEAR_FLAG_DEPTH, float depth = 1.0f, UINT stencil = 1,UINT miplevel = 0);
-	void clearDepthStencil(Texture &dsbuffer, D3D12_CLEAR_FLAGS flag = D3D12_CLEAR_FLAG_DEPTH, float depth = 1.0f, UINT stencil = 1, UINT miplevel = 0);
 
+	/******************************************/
+	void clearDepthStencil(Texture &dsbuffer, D3D12_CLEAR_FLAGS flag = D3D12_CLEAR_FLAG_DEPTH, float depth = 1.0f, UINT stencil = 1, UINT miplevel = 0);
+	void clearRenderTarget(Texture &rt, const float *color, UINT miplevel = 0);
+	void clearRenderTarget(Texture &rt, UINT miplevel = 0);
+
+
+
+
+	/***********************************/
 	void clearcubeRenderTarget(CubeRenderTarget &crt, UINT face, UINT level = 0);
 	void clearcubeDepthStencil(CubeRenderTarget &crt, UINT face, UINT level = 0,D3D12_CLEAR_FLAGS flag = D3D12_CLEAR_FLAG_DEPTH, float depth = 1.0f, UINT stencil = 1);
 	
@@ -76,6 +108,11 @@ public:
 		D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
 	void resourceTransition(Resource& res,D3D12_RESOURCE_STATES stataf, bool barrier = false,UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
 		D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
+
+	void swapChainBufferTransition(SwapChainBuffer& res, D3D12_RESOURCE_STATES stataf, bool barrier = false,
+		D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
+
+
 	void setBarrier();
 
 	// This one should not be used after finish frame buffering, or could change this to use via swapchain's render target
@@ -125,4 +162,18 @@ private:
 		mDx12CommandList->IASetVertexBuffers(0, (UINT)bufferlist.size(), vbs);
 
 	}
+	template <typename T>
+	void bindrendertargetsonlyhelp(std::initializer_list<T>& bufferlist,UINT miplevel)
+	{
+		UINT i = 0;
+		CD3DX12_CPU_DESCRIPTOR_HANDLE  cpuhandles[8];
+		for (auto buffer : bufferlist)
+		{
+			cpuhandles[i] = buffer.mRTV[miplevel].Cpu;
+			++i;
+		}
+
+		mDx12CommandList->OMSetRenderTargets(i, (cpuhandles), false, nullptr);
+	}
+
 };

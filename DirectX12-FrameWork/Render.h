@@ -17,7 +17,12 @@ public:
 	bool initialize();
 	void release();
 	// swap chain particualr for present render target on the window
-	bool createSwapChain(Window& window, UINT  count,RenderTargetFormat & format);
+	//bool createSwapChain(Window& window, UINT  count,RenderTargetFormat & format);
+
+
+
+	bool createSwapChain(Window& window, UINT  count, DXGI_FORMAT format);
+
 	void releaseSwapChain();
 	UINT getCurrentSwapChainIndex();
 	void executeCommands(CommandList *cmds, UINT counts = 1);
@@ -38,7 +43,13 @@ public:
 	IDXGIFactory4* mDxgiFactory;
 	IDXGIAdapter1* mDxgiAdaptor;
 	IDXGISwapChain3* mSwapChain;
-	RenderTarget* mSwapChainRenderTarget;
+//	RenderTarget* mSwapChainRenderTarget;
+	
+//	vector<Texture>   mSwapChainRenderTarget;
+
+
+	vector<SwapChainBuffer>   mSwapChainRenderTarget;
+
 	DescriptorHeap mRTVDescriptorHeap;
 	DescriptorHeap mDSVDescriptorHeap;
 	//UINT mRTVDescSize;

@@ -117,13 +117,88 @@ bool Render::initialize()
 	}
 	return true;
 }
-bool Render::createSwapChain(Window &window, UINT  count, RenderTargetFormat &format)
+//bool Render::createSwapChain(Window &window, UINT  count, RenderTargetFormat &format)
+//{
+//	DXGI_MODE_DESC backbufferdesc = {};
+//	backbufferdesc.Format = format.mRenderTargetFormat[0];
+//	backbufferdesc.Height = window.mHeight;
+//	backbufferdesc.Width = window.mWidth;
+//	
+//	DXGI_SAMPLE_DESC samdesc = {};
+//	samdesc.Count = 1;
+//
+//	IDXGISwapChain* tempSwapChain;
+//
+//	DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
+//	swapChainDesc.BufferCount = count;
+//	swapChainDesc.BufferDesc = backbufferdesc;
+//	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+//	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+//	swapChainDesc.OutputWindow = glfwGetWin32Window(window.mWindow);
+//	swapChainDesc.SampleDesc = samdesc;
+//	swapChainDesc.Windowed = true;
+//
+//
+//	//DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
+//	//swapChainDesc.BufferCount = count;
+//	//swapChainDesc.Width = window.mWidth;
+//	//swapChainDesc.Height = window.mHeight;
+//	//swapChainDesc.Format = format.mRenderTargetFormat[0];
+//	//swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+//	//swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+//	//swapChainDesc.SampleDesc.Count = 1;
+//	
+//
+//	HRESULT hr = mDxgiFactory->CreateSwapChain(mCommandQueue, &swapChainDesc, &tempSwapChain);
+////	HRESULT hr = mDxgiFactory->CreateSwapChainForHwnd(mCommandQueue, glfwGetWin32Window(window.mWindow), &swapChainDesc, nullptr, nullptr, &tempSwapChain);
+//	if (!SUCCEEDED(hr))
+//	{
+//		std::cout << "Fail to Create Swap Chain" << std::endl;
+//		return false;
+//	}
+//	mSwapChain = static_cast<IDXGISwapChain3*>(tempSwapChain);
+//	
+//	mSwapChainRenderTarget = new RenderTarget[3];
+//
+//	for (UINT i = 0; i < count; ++i)
+//	{
+//		mSwapChainRenderTarget[i].mWidth = window.mWidth;
+//		mSwapChainRenderTarget[i].mHeight = window.mHeight;
+//		ClearValue depthclear;
+//		depthclear.DepthStencil.Depth = 1.0f;
+//
+//
+//
+//		mSwapChainRenderTarget[i].mFormat = format;
+//		mSwapChainRenderTarget[i].mRenderBuffers.resize(1);
+//		hr = mSwapChain->GetBuffer(i, IID_PPV_ARGS(&mSwapChainRenderTarget[i].mRenderBuffers[0].mResource));
+//		mSwapChainRenderTarget[i].mRenderBuffers[0].mState.push_back(D3D12_RESOURCE_STATE_RENDER_TARGET);
+//		mSwapChainRenderTarget[i].mRenderBuffers[0].mFormat = format.mRenderTargetFormat[0];
+//		mSwapChainRenderTarget[i].mRenderBuffers[0].mRTV.push_back (mRTVDescriptorHeap.addResource(RTV, mSwapChainRenderTarget[i].mRenderBuffers[0].mResource, NULL));
+//		if (format.mDepth) 
+//		{
+//			mSwapChainRenderTarget[i].mDepthBuffer.resize(1);
+//			mSwapChainRenderTarget[i].mDepthBuffer[0].CreateTexture(mDevice, format.mDepthStencilFormat, window.mWidth, window.mHeight, 1, false, 1,D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, depthclear, D3D12_RESOURCE_DIMENSION_TEXTURE2D, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+//			mSwapChainRenderTarget[i].mDepthBuffer[0].addDepgthStencilView(mDSVDescriptorHeap);
+//		}
+//		if (FAILED(hr))
+//		{
+//			std::cout << "Fail to get Buffer from SwapChain" << std::endl;
+//			return false;
+//		}
+//	}
+//	mSwapChainAccout = count;  //  setup swap chain account
+//	return true;
+//}
+
+
+bool Render::createSwapChain(Window& window, UINT  count, DXGI_FORMAT format)
 {
 	DXGI_MODE_DESC backbufferdesc = {};
-	backbufferdesc.Format = format.mRenderTargetFormat[0];
+	backbufferdesc.Format = format;
 	backbufferdesc.Height = window.mHeight;
 	backbufferdesc.Width = window.mWidth;
-	
+
 	DXGI_SAMPLE_DESC samdesc = {};
 	samdesc.Count = 1;
 
@@ -139,48 +214,33 @@ bool Render::createSwapChain(Window &window, UINT  count, RenderTargetFormat &fo
 	swapChainDesc.Windowed = true;
 
 
-	//DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-	//swapChainDesc.BufferCount = count;
-	//swapChainDesc.Width = window.mWidth;
-	//swapChainDesc.Height = window.mHeight;
-	//swapChainDesc.Format = format.mRenderTargetFormat[0];
-	//swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	//swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-	//swapChainDesc.SampleDesc.Count = 1;
-	
-
 	HRESULT hr = mDxgiFactory->CreateSwapChain(mCommandQueue, &swapChainDesc, &tempSwapChain);
-//	HRESULT hr = mDxgiFactory->CreateSwapChainForHwnd(mCommandQueue, glfwGetWin32Window(window.mWindow), &swapChainDesc, nullptr, nullptr, &tempSwapChain);
+	//	HRESULT hr = mDxgiFactory->CreateSwapChainForHwnd(mCommandQueue, glfwGetWin32Window(window.mWindow), &swapChainDesc, nullptr, nullptr, &tempSwapChain);
 	if (!SUCCEEDED(hr))
 	{
 		std::cout << "Fail to Create Swap Chain" << std::endl;
 		return false;
 	}
 	mSwapChain = static_cast<IDXGISwapChain3*>(tempSwapChain);
-	
-	mSwapChainRenderTarget = new RenderTarget[3];
+
+	mSwapChainRenderTarget.resize(count);
+	D3D12_RENDER_TARGET_VIEW_DESC rtvdesc;
+	rtvdesc.Format = format;
+	rtvdesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+	rtvdesc.Texture2D.MipSlice = 0;
+	rtvdesc.Texture2D.PlaneSlice = 0;
 
 	for (UINT i = 0; i < count; ++i)
 	{
-		mSwapChainRenderTarget[i].mWidth = window.mWidth;
+		/*mSwapChainRenderTarget[i].mWidth = window.mWidth;
 		mSwapChainRenderTarget[i].mHeight = window.mHeight;
 		ClearValue depthclear;
-		depthclear.DepthStencil.Depth = 1.0f;
+		depthclear.DepthStencil.Depth = 1.0f;*/
+		hr = mSwapChain->GetBuffer(i, IID_PPV_ARGS(&mSwapChainRenderTarget[i].mResource));
+		mSwapChainRenderTarget[i].backbufferdesc = backbufferdesc;
+		mSwapChainRenderTarget[i].mState.push_back(D3D12_RESOURCE_STATE_PRESENT);
+		mSwapChainRenderTarget[i].mRTV.push_back(mRTVDescriptorHeap.addResource(RTV, mSwapChainRenderTarget[i].mResource, NULL));
 
-
-
-		mSwapChainRenderTarget[i].mFormat = format;
-		mSwapChainRenderTarget[i].mRenderBuffers.resize(1);
-		hr = mSwapChain->GetBuffer(i, IID_PPV_ARGS(&mSwapChainRenderTarget[i].mRenderBuffers[0].mResource));
-		mSwapChainRenderTarget[i].mRenderBuffers[0].mState.push_back(D3D12_RESOURCE_STATE_RENDER_TARGET);
-		mSwapChainRenderTarget[i].mRenderBuffers[0].mFormat = format.mRenderTargetFormat[0];
-		mSwapChainRenderTarget[i].mRenderBuffers[0].mRTV.push_back (mRTVDescriptorHeap.addResource(RTV, mSwapChainRenderTarget[i].mRenderBuffers[0].mResource, NULL));
-		if (format.mDepth) 
-		{
-			mSwapChainRenderTarget[i].mDepthBuffer.resize(1);
-			mSwapChainRenderTarget[i].mDepthBuffer[0].CreateTexture(mDevice, format.mDepthStencilFormat, window.mWidth, window.mHeight, 1, false, 1,D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, depthclear, D3D12_RESOURCE_DIMENSION_TEXTURE2D, D3D12_RESOURCE_STATE_DEPTH_WRITE);
-			mSwapChainRenderTarget[i].mDepthBuffer[0].addDepgthStencilView(mDSVDescriptorHeap);
-		}
 		if (FAILED(hr))
 		{
 			std::cout << "Fail to get Buffer from SwapChain" << std::endl;
@@ -223,8 +283,7 @@ void Render::release()
 void Render::releaseSwapChain()
 {
 	for (UINT i = 0; i < mSwapChainAccout; ++i)
-		mSwapChainRenderTarget[i].release();
-	delete [] mSwapChainRenderTarget;
+		SAFE_RELEASE(mSwapChainRenderTarget[i].mResource);
 	SAFE_RELEASE(mSwapChain);
 }
 
