@@ -75,9 +75,9 @@ void initializeRender()
 	srvheap.ininitialize(render.mDevice, 1);
 
 	depthBuffer.resize(swapChainCount);
-	depthBuffer[0].CreateTexture(render, srvheap, retformat.mDepthStencilFormat, windows.mWidth, windows.mHeight, 1, 1, TEXURE_SRV_TYPE_2D, TEXTURE_USAGE_DSV);
-	depthBuffer[1].CreateTexture(render, srvheap, retformat.mDepthStencilFormat, windows.mWidth, windows.mHeight, 1, 1, TEXURE_SRV_TYPE_2D, TEXTURE_USAGE_DSV);
-	depthBuffer[2].CreateTexture(render, srvheap, retformat.mDepthStencilFormat, windows.mWidth, windows.mHeight, 1, 1, TEXURE_SRV_TYPE_2D, TEXTURE_USAGE_DSV);
+	depthBuffer[0].CreateTexture(render, srvheap, retformat.mDepthStencilFormat, windows.mWidth, windows.mHeight, 1, 1, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_DSV);
+	depthBuffer[1].CreateTexture(render, srvheap, retformat.mDepthStencilFormat, windows.mWidth, windows.mHeight, 1, 1, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_DSV);
+	depthBuffer[2].CreateTexture(render, srvheap, retformat.mDepthStencilFormat, windows.mWidth, windows.mHeight, 1, 1, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_DSV);
 
 
 	samplerheap.ininitialize(render.mDevice, 1, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
@@ -129,7 +129,7 @@ void loadAsset()
 	cameraBuffer.maptoCpu();
 
 //	IrradianceMap.createCubeRenderTargets(render.mDevice, mapWidth, mapHeight,1,1, CUBE_RENDERTAERGET_TYPE_RENDERTARGET, rtvheap, srvheap, D3D12_RESOURCE_FLAG_NONE, DXGI_FORMAT_R32G32B32A32_FLOAT);
-	IrradianceMap.CreateTexture(render, srvheap, DXGI_FORMAT_R32G32B32A32_FLOAT, mapWidth, mapHeight, 1, 1, TEXURE_SRV_TYPE_CUBE, TEXTURE_USAGE_SRV_RTV);
+	IrradianceMap.CreateTexture(render, srvheap, DXGI_FORMAT_R32G32B32A32_FLOAT, mapWidth, mapHeight, 1, 1, TEXTURE_SRV_TYPE_CUBE, TEXTURE_USAGE_SRV_RTV);
 
 	int width, height, bpp;
 	//	unsigned char* rgb = stbi_load("Assets/Textures/front.jpg", &width, &height, &bpp, 4);
@@ -176,7 +176,7 @@ void loadAsset()
 
 	//skyBox.addSahderResorceView(srvheap);
 
-	skyBox.CreateTexture(render, srvheap, DXGI_FORMAT_R32G32B32A32_FLOAT, img[0].mWidth, img[0].mHeight, 1, 5, TEXURE_SRV_TYPE_CUBE);
+	skyBox.CreateTexture(render, srvheap, DXGI_FORMAT_R32G32B32A32_FLOAT, img[0].mWidth, img[0].mHeight, 1, 5, TEXTURE_SRV_TYPE_CUBE);
 
 
 

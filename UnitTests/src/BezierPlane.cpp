@@ -47,6 +47,7 @@ ViewPort viewport;
 Scissor scissor;
 DescriptorHeap srvheap;
 static uint32_t swapChainCount = 3;
+vector<Texture> depthBuffer;
 ShaderSet shaderset;
 
 aiScene const * scene = nullptr;
@@ -92,7 +93,7 @@ void initializeRender()
 
 	render.initialize();
 	RenderTargetFormat retformat(true);
-	render.createSwapChain(windows, swapChainCount, retformat);
+	render.createSwapChain(windows, swapChainCount, retformat.mRenderTargetFormat[0]);
 	cmdalloc.initialize(render.mDevice);
 	cmdlist.initial(render.mDevice, cmdalloc);
 
@@ -101,6 +102,12 @@ void initializeRender()
 	fenceEvet = CreateEvent(NULL, FALSE, FALSE, NULL);
 
 	srvheap.ininitialize(render.mDevice, 1);
+	depthBuffer.resize(swapChainCount);
+	depthBuffer[0].CreateTexture(render, srvheap, retformat.mDepthStencilFormat, windows.mWidth, windows.mHeight, 1, 1, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_DSV);
+	depthBuffer[1].CreateTexture(render, srvheap, retformat.mDepthStencilFormat, windows.mWidth, windows.mHeight, 1, 1, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_DSV);
+	depthBuffer[2].CreateTexture(render, srvheap, retformat.mDepthStencilFormat, windows.mWidth, windows.mHeight, 1, 1, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_DSV);
+
+
 	rootsig.mParameters.resize(3);
 	rootsig.mParameters[0].mType = PARAMETERTYPE_CBV;
 	rootsig.mParameters[0].mResCounts = 1;
@@ -194,11 +201,13 @@ void loadAsset()
 
 	cmdalloc.reset();
 	cmdlist.reset(Pipeline());
-	
-	cmdlist.resourceBarrier(Ground.mVertexBufferData.mResource, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceBarrier(Ground.mNormalBuffer.mResource, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceBarrier(Ground.mIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceBarrier(Ground.mStructeredBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(depthBuffer[0], D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	cmdlist.resourceTransition(depthBuffer[1], D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	cmdlist.resourceTransition(depthBuffer[2], D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	cmdlist.resourceTransition(Ground.mVertexBufferData, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(Ground.mNormalBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(Ground.mIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(Ground.mStructeredBuffer, D3D12_RESOURCE_STATE_COPY_DEST,true);
 
 	cmdlist.updateBufferData(Ground.mVertexBufferData, patch.mPosition.data(), patch.mPosition.size() * sizeof(float));
 	cmdlist.updateBufferData(Ground.mIndexBuffer, patch.mIndex.data(), patch.mIndex.size() * sizeof(unsigned int));
@@ -206,10 +215,10 @@ void loadAsset()
 	cmdlist.updateBufferData(Ground.mStructeredBuffer, Ground.mBufferData.data(), Ground.mNum * sizeof(InstancedInformation));
 
 
-	cmdlist.resourceBarrier(Ground.mVertexBufferData.mResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceBarrier(Ground.mNormalBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceBarrier(Ground.mIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
-	cmdlist.resourceBarrier(Ground.mStructeredBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
+	cmdlist.resourceTransition(Ground.mVertexBufferData, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist.resourceTransition(Ground.mNormalBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist.resourceTransition(Ground.mIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+	cmdlist.resourceTransition(Ground.mStructeredBuffer, D3D12_RESOURCE_STATE_GENERIC_READ,true);
 
 
 	cmdlist.close();
@@ -228,8 +237,9 @@ void loadAsset()
 
 void releaseRender()
 {
-
-
+	depthBuffer[2].release();
+	depthBuffer[1].release();
+	depthBuffer[0].release();
 	Ground.mNormalBuffer.release();
 	Ground.mVertexBufferData.release();
 	Ground.mStructeredBuffer.release();
@@ -275,11 +285,11 @@ void onrender()
 	cmdlist.bindGraphicsRootSigature(rootsig);
 	cmdlist.setViewPort(viewport);
 	cmdlist.setScissor(scissor);
-	cmdlist.renderTargetBarrier(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	cmdlist.bindRenderTarget(render.mSwapChainRenderTarget[frameIndex]);
+	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET,true);
+	cmdlist.bindRenderTarget(render.mSwapChainRenderTarget[frameIndex],depthBuffer[frameIndex]);
 	const float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	cmdlist.clearRenderTarget(render.mSwapChainRenderTarget[frameIndex], clearColor);
-	cmdlist.clearDepthStencil(render.mSwapChainRenderTarget[frameIndex]);
+	cmdlist.clearDepthStencil(depthBuffer[frameIndex]);
 	cmdlist.setTopolgy(D3D_PRIMITIVE_TOPOLOGY_16_CONTROL_POINT_PATCHLIST);
 
 	cmdlist.bindGraphicsResource(1, Ground.mStructeredBuffer);
@@ -294,7 +304,7 @@ void onrender()
 
 
 
-	cmdlist.renderTargetBarrier(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT,true);
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
 	render.present();

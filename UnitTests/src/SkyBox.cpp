@@ -69,9 +69,9 @@ void initializeRender()
 	samplerheap.ininitialize(render.mDevice, 1, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 
 	depthBuffer.resize(swapChainCount);
-	depthBuffer[0].CreateTexture(render, srvheap, retformat.mDepthStencilFormat, windows.mWidth, windows.mHeight, 1, 1, TEXURE_SRV_TYPE_2D, TEXTURE_USAGE_DSV);
-	depthBuffer[1].CreateTexture(render, srvheap, retformat.mDepthStencilFormat, windows.mWidth, windows.mHeight, 1, 1, TEXURE_SRV_TYPE_2D, TEXTURE_USAGE_DSV);
-	depthBuffer[2].CreateTexture(render, srvheap, retformat.mDepthStencilFormat, windows.mWidth, windows.mHeight, 1, 1, TEXURE_SRV_TYPE_2D, TEXTURE_USAGE_DSV);
+	depthBuffer[0].CreateTexture(render, srvheap, retformat.mDepthStencilFormat, windows.mWidth, windows.mHeight, 1, 1, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_DSV);
+	depthBuffer[1].CreateTexture(render, srvheap, retformat.mDepthStencilFormat, windows.mWidth, windows.mHeight, 1, 1, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_DSV);
+	depthBuffer[2].CreateTexture(render, srvheap, retformat.mDepthStencilFormat, windows.mWidth, windows.mHeight, 1, 1, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_DSV);
 
 
 	rootsig.mParameters.resize(3);
@@ -139,7 +139,7 @@ void loadAsset()
 	//skyBox.CreateTexture(render.mDevice, DXGI_FORMAT_R8G8B8A8_UNORM, width, height, 1, true);
 	//skyBox.addSahderResorceView(srvheap);
 
-	skyBox.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, width, height, 1, 1, TEXURE_SRV_TYPE_CUBE, TEXTURE_USAGE_SRV);
+	skyBox.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, width, height, 1, 1, TEXTURE_SRV_TYPE_CUBE, TEXTURE_USAGE_SRV);
 
 
 

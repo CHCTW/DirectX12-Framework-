@@ -17,11 +17,11 @@ enum TEXTURE_USAGE
 	TEXTURE_USAGE_SRV_UAV = TEXTURE_USAGE_SRV | TEXTURE_USAGE_UAV,
 	TEXTURE_USAGE_SRV_RTV = TEXTURE_USAGE_SRV | TEXTURE_USAGE_RTV,
 };
-enum TEXURE_SRV_TYPE
+enum TEXTURE_SRV_TYPE
 {
-	TEXURE_SRV_TYPE_2D,  // if depth > 1 , it's a 2dtexturearray
-	TEXURE_SRV_TYPE_CUBE, // if depth > 1 , it's an array of cube that is total num is 6*depth 
-	TEXURE_SRV_TYPE_3D
+	TEXTURE_SRV_TYPE_2D,  // if depth > 1 , it's a 2dtexturearray
+	TEXTURE_SRV_TYPE_CUBE, // if depth > 1 , it's an array of cube that is total num is 6*depth 
+	TEXTURE_SRV_TYPE_3D
 };
 
 enum TEXTURE_ALL_MIPS_USE
@@ -42,8 +42,8 @@ public:
 	 D3D12_RESOURCE_STATES state= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	void CreateTexture(Render& render, DescriptorHeap& srvcbvheap,DXGI_FORMAT format, UINT width, UINT height, UINT arraySize = 1,UINT mipLevel = 1,
-		TEXURE_SRV_TYPE srvtype = TEXURE_SRV_TYPE_2D, TEXTURE_USAGE usage = TEXTURE_USAGE_SRV, D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-		TEXTURE_ALL_MIPS_USE mipuse = TEXTURE_ALL_MIPS_USE_NONE,ClearValue& clear = DefaultClearValue);
+		TEXTURE_SRV_TYPE srvtype = TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE usage = TEXTURE_USAGE_SRV,TEXTURE_ALL_MIPS_USE mipuse = TEXTURE_ALL_MIPS_USE_NONE,
+		ClearValue& clear = DefaultClearValue, D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 
 	void addSahderResorceView(DescriptorHeap& heap);
@@ -60,7 +60,7 @@ public:
 	D3D12_RESOURCE_FLAGS mUsage;
 	TEXTURE_USAGE mTextUsage;
 	TEXTURE_ALL_MIPS_USE mMipsUse;
-	TEXURE_SRV_TYPE mSRVType;
+	TEXTURE_SRV_TYPE mSRVType;
 	DXGI_FORMAT mFormat;
 	//Handles mSRV;
 	//Handles mUAV;

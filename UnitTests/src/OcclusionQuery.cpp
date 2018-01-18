@@ -30,6 +30,7 @@ ViewPort viewport;
 Scissor scissor;
 DescriptorHeap srvheap;
 static uint32_t swapChainCount = 3;
+vector<Texture> depthBuffer;
 ShaderSet shaderset;
 Assimp::Importer import;
 SpecCamera camera;
@@ -99,7 +100,7 @@ void initializeRender()
 
 	render.initialize();
 	RenderTargetFormat retformat(true);
-	render.createSwapChain(windows, swapChainCount, retformat);
+	render.createSwapChain(windows, swapChainCount, retformat.mRenderTargetFormat[0]);
 	cmdalloc.initialize(render.mDevice);
 	cmdlist.initial(render.mDevice, cmdalloc);
 
@@ -108,6 +109,13 @@ void initializeRender()
 	fenceEvet = CreateEvent(NULL, FALSE, FALSE, NULL);
 
 	srvheap.ininitialize(render.mDevice, 1);
+
+	depthBuffer.resize(swapChainCount);
+	depthBuffer[0].CreateTexture(render, srvheap, retformat.mDepthStencilFormat, windows.mWidth, windows.mHeight, 1, 1, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_DSV);
+	depthBuffer[1].CreateTexture(render, srvheap, retformat.mDepthStencilFormat, windows.mWidth, windows.mHeight, 1, 1, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_DSV);
+	depthBuffer[2].CreateTexture(render, srvheap, retformat.mDepthStencilFormat, windows.mWidth, windows.mHeight, 1, 1, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_DSV);
+
+
 	rootsig.mParameters.resize(2);
 	rootsig.mParameters[0].mType = PARAMETERTYPE_CBV;
 	rootsig.mParameters[0].mResCounts = 1;
@@ -388,12 +396,15 @@ void loadAsset()
 
 	cmdalloc.reset();
 	cmdlist.reset(Pipeline());
-	cmdlist.resourceBarrier(vertexBuffer.mResource, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceBarrier(normalBuffer.mResource, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceBarrier(indexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(depthBuffer[0], D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	cmdlist.resourceTransition(depthBuffer[1], D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	cmdlist.resourceTransition(depthBuffer[2], D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	cmdlist.resourceTransition(vertexBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(normalBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(indexBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
 
-	cmdlist.resourceBarrier(indirectBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceBarrier(instanceStructBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(indirectBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(instanceStructBuffer, D3D12_RESOURCE_STATE_COPY_DEST,true);
 
 
 	cmdlist.updateBufferData(vertexBuffer, mesh->mVertices, mesh->mNumVertices * 3 * sizeof(float));
@@ -404,24 +415,24 @@ void loadAsset()
 	cmdlist.updateBufferData(instanceStructBuffer, instanceInf.data(), objnum * sizeof(InstanceData));
 
 
-	cmdlist.resourceBarrier(instanceStructBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
-	cmdlist.resourceBarrier(indirectBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
+	cmdlist.resourceTransition(instanceStructBuffer, D3D12_RESOURCE_STATE_GENERIC_READ);
+	cmdlist.resourceTransition(indirectBuffer, D3D12_RESOURCE_STATE_GENERIC_READ);
 
-	cmdlist.resourceBarrier(vertexBuffer.mResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceBarrier(normalBuffer.mResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceBarrier(indexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+	cmdlist.resourceTransition(vertexBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist.resourceTransition(normalBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist.resourceTransition(indexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER);
 
-	cmdlist.resourceBarrier(cullIndirectBuffer[0], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
-	cmdlist.resourceBarrier(cullIndirectBuffer[1], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
-	cmdlist.resourceBarrier(cullIndirectBuffer[2], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
+	cmdlist.resourceTransition(cullIndirectBuffer[0], D3D12_RESOURCE_STATE_GENERIC_READ);
+	cmdlist.resourceTransition(cullIndirectBuffer[1], D3D12_RESOURCE_STATE_GENERIC_READ);
+	cmdlist.resourceTransition(cullIndirectBuffer[2], D3D12_RESOURCE_STATE_GENERIC_READ);
 
-	cmdlist.resourceBarrier(occuIndirectBuffer[0], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
-	cmdlist.resourceBarrier(occuIndirectBuffer[1], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
-	cmdlist.resourceBarrier(occuIndirectBuffer[2], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+	cmdlist.resourceTransition(occuIndirectBuffer[0], D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+	cmdlist.resourceTransition(occuIndirectBuffer[1], D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+	cmdlist.resourceTransition(occuIndirectBuffer[2], D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
 
-	cmdlist.resourceBarrier(occResult[0], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PREDICATION);
-	cmdlist.resourceBarrier(occResult[1], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PREDICATION);
-	cmdlist.resourceBarrier(occResult[2], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PREDICATION);
+	cmdlist.resourceTransition(occResult[0], D3D12_RESOURCE_STATE_PREDICATION);
+	cmdlist.resourceTransition(occResult[1], D3D12_RESOURCE_STATE_PREDICATION);
+	cmdlist.resourceTransition(occResult[2], D3D12_RESOURCE_STATE_PREDICATION,true);
 
 
 
@@ -442,6 +453,9 @@ void loadAsset()
 
 void releaseRender()
 {
+	depthBuffer[2].release();
+	depthBuffer[1].release();
+	depthBuffer[0].release();
 	occCmdPipeline.release();
 	occucomdrootsig.realease();
 
@@ -496,18 +510,18 @@ void update()
 	cmdlist.reset(cullPipeline);
 	cmdlist.bindDescriptorHeaps(&srvheap);
 	// reset the command number and start culling
-	cmdlist.resourceBarrier(cullIndirectBuffer[frameIndex], D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST); //reset count
-	cmdlist.resourceBarrier(cullIndirectBuffer[(frameIndex+1)%3], D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceBarrier(occuIndirectBuffer[frameIndex], D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceBarrier(occResult[0], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(cullIndirectBuffer[frameIndex], D3D12_RESOURCE_STATE_COPY_DEST); //reset count
+	cmdlist.resourceTransition(cullIndirectBuffer[(frameIndex+1)%3], D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(occuIndirectBuffer[frameIndex], D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(occResult[0], D3D12_RESOURCE_STATE_COPY_DEST,true);
 	cmdlist.updateBufferData(occResult[0], clearbuf.data(), sizeof(int)*objnum);
 	cmdlist.setCounterforStructeredBuffer(occuIndirectBuffer[frameIndex], 0);
 	cmdlist.setCounterforStructeredBuffer(cullIndirectBuffer[frameIndex], 0);
 	cmdlist.setCounterforStructeredBuffer(cullIndirectBuffer[(frameIndex+1)%3], 0);
-	cmdlist.resourceBarrier(occResult[0], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-	cmdlist.resourceBarrier(cullIndirectBuffer[frameIndex], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-	cmdlist.resourceBarrier(cullIndirectBuffer[(frameIndex+1)%3], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-	cmdlist.resourceBarrier(occuIndirectBuffer[frameIndex], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	cmdlist.resourceTransition(occResult[0], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	cmdlist.resourceTransition(cullIndirectBuffer[frameIndex], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	cmdlist.resourceTransition(cullIndirectBuffer[(frameIndex+1)%3], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	cmdlist.resourceTransition(occuIndirectBuffer[frameIndex], D3D12_RESOURCE_STATE_UNORDERED_ACCESS,true);
 
 
 	// frustum culling
@@ -515,8 +529,8 @@ void update()
 	cmdlist.bindComputeResource(0, occuIndirectBuffer[frameIndex]);
 	cmdlist.bindComputeResource(1, cullIndirectBuffer[frameIndex]);
 	cmdlist.dispatch((objnum + 1023) / 1024, 1, 1);
-	cmdlist.resourceBarrier(cullIndirectBuffer[frameIndex], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
-	cmdlist.resourceBarrier(occuIndirectBuffer[frameIndex], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+	cmdlist.resourceTransition(cullIndirectBuffer[frameIndex], D3D12_RESOURCE_STATE_GENERIC_READ);
+	cmdlist.resourceTransition(occuIndirectBuffer[frameIndex], D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT,true);
 
 
 	
@@ -528,8 +542,8 @@ void update()
 
 	cmdlist.setViewPort(viewport);
 	cmdlist.setScissor(scissor);
-	cmdlist.renderTargetBarrier(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	cmdlist.bindRenderTarget(render.mSwapChainRenderTarget[frameIndex]);
+	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET,true);
+	cmdlist.bindRenderTarget(render.mSwapChainRenderTarget[frameIndex],depthBuffer[frameIndex]);
 	// before clear render target, start to query the occulusion
 
 	const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
@@ -543,7 +557,7 @@ void update()
 		cmdlist.bindGraphicsRootSigature(occurootsig);
 		cmdlist.bindGraphicsResource(0, cameraBuffer);
 		cmdlist.executeIndirect(occCmdSig, objnum, occuIndirectBuffer[frameIndex], 0, occuIndirectBuffer[frameIndex], occuIndirectBuffer[frameIndex].mBufferSize - sizeof(UINT));
-		cmdlist.resourceBarrier(occResult[0], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+		cmdlist.resourceTransition(occResult[0], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,true);
 
 
 		cmdlist.bindPipeline(occCmdPipeline);
@@ -552,17 +566,17 @@ void update()
 		cmdlist.bindComputeResource(1, cullIndirectBuffer[frameIndex]);
 		cmdlist.bindComputeResource(2, occResult[0]);
 		cmdlist.dispatch((objnum + 1023) / 1024, 1, 1);
-		cmdlist.resourceBarrier(cullIndirectBuffer[(frameIndex + 1) % 3], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
+		cmdlist.resourceTransition(cullIndirectBuffer[(frameIndex + 1) % 3], D3D12_RESOURCE_STATE_GENERIC_READ,true);
 	}
 	else
 	{
-		cmdlist.resourceBarrier(occResult[0], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-		cmdlist.resourceBarrier(cullIndirectBuffer[(frameIndex + 1) % 3], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
+		cmdlist.resourceTransition(occResult[0], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+		cmdlist.resourceTransition(cullIndirectBuffer[(frameIndex + 1) % 3], D3D12_RESOURCE_STATE_GENERIC_READ,true);
 	}
 
 	// use result to cull unecessary command
 
-	cmdlist.clearDepthStencil(render.mSwapChainRenderTarget[frameIndex]);
+	cmdlist.clearDepthStencil(depthBuffer[frameIndex]);
 	cmdlist.bindIndexBuffer(indexBuffer);
 	cmdlist.bindVertexBuffers(vertexBuffer, normalBuffer);
 
@@ -593,7 +607,7 @@ void update()
 
 
 
-	cmdlist.renderTargetBarrier(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT,true);
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
 	render.present();

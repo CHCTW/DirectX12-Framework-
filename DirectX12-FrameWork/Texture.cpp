@@ -475,8 +475,8 @@ void Texture::addUnorderedAccessView(DescriptorHeap& heap)
 }
 
 void Texture::CreateTexture(Render& render, DescriptorHeap& srvuavheap, DXGI_FORMAT format, UINT width, UINT height, UINT arraySize, UINT mipLevel,
-	TEXURE_SRV_TYPE srvtype, TEXTURE_USAGE usage, D3D12_RESOURCE_STATES state, TEXTURE_ALL_MIPS_USE mipuse,
-	ClearValue& clear)
+	TEXTURE_SRV_TYPE srvtype, TEXTURE_USAGE usage, TEXTURE_ALL_MIPS_USE mipuse,
+	ClearValue& clear, D3D12_RESOURCE_STATES state)
 {
 	textureDesc = {};
 	mByteSize = getSize(format);
@@ -537,7 +537,7 @@ void Texture::CreateTexture(Render& render, DescriptorHeap& srvuavheap, DXGI_FOR
 	textureDesc.Width = width;
 	textureDesc.Height = height;
 	textureDesc.DepthOrArraySize = (UINT16)arraySize;
-	if ((mSRVType&TEXURE_SRV_TYPE_CUBE)>0) // cube array
+	if ((mSRVType&TEXTURE_SRV_TYPE_CUBE)>0) // cube array
 	{
 		textureDesc.DepthOrArraySize *= 6;
 
@@ -546,7 +546,7 @@ void Texture::CreateTexture(Render& render, DescriptorHeap& srvuavheap, DXGI_FOR
 	textureDesc.Format = format;
 	textureDesc.Flags = mUsage;
 	textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-	if ((mSRVType&TEXURE_SRV_TYPE_3D)>0)
+	if ((mSRVType&TEXTURE_SRV_TYPE_3D)>0)
 		textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE3D;
 	textureDesc.SampleDesc.Count = 1;
 	textureDesc.SampleDesc.Quality = 0;
@@ -604,7 +604,7 @@ void Texture::createSRV(DescriptorHeap& heap)
 
 
 	// need to decide the deimesnion depends on the real dimesion of texture
-	if (mSRVType==TEXURE_SRV_TYPE_2D) // 2d could be 2d or 2d array
+	if (mSRVType==TEXTURE_SRV_TYPE_2D) // 2d could be 2d or 2d array
 	{
 		if (textureDesc.DepthOrArraySize == 1)
 		{
@@ -621,7 +621,7 @@ void Texture::createSRV(DescriptorHeap& heap)
 
 	}
 
-	if (mSRVType==TEXURE_SRV_TYPE_CUBE)
+	if (mSRVType==TEXTURE_SRV_TYPE_CUBE)
 	{
 
 		if (textureDesc.DepthOrArraySize > 6)  // cube texture array
@@ -640,7 +640,7 @@ void Texture::createSRV(DescriptorHeap& heap)
 		}
 	}
 
-	if (mSRVType==TEXURE_SRV_TYPE_3D)
+	if (mSRVType==TEXTURE_SRV_TYPE_3D)
 	{
 		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE3D;
 		srvDesc.Texture3D.MipLevels = textureDesc.MipLevels;
@@ -659,7 +659,7 @@ void Texture::createRTVs(DescriptorHeap& heap)
 	if (renDesc.Format == DXGI_FORMAT_R16_TYPELESS)
 		renDesc.Format = DXGI_FORMAT_R16_UNORM;
 
-	if (mSRVType== TEXURE_SRV_TYPE_3D)
+	if (mSRVType== TEXTURE_SRV_TYPE_3D)
 	{
 		renDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE3D;
 		if((mMipsUse&TEXTURE_ALL_MIPS_USE_RTV) == 0)
@@ -761,7 +761,7 @@ void Texture::createUAVs(DescriptorHeap& heap)
 
 //	uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
 
-	if (mSRVType == TEXURE_SRV_TYPE_3D)
+	if (mSRVType == TEXTURE_SRV_TYPE_3D)
 	{
 		uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE3D;
 		if ((mMipsUse&TEXTURE_ALL_MIPS_USE_UAV)==0)

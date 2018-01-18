@@ -68,7 +68,7 @@ void CommandList::resourceTransition(Resource& res, D3D12_RESOURCE_STATES stataf
 	transition.Flags = flags;
 	transition.Transition.pResource = res.mResource;
 	transition.Transition.StateAfter = stataf;
-	transition.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+	transition.Transition.Subresource = subresource;
 	if (subresource == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)
 	{
 		
@@ -437,7 +437,7 @@ bool CommandList::updateTextureData(Texture& texture, void const * data)
 }
 bool CommandList::updateTextureCubeData(Texture& texture, void  const ** data)
 {
-	if (!texture.mResource || !texture.mUploadBuffer || !(texture.mSRVType&TEXURE_SRV_TYPE_CUBE))
+	if (!texture.mResource || !texture.mUploadBuffer || !(texture.mSRVType&TEXTURE_SRV_TYPE_CUBE))
 		return false;
 
 	texture.textureDesc.MipLevels;

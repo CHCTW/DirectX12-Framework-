@@ -62,7 +62,7 @@ void initializeRender()
 	//RenderTargetFormat framefomat(1,&firstformat,false, DXGI_FORMAT_D32_FLOAT);
 	
 
-	framebuffer.CreateTexture(render,srvheap, retformat.mRenderTargetFormat[0],windows.mWidth, windows.mHeight,1,1, TEXURE_SRV_TYPE_2D, TEXTURE_USAGE_SRV_RTV);
+	framebuffer.CreateTexture(render,srvheap, retformat.mRenderTargetFormat[0],windows.mWidth, windows.mHeight,1,1, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_SRV_RTV);
 
 	//texture.CreateTexture(render.mDevice, DXGI_FORMAT_R8G8B8A8_UNORM, TextureWidth, TextureHeight, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET  | D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 	texture.CreateTexture(render,srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, TextureWidth, TextureHeight);

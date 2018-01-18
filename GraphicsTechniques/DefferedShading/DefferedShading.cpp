@@ -86,8 +86,8 @@ ObjectData Ground;
 SpotLight light;
 
 
-RenderTarget GBuffer;
-
+vector<Texture> GBuffer;
+Texture HDRBuffer;
 ShaderSet defferedshader;
 Pipeline defferedpipeline;
 RootSignature defferedrootsig;
@@ -131,7 +131,7 @@ void initializeRender()
 
 	render.initialize();
 	RenderTargetFormat retformat;
-	render.createSwapChain(windows, swapChainCount, retformat);
+	render.createSwapChain(windows, swapChainCount, retformat.mRenderTargetFormat[0]);
 	cmdalloc.initialize(render.mDevice);
 	cmdlist.initial(render.mDevice, cmdalloc);
 
@@ -175,7 +175,12 @@ void initializeRender()
 	formats[0] = DXGI_FORMAT_R32G32B32A32_FLOAT; // normal + metal
 	formats[1] = DXGI_FORMAT_R32G32B32A32_FLOAT; // color + roughness
 	RenderTargetFormat gBufferFormat(2, formats, true);
-	GBuffer.createRenderTargets(render.mDevice, windows.mWidth, windows.mHeight, gBufferFormat, rtvheap, dsvheap, srvheap);
+	//GBuffer.createRenderTargets(render.mDevice, windows.mWidth, windows.mHeight, gBufferFormat, rtvheap, dsvheap, srvheap);
+
+	GBuffer.resize(3);
+	GBuffer[0].CreateTexture(render, srvheap, gBufferFormat.mRenderTargetFormat[0], windows.mWidth, windows.mHeight, 1, 1, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_SRV_RTV);
+	GBuffer[1].CreateTexture(render, srvheap, gBufferFormat.mRenderTargetFormat[1], windows.mWidth, windows.mHeight, 1, 1, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_SRV_RTV);
+	GBuffer[2].CreateTexture(render, srvheap, gBufferFormat.mDepthStencilFormat, windows.mWidth, windows.mHeight, 1, 1, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_SRV_DSV);
 
 	shaderset.shaders[VS].load("Shaders/GBuffer.hlsl", "VSMain", VS);
 	shaderset.shaders[PS].load("Shaders/GBuffer.hlsl", "PSMain", PS);
@@ -197,15 +202,15 @@ void initializeRender()
 	defferedrootsig.mParameters[1].mType = PARAMETERTYPE_SRV;
 	defferedrootsig.mParameters[1].mResCounts = 1;
 	defferedrootsig.mParameters[1].mBindSlot = 0;
-	defferedrootsig.mParameters[1].mResource = &GBuffer.mRenderBuffers[0];
+	defferedrootsig.mParameters[1].mResource = &GBuffer[0];
 	defferedrootsig.mParameters[2].mType = PARAMETERTYPE_SRV;
 	defferedrootsig.mParameters[2].mResCounts = 1;
 	defferedrootsig.mParameters[2].mBindSlot = 1;
-	defferedrootsig.mParameters[2].mResource = &GBuffer.mRenderBuffers[1];
+	defferedrootsig.mParameters[2].mResource = &GBuffer[1];
 	defferedrootsig.mParameters[3].mType = PARAMETERTYPE_SRV;
 	defferedrootsig.mParameters[3].mResCounts = 1;
 	defferedrootsig.mParameters[3].mBindSlot = 2;
-	defferedrootsig.mParameters[3].mResource = &GBuffer.mDepthBuffer[0];
+	defferedrootsig.mParameters[3].mResource = &GBuffer[2];
 	defferedrootsig.mParameters[4].mType = PARAMETERTYPE_SAMPLER;
 	defferedrootsig.mParameters[4].mResCounts = 1;
 	defferedrootsig.mParameters[4].mBindSlot = 0;
@@ -399,21 +404,21 @@ void loadAsset()
 
 	cmdalloc.reset();
 	cmdlist.reset(Pipeline());
-	cmdlist.resourceBarrier(Spheres.mVertexBufferData.mResource, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceBarrier(Spheres.mNormalBuffer.mResource, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceBarrier(Spheres.mIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceBarrier(Spheres.mStructeredBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceBarrier(Buddha.mVertexBufferData.mResource, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceBarrier(Buddha.mNormalBuffer.mResource, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceBarrier(Buddha.mIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceBarrier(Buddha.mStructeredBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(Spheres.mVertexBufferData, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(Spheres.mNormalBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(Spheres.mIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(Spheres.mStructeredBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(Buddha.mVertexBufferData, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(Buddha.mNormalBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(Buddha.mIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(Buddha.mStructeredBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
 
-	cmdlist.resourceBarrier(Ground.mVertexBufferData.mResource, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceBarrier(Ground.mNormalBuffer.mResource, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceBarrier(Ground.mIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceBarrier(Ground.mStructeredBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(Ground.mVertexBufferData, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(Ground.mNormalBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(Ground.mIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(Ground.mStructeredBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
 
-	cmdlist.resourceBarrier(lightDataBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(lightDataBuffer, D3D12_RESOURCE_STATE_COPY_DEST,true);
 
 
 
@@ -435,26 +440,27 @@ void loadAsset()
 	cmdlist.updateBufferData(lightDataBuffer, lightlist.data(), lightlist.size() * sizeof(PointLightData));
 
 
-	cmdlist.resourceBarrier(Spheres.mVertexBufferData.mResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceBarrier(Spheres.mNormalBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceBarrier(Spheres.mIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
-	cmdlist.resourceBarrier(Spheres.mStructeredBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
+	cmdlist.resourceTransition(Spheres.mVertexBufferData, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist.resourceTransition(Spheres.mNormalBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist.resourceTransition(Spheres.mIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+	cmdlist.resourceTransition(Spheres.mStructeredBuffer, D3D12_RESOURCE_STATE_GENERIC_READ);
 
-	cmdlist.resourceBarrier(Buddha.mVertexBufferData.mResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceBarrier(Buddha.mNormalBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceBarrier(Buddha.mIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
-	cmdlist.resourceBarrier(Buddha.mStructeredBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
+	cmdlist.resourceTransition(Buddha.mVertexBufferData, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist.resourceTransition(Buddha.mNormalBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist.resourceTransition(Buddha.mIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+	cmdlist.resourceTransition(Buddha.mStructeredBuffer, D3D12_RESOURCE_STATE_GENERIC_READ);
 
-	cmdlist.resourceBarrier(Ground.mVertexBufferData.mResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceBarrier(Ground.mNormalBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceBarrier(Ground.mIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
-	cmdlist.resourceBarrier(Ground.mStructeredBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
+	cmdlist.resourceTransition(Ground.mVertexBufferData, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist.resourceTransition(Ground.mNormalBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist.resourceTransition(Ground.mIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+	cmdlist.resourceTransition(Ground.mStructeredBuffer, D3D12_RESOURCE_STATE_GENERIC_READ);
 
-	cmdlist.resourceBarrier(lightDataBuffer, D3D12_RESOURCE_STATE_COPY_DEST,D3D12_RESOURCE_STATE_GENERIC_READ);
+	cmdlist.resourceTransition(lightDataBuffer,D3D12_RESOURCE_STATE_GENERIC_READ);
 
 
-	cmdlist.renderTargetBarrier(GBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ);
-	cmdlist.depthBufferBarrier(GBuffer, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_GENERIC_READ);
+	cmdlist.resourceTransition(GBuffer[0], D3D12_RESOURCE_STATE_GENERIC_READ);
+	cmdlist.resourceTransition(GBuffer[1], D3D12_RESOURCE_STATE_GENERIC_READ);
+	cmdlist.resourceTransition(GBuffer[2], D3D12_RESOURCE_STATE_GENERIC_READ,true);
 
 
 	cmdlist.close();
@@ -482,8 +488,9 @@ void releaseRender()
 	quadpipeline.release();
 	quadrootsig.realease();
 	samplerheap.release();
-
-	GBuffer.release();
+	GBuffer[2].release();
+	GBuffer[1].release();
+	GBuffer[0].release();
 	rtvheap.release();
 	dsvheap.release();
 
@@ -556,15 +563,13 @@ void onrender()
 	cmdalloc.reset();
 	cmdlist.reset(pipeline);
 
-	cmdlist.resourceBarrier(Spheres.mStructeredBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
-
-
-	cmdlist.resourceBarrier(lightDataBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(Spheres.mStructeredBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(lightDataBuffer, D3D12_RESOURCE_STATE_COPY_DEST,true);
 	cmdlist.updateBufferData(Spheres.mStructeredBuffer, Spheres.mBufferData.data(), Spheres.mNum * sizeof(InstancedInformation));
 	cmdlist.updateBufferData(lightDataBuffer, lightlist.data(), lightlist.size() * sizeof(PointLightData));
 
-	cmdlist.resourceBarrier(lightDataBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
-	cmdlist.resourceBarrier(Spheres.mStructeredBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
+	cmdlist.resourceTransition(lightDataBuffer, D3D12_RESOURCE_STATE_GENERIC_READ);
+	cmdlist.resourceTransition(Spheres.mStructeredBuffer, D3D12_RESOURCE_STATE_GENERIC_READ,true);
 
 	cmdlist.bindDescriptorHeaps(&srvheap, &samplerheap);
 	cmdlist.setTopolgy(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -576,12 +581,14 @@ void onrender()
 
 		//cmdlist.renderTargetBarrier(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-		cmdlist.renderTargetBarrier(GBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_RENDER_TARGET);
-		cmdlist.depthBufferBarrier(GBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+		cmdlist.resourceTransition(GBuffer[0], D3D12_RESOURCE_STATE_RENDER_TARGET);
+		cmdlist.resourceTransition(GBuffer[1], D3D12_RESOURCE_STATE_RENDER_TARGET);
+		cmdlist.resourceTransition(GBuffer[2], D3D12_RESOURCE_STATE_DEPTH_WRITE,true);
 
-		cmdlist.bindRenderTarget(GBuffer);
-		cmdlist.clearRenderTarget(GBuffer);
-		cmdlist.clearDepthStencil(GBuffer);
+		cmdlist.bindRenderTargetsDepthStencil(GBuffer[0], GBuffer[1], GBuffer[2]);
+		cmdlist.clearRenderTarget(GBuffer[0]);
+		cmdlist.clearRenderTarget(GBuffer[1]);
+		cmdlist.clearDepthStencil(GBuffer[2]);
 
 
 		cmdlist.bindIndexBuffer(Spheres.mIndexBuffer);
@@ -600,11 +607,12 @@ void onrender()
 		cmdlist.drawIndexedInstanced(Ground.indexCount, Ground.mNum, 0, 0);
 
 
-		cmdlist.renderTargetBarrier(GBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ);
-		cmdlist.depthBufferBarrier(GBuffer, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_GENERIC_READ);
+		cmdlist.resourceTransition(GBuffer[0], D3D12_RESOURCE_STATE_GENERIC_READ);
+		cmdlist.resourceTransition(GBuffer[1], D3D12_RESOURCE_STATE_GENERIC_READ);
+		cmdlist.resourceTransition(GBuffer[2], D3D12_RESOURCE_STATE_GENERIC_READ);
 
 	}
-	cmdlist.renderTargetBarrier(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET,true);
 	cmdlist.bindRenderTarget(render.mSwapChainRenderTarget[frameIndex]);
 	const float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	cmdlist.clearRenderTarget(render.mSwapChainRenderTarget[frameIndex], clearColor);
@@ -625,21 +633,21 @@ void onrender()
 
 		debugviewport.setup(0.0f, 0.0f, (float)windows.mWidth / 4, (float)windows.mHeight / 4);
 		cmdlist.setViewPort(debugviewport);
-		cmdlist.bindGraphicsResource(0, GBuffer.mRenderBuffers[0]);
+		cmdlist.bindGraphicsResource(0, GBuffer[0]);
 		cmdlist.drawInstance(3, 1, 0, 0);
 		debugviewport.setup(0.0f, (float)windows.mHeight / 4, (float)windows.mWidth / 4, (float)windows.mHeight / 4);
 		cmdlist.setViewPort(debugviewport);
-		cmdlist.bindGraphicsResource(0, GBuffer.mRenderBuffers[1]);
+		cmdlist.bindGraphicsResource(0, GBuffer[1]);
 		cmdlist.drawInstance(3, 1, 0, 0);
 		debugviewport.setup(0.0f, 2*(float)windows.mHeight / 4, (float)windows.mWidth / 4, (float)windows.mHeight / 4);
 		cmdlist.setViewPort(debugviewport);
-		cmdlist.bindGraphicsResource(0, GBuffer.mDepthBuffer[0]);
+		cmdlist.bindGraphicsResource(0, GBuffer[2]);
 		cmdlist.drawInstance(3, 1, 0, 0);
 
 
 		
 	}
-	cmdlist.renderTargetBarrier(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT,true);
 
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
