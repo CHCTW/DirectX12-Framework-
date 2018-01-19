@@ -39,16 +39,16 @@ void CommandList::bindPipeline(Pipeline& pipeline)
 {
 	mDx12CommandList->SetPipelineState(pipeline.mPipeline);
 }
-void CommandList::resourceBarrier(Resource& res, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource,
-	D3D12_RESOURCE_BARRIER_FLAGS flags)
-{
-	
-	mDx12CommandList->ResourceBarrier(1,&CD3DX12_RESOURCE_BARRIER::Transition(res.mResource,statbef,stataf,subresource,flags));
-	if (subresource == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)
-		std::fill(res.mState.begin(), res.mState.end(), stataf);
-	else
-		res.mState[subresource] = stataf;
-}
+//void CommandList::resourceBarrier(Resource& res, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource,
+//	D3D12_RESOURCE_BARRIER_FLAGS flags)
+//{
+//	
+//	mDx12CommandList->ResourceBarrier(1,&CD3DX12_RESOURCE_BARRIER::Transition(res.mResource,statbef,stataf,subresource,flags));
+//	if (subresource == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)
+//		std::fill(res.mState.begin(), res.mState.end(), stataf);
+//	else
+//		res.mState[subresource] = stataf;
+//}
 
 void CommandList::resourceTransition(Resource& res, D3D12_RESOURCE_STATES stataf, bool barrier, UINT subresource,D3D12_RESOURCE_BARRIER_FLAGS flags)
 {
@@ -118,49 +118,49 @@ void CommandList::setBarrier()
 	mAccuBarriers.clear();
 }
 
-void CommandList::resourceBarrier(ID3D12Resource* res, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource,
-	D3D12_RESOURCE_BARRIER_FLAGS flags)
-{
-
-	mDx12CommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(res, statbef, stataf, subresource, flags));
-}
-void CommandList::renderTargetBarrier(RenderTarget &rt, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource,
-	D3D12_RESOURCE_BARRIER_FLAGS flags)
-{
-
-	
-	for (int i = 0; i < rt.mRenderBuffers.size(); ++i)
-	{
-		mDx12CommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(rt.mRenderBuffers[i].mResource, statbef, stataf, subresource, flags));
-	}
-	//mDx12CommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(rt.mRenderBuffer, statbef, stataf, subresource, flags));
-	//rt.mRenderBufferState = stataf;
-}
-void CommandList::depthBufferBarrier(RenderTarget &rt, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource,D3D12_RESOURCE_BARRIER_FLAGS flags)
-{
-	if (rt.mDepthBuffer.size() == 1)
-	{
-		mDx12CommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(rt.mDepthBuffer[0].mResource, statbef, stataf, subresource, flags));
-	}
-}
-
-
-void CommandList::cubeRenderTargetBarrier(CubeRenderTarget &crt, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource,
-	D3D12_RESOURCE_BARRIER_FLAGS flags)
-{
-	if (crt.mType & (CUBE_RENDERTAERGET_TYPE_RENDERTARGET))
-	{
-		mDx12CommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(crt.mRenderBuffer[0].mResource, statbef, stataf, subresource, flags));
-	}
-}
-void CommandList::cubeDepthBufferBarrier(CubeRenderTarget &crt, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource,
-	D3D12_RESOURCE_BARRIER_FLAGS flags)
-{
-	if (crt.mType & (CUBE_RENDERTAERGET_TYPE_DEPTH))
-	{
-		mDx12CommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(crt.mDepthBuffer[0].mResource, statbef, stataf, subresource, flags));
-	}
-}
+//void CommandList::resourceBarrier(ID3D12Resource* res, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource,
+//	D3D12_RESOURCE_BARRIER_FLAGS flags)
+//{
+//
+//	mDx12CommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(res, statbef, stataf, subresource, flags));
+//}
+//void CommandList::renderTargetBarrier(RenderTarget &rt, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource,
+//	D3D12_RESOURCE_BARRIER_FLAGS flags)
+//{
+//
+//	
+//	for (int i = 0; i < rt.mRenderBuffers.size(); ++i)
+//	{
+//		mDx12CommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(rt.mRenderBuffers[i].mResource, statbef, stataf, subresource, flags));
+//	}
+//	//mDx12CommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(rt.mRenderBuffer, statbef, stataf, subresource, flags));
+//	//rt.mRenderBufferState = stataf;
+//}
+//void CommandList::depthBufferBarrier(RenderTarget &rt, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource,D3D12_RESOURCE_BARRIER_FLAGS flags)
+//{
+//	if (rt.mDepthBuffer.size() == 1)
+//	{
+//		mDx12CommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(rt.mDepthBuffer[0].mResource, statbef, stataf, subresource, flags));
+//	}
+//}
+//
+//
+//void CommandList::cubeRenderTargetBarrier(CubeRenderTarget &crt, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource,
+//	D3D12_RESOURCE_BARRIER_FLAGS flags)
+//{
+//	if (crt.mType & (CUBE_RENDERTAERGET_TYPE_RENDERTARGET))
+//	{
+//		mDx12CommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(crt.mRenderBuffer[0].mResource, statbef, stataf, subresource, flags));
+//	}
+//}
+//void CommandList::cubeDepthBufferBarrier(CubeRenderTarget &crt, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource,
+//	D3D12_RESOURCE_BARRIER_FLAGS flags)
+//{
+//	if (crt.mType & (CUBE_RENDERTAERGET_TYPE_DEPTH))
+//	{
+//		mDx12CommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(crt.mDepthBuffer[0].mResource, statbef, stataf, subresource, flags));
+//	}
+//}
 
 
 bool CommandList::close()
@@ -171,18 +171,18 @@ bool CommandList::close()
 		return false;
 	return true;
 }
-void CommandList::bindRenderTarget(RenderTarget & rt, UINT miplevel)
-{
-	CD3DX12_CPU_DESCRIPTOR_HANDLE cpus[8] = {};
-	for (int i = 0 ; i < rt.mRenderBuffers.size() ; ++i)
-	{
-		cpus[i] = rt.mRenderBuffers[i].mRTV[miplevel].Cpu;
-	}
-	if(rt.mFormat.mDepth)
-		mDx12CommandList->OMSetRenderTargets(rt.mRenderBuffers.size(), cpus, false, &(rt.mDepthBuffer[0].mDSV[miplevel].Cpu));
-	else
-	mDx12CommandList->OMSetRenderTargets(rt.mRenderBuffers.size(), cpus, false, nullptr);
-}
+//void CommandList::bindRenderTarget(RenderTarget & rt, UINT miplevel)
+//{
+//	CD3DX12_CPU_DESCRIPTOR_HANDLE cpus[8] = {};
+//	for (int i = 0 ; i < rt.mRenderBuffers.size() ; ++i)
+//	{
+//		cpus[i] = rt.mRenderBuffers[i].mRTV[miplevel].Cpu;
+//	}
+//	if(rt.mFormat.mDepth)
+//		mDx12CommandList->OMSetRenderTargets(rt.mRenderBuffers.size(), cpus, false, &(rt.mDepthBuffer[0].mDSV[miplevel].Cpu));
+//	else
+//	mDx12CommandList->OMSetRenderTargets(rt.mRenderBuffers.size(), cpus, false, nullptr);
+//}
 void CommandList::bindRenderTarget(SwapChainBuffer & rt)
 {
 	mDx12CommandList->OMSetRenderTargets(1, &rt.mRTV[0].Cpu, false, nullptr);
@@ -259,42 +259,42 @@ void CommandList::bindRenderTargetsDepthStencil(Texture& t1, Texture& t2, Textur
 
 
 
-void CommandList::bindCubeRenderTarget(CubeRenderTarget & crt, UINT face,UINT level)
-{
-	if (crt.mType == (CUBE_RENDERTAERGET_TYPE_DEPTH| CUBE_RENDERTAERGET_TYPE_RENDERTARGET))
-	{
-		mDx12CommandList->OMSetRenderTargets(1, &(crt.mFaceRTV[level].Cpu), false, &crt.mFaceDSV[level].Cpu);
-	}
-	else if (crt.mType == (CUBE_RENDERTAERGET_TYPE_DEPTH))
-	{
-		mDx12CommandList->OMSetRenderTargets(0, nullptr, false, &crt.mFaceDSV[level].Cpu);
-	}
-	else
-		mDx12CommandList->OMSetRenderTargets(1, &(crt.mFaceRTV[level].Cpu), false, nullptr);
-}
-
-void CommandList::clearRenderTarget(RenderTarget &rt, const float *color,  UINT miplevel)
-{
-//	CD3DX12_CPU_DESCRIPTOR_HANDLE cpus[8] = {};
-	for (int i = 0; i < rt.mRenderBuffers.size(); ++i)
-	{
-	//	cpus[i] = rt.mRenderBuffers[i].mRTV.Cpu;
-
-		mDx12CommandList->ClearRenderTargetView(rt.mRenderBuffers[i].mRTV[miplevel].Cpu, color, 0, NULL);
-
-	}
-//	mDx12CommandList->ClearRenderTargetView(rt.mRTV.Cpu, color, 0, NULL);
-}
-void CommandList::clearRenderTarget(RenderTarget &rt,UINT miplevel)
-{
-	for (int i = 0; i < rt.mRenderBuffers.size(); ++i)
-	{
-		//	cpus[i] = rt.mRenderBuffers[i].mRTV.Cpu;
-
-		mDx12CommandList->ClearRenderTargetView(rt.mRenderBuffers[i].mRTV[miplevel].Cpu, rt.mFormat.mRenderTargetClearValue[i].Color, 0, NULL);
-
-	}
-}
+//void CommandList::bindCubeRenderTarget(CubeRenderTarget & crt, UINT face,UINT level)
+//{
+//	if (crt.mType == (CUBE_RENDERTAERGET_TYPE_DEPTH| CUBE_RENDERTAERGET_TYPE_RENDERTARGET))
+//	{
+//		mDx12CommandList->OMSetRenderTargets(1, &(crt.mFaceRTV[level].Cpu), false, &crt.mFaceDSV[level].Cpu);
+//	}
+//	else if (crt.mType == (CUBE_RENDERTAERGET_TYPE_DEPTH))
+//	{
+//		mDx12CommandList->OMSetRenderTargets(0, nullptr, false, &crt.mFaceDSV[level].Cpu);
+//	}
+//	else
+//		mDx12CommandList->OMSetRenderTargets(1, &(crt.mFaceRTV[level].Cpu), false, nullptr);
+//}
+//
+//void CommandList::clearRenderTarget(RenderTarget &rt, const float *color,  UINT miplevel)
+//{
+////	CD3DX12_CPU_DESCRIPTOR_HANDLE cpus[8] = {};
+//	for (int i = 0; i < rt.mRenderBuffers.size(); ++i)
+//	{
+//	//	cpus[i] = rt.mRenderBuffers[i].mRTV.Cpu;
+//
+//		mDx12CommandList->ClearRenderTargetView(rt.mRenderBuffers[i].mRTV[miplevel].Cpu, color, 0, NULL);
+//
+//	}
+////	mDx12CommandList->ClearRenderTargetView(rt.mRTV.Cpu, color, 0, NULL);
+//}
+//void CommandList::clearRenderTarget(RenderTarget &rt,UINT miplevel)
+//{
+//	for (int i = 0; i < rt.mRenderBuffers.size(); ++i)
+//	{
+//		//	cpus[i] = rt.mRenderBuffers[i].mRTV.Cpu;
+//
+//		mDx12CommandList->ClearRenderTargetView(rt.mRenderBuffers[i].mRTV[miplevel].Cpu, rt.mFormat.mRenderTargetClearValue[i].Color, 0, NULL);
+//
+//	}
+//}
 void CommandList::clearRenderTarget(Texture &rt, const float *color, UINT miplevel)
 {
 	mDx12CommandList->ClearRenderTargetView(rt.mRTV[miplevel].Cpu, color, 0, NULL);
@@ -309,13 +309,13 @@ void CommandList::clearRenderTarget(SwapChainBuffer &rt, const float *color)
 }
 
 
-void CommandList::clearDepthStencil(RenderTarget &rt, D3D12_CLEAR_FLAGS flag, float depth, UINT stencil, UINT miplevel)
-{
-	if (rt.mFormat.mDepth)
-	{
-		mDx12CommandList->ClearDepthStencilView(rt.mDepthBuffer[0].mDSV[miplevel].Cpu, flag, depth, stencil, 0, nullptr);
-	}
-}
+//void CommandList::clearDepthStencil(RenderTarget &rt, D3D12_CLEAR_FLAGS flag, float depth, UINT stencil, UINT miplevel)
+//{
+//	if (rt.mFormat.mDepth)
+//	{
+//		mDx12CommandList->ClearDepthStencilView(rt.mDepthBuffer[0].mDSV[miplevel].Cpu, flag, depth, stencil, 0, nullptr);
+//	}
+//}
 void CommandList::clearDepthStencil(Texture &dsbuffer, D3D12_CLEAR_FLAGS flag, float depth , UINT stencil, UINT miplevel)
 {
 	if (dsbuffer.mTextUsage&TEXTURE_USAGE_DSV)
@@ -325,21 +325,21 @@ void CommandList::clearDepthStencil(Texture &dsbuffer, D3D12_CLEAR_FLAGS flag, f
 }
 
 
-void CommandList::clearcubeRenderTarget(CubeRenderTarget &crt, UINT face, UINT level)
-{
-	if (crt.mType & (CUBE_RENDERTAERGET_TYPE_RENDERTARGET))
-	{
-		mDx12CommandList->ClearRenderTargetView(crt.mFaceRTV[level].Cpu, crt.mRenderTargetClearValue.Color, 0, NULL);
-	}
-
-}
-void CommandList::clearcubeDepthStencil(CubeRenderTarget &crt, UINT face, UINT level, D3D12_CLEAR_FLAGS flag, float depth, UINT stencil)
-{
-	if (crt.mType & (CUBE_RENDERTAERGET_TYPE_DEPTH))
-	{
-		mDx12CommandList->ClearDepthStencilView(crt.mFaceDSV[level].Cpu, flag, depth, stencil, 0, nullptr);
-	}
-}
+//void CommandList::clearcubeRenderTarget(CubeRenderTarget &crt, UINT face, UINT level)
+//{
+//	if (crt.mType & (CUBE_RENDERTAERGET_TYPE_RENDERTARGET))
+//	{
+//		mDx12CommandList->ClearRenderTargetView(crt.mFaceRTV[level].Cpu, crt.mRenderTargetClearValue.Color, 0, NULL);
+//	}
+//
+//}
+//void CommandList::clearcubeDepthStencil(CubeRenderTarget &crt, UINT face, UINT level, D3D12_CLEAR_FLAGS flag, float depth, UINT stencil)
+//{
+//	if (crt.mType & (CUBE_RENDERTAERGET_TYPE_DEPTH))
+//	{
+//		mDx12CommandList->ClearDepthStencilView(crt.mFaceDSV[level].Cpu, flag, depth, stencil, 0, nullptr);
+//	}
+//}
 
 
 
@@ -387,6 +387,11 @@ bool CommandList::setCounterforStructeredBuffer(Buffer& buffer, UINT value)
 void CommandList::setTopolgy(D3D_PRIMITIVE_TOPOLOGY topo)
 {
 	mDx12CommandList->IASetPrimitiveTopology(topo);
+}
+bool CommandList::copyResource(Resource &src, Resource &desc)
+{
+	mDx12CommandList->CopyResource(desc.mResource,src.mResource);
+	return true;
 }
 bool CommandList::updateTextureData(Texture& texture, void const * data)
 {

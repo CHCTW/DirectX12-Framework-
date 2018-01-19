@@ -198,10 +198,12 @@ static ClearValue DefaultClearValue(ClearValue::ClearType::CLEAR_TYPE_DEFAUTL);
 
 enum Mip_Map_Generate_Type
 {
-	MIP_MAP_GEN_SRGB_A_BOX,
+	MIP_MAP_GEN_SRGB_A_BOX_CLAMP,
 	MIP_MAP_GEN_COUNT
 };
+
+
 const static char *MipMapShadersName[MIP_MAP_GEN_COUNT]
 {
-	"DownScale_Srgba_Box.hlsl"
+	"DownScale_Srgb_A_Box_Clamp.hlsl"
 };

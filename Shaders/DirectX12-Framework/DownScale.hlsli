@@ -3,7 +3,7 @@
 
 /**************************
 
-combiniation : data type + filter type
+combiniation : data type + filter type + address mode
 
 data type:
 
@@ -18,6 +18,12 @@ filter type:
 #define BOX_FITER
 #define GAUSSIAN_FILTER
 
+
+address mode:
+#define CLAMP
+#define WRAP
+#define MIRROR
+
 example SRGBA+BOX_FILTER
 
 **************************/
@@ -26,24 +32,25 @@ example SRGBA+BOX_FILTER
 #define BlockSize 16
 #define gaussinwindow 5
 
-Texture2D<float4> SrcTexture : register(t0);
+Texture2DArray SrcTexture : register(t0);
 cbuffer mipdata : register(b0)
 {
+    uint SrcSliceNum;
     uint SrcMipLevel; // Texture level of source mip
 }
 
-
+//#define CLAMP
 //#define SRGB_A  // temporary for test
 //#define BOX_FILTER  // temporary for test, the very basic way to down scale
 
 
 #ifdef BOX_FILTER
-static float2 offset[4] =
+static int2 offset[4] =
 {
-    float2(0.0f, 0.0f),
-    float2(0.0f, 1.0f),
-    float2(1.0f, 0.0f),
-    float2(1.0f, 1.0f),
+    int2(0, 0),
+    int2(0, 1),
+    int2(1, 0),
+    int2(1, 1),
 };
 
 #elif GAUSSION_FILTER
@@ -58,10 +65,33 @@ static float gaussweight[5][5] =
 #endif
 
 #if defined(SRGB_ALPHA_MASK)||defined(SRGB_A) // all 4 channel data
-RWTexture2D<float4> DesTexture : register(u0);
+RWTexture2DArray<float4> DesTexture : register(u0);
 #endif
+uint2 addressPos(int2 pos,int2 dim)
+{
+    int2 spos = pos;
+ 
 
-void boxfilterandwrite(float4 data[4],uint2 pos)
+
+#if defined(CLAMP)
+    spos = clamp(spos, int2(0, 0), dim-int2(1,1));
+#elif defined(WRAP)
+     while (any(spos < int2(0,0)))  // make sure spos is > 0
+        spos = spos + dim;
+    spos = spos % dim;
+#elif defined(MIRROR)
+    while (any(spos < int2(0, 0)))  // make sure spos is > 0
+        spos = spos + 2*dim; // mirror cycle is 2* size
+    spos = spos % (2 * dim);
+    if(spos.x>=dim.x) // mirror 
+        spos.x = dim.x - (spos.x - dim.x + 1);
+    if (spos.y >= dim.y) // mirror 
+        spos.y = dim.y - (spos.y - dim.y + 1);
+#endif
+    return spos;
+}
+
+void boxfilterandwrite(float4 data[4],uint2 pos) // we decide how to dealing with differnt usage of data
 {
     float4 result = float4(0.0f,0.0f,0.0f,0.0f);
 #if defined(SRGB_A)
@@ -73,7 +103,7 @@ void boxfilterandwrite(float4 data[4],uint2 pos)
     }
     result *= 0.25;
     result.xyz = pow(result.xyz, 1.0/2.2f);
-    DesTexture[pos] = result;
+    DesTexture[uint3(pos,SrcSliceNum)] = result;
 #endif
 }
 
@@ -82,14 +112,18 @@ void boxfilterandwrite(float4 data[4],uint2 pos)
 [numthreads(BlockSize, BlockSize, 1)]
 void CSMain(uint gid : SV_GroupIndex, uint3 tid : SV_DispatchThreadID) // tid is the position of out put texture
 {
+      int3 pos = tid;
+      pos.z = 0;
+    uint3 dim;
+    SrcTexture.GetDimensions(dim.x, dim.y, dim.z);
 #ifdef BOX_FILTER
     float4 data[4];
-// no mether what type of data in source input, still going to real them all
+
+    
+    // no mether what type of data in source input, still going to real them all
     [unroll]
     for (uint i = 0; i < 4; ++i)
-        data[i] = SrcTexture.Load(uint3(tid.xy * 2 + offset[i], SrcMipLevel)); // read all four nearby data, .mips[][]not support
-    
+        data[i] = SrcTexture.Load(uint4(addressPos(pos.xy * 2 + offset[i], dim.xy), SrcSliceNum, SrcMipLevel)); // read all four nearby data, .mips[][]not support
     boxfilterandwrite(data, tid.xy);
-    //SrcTexture.[]
 #endif
 }

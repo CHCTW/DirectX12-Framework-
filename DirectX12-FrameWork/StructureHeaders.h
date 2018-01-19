@@ -1,6 +1,5 @@
 #pragma once
 #include "DescriptorHeap.h"
-#include "RenderTarget.h"
 #include "CommandAllocator.h"
 #include "CommandList.h"
 #include "Fence.h"
@@ -16,7 +15,6 @@
 #include "DepthStencilState.h"
 #include "BlendState.h"
 #include "RasterizerState.h"
-#include "CubeRenderTarget.h"
 #include "Image.h"
 #include "CommandSignature.h"
 #include "QueryHeap.h"

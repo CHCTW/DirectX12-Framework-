@@ -4,8 +4,9 @@
 #include <dxgi1_4.h>
 #include <vector>
 using namespace std;
-struct SwapChainBuffer
+class SwapChainBuffer
 {
+public:
 	DXGI_MODE_DESC backbufferdesc;
 	vector<D3D12_RESOURCE_STATES> mState;
 	ID3D12Resource* mResource;

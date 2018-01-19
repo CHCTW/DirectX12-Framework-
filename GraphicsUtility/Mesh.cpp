@@ -55,36 +55,39 @@ bool Mesh::loadMesh(aiMesh* assmesh, Render& render, CommandAllocator& cmdalloc,
 	// not a good way to write it, cause I don't have batch barrier yet. since I only assume this only happened in loading time, it probally not too bad now
 	if (assmesh->HasPositions())
 	{
-		cmdlist.resourceBarrier(mPositionBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
+		cmdlist.resourceTransition(mPositionBuffer, D3D12_RESOURCE_STATE_COPY_DEST,true);
 		cmdlist.updateBufferData(mPositionBuffer, assmesh->mVertices, assmesh->mNumVertices * 3 * sizeof(float));
-		cmdlist.resourceBarrier(mPositionBuffer, D3D12_RESOURCE_STATE_COPY_DEST,D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+		cmdlist.resourceTransition(mPositionBuffer,D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,true);
+
+	
+
 	}
 	if (assmesh->HasNormals())
 	{
-		cmdlist.resourceBarrier(mNormalBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
+		cmdlist.resourceTransition(mNormalBuffer, D3D12_RESOURCE_STATE_COPY_DEST,true);
 		cmdlist.updateBufferData(mNormalBuffer, assmesh->mNormals, assmesh->mNumVertices * 3 * sizeof(float));
-		cmdlist.resourceBarrier(mNormalBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+		cmdlist.resourceTransition(mNormalBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,true);
 	}
 	if (assmesh->HasTextureCoords(0))
 	{
-		cmdlist.resourceBarrier(mUVBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
+		cmdlist.resourceTransition(mUVBuffer, D3D12_RESOURCE_STATE_COPY_DEST,true);
 		cmdlist.updateBufferData(mUVBuffer, assmesh->mTextureCoords[0], assmesh->mNumVertices * 3 * sizeof(float));
-		cmdlist.resourceBarrier(mUVBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+		cmdlist.resourceTransition(mUVBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,true);
 	}
 	if (assmesh->HasTangentsAndBitangents())
 	{
-		cmdlist.resourceBarrier(mTangentBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
+		cmdlist.resourceTransition(mTangentBuffer, D3D12_RESOURCE_STATE_COPY_DEST,true);
 		cmdlist.updateBufferData(mTangentBuffer, assmesh->mTangents, assmesh->mNumVertices * 3 * sizeof(float));
-		cmdlist.resourceBarrier(mTangentBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+		cmdlist.resourceTransition(mTangentBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,true);
 
-		cmdlist.resourceBarrier(mBiTangentBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
+		cmdlist.resourceTransition(mBiTangentBuffer, D3D12_RESOURCE_STATE_COPY_DEST,true);
 		cmdlist.updateBufferData(mBiTangentBuffer, assmesh->mBitangents, assmesh->mNumVertices * 3 * sizeof(float));
-		cmdlist.resourceBarrier(mBiTangentBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+		cmdlist.resourceTransition(mBiTangentBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,true);
 
 	}
-	cmdlist.resourceBarrier(mIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(mIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST,true);
 	cmdlist.updateBufferData(mIndexBuffer, indexdata.data(), assmesh->mNumFaces * 3 * sizeof(unsigned int));
-	cmdlist.resourceBarrier(mIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST,D3D12_RESOURCE_STATE_INDEX_BUFFER);
+	cmdlist.resourceTransition(mIndexBuffer,D3D12_RESOURCE_STATE_INDEX_BUFFER,true);
 
 
 	cmdlist.close();

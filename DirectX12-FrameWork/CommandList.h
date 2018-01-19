@@ -1,8 +1,8 @@
 #pragma once
 #include "d3dx12.h"
+#include <vector>
 class Pipeline;
 class CommandAllocator;
-class RenderTarget;
 class Buffer;
 class Texture;
 class RootSignature;
@@ -10,7 +10,6 @@ class ViewPort;
 class Scissor;
 class DescriptorHeap;
 class Resource;
-class CubeRenderTarget;
 class CommandSignature;
 class QueryHeap;
 class SwapChainBuffer;
@@ -45,7 +44,7 @@ public:
 		vertexbindhelp({ std::forward<T>(buffers)... });
 	}
 	void bindIndexBuffer(Buffer& buffer);
-	void bindRenderTarget(RenderTarget & rt,UINT miplevel = 0);
+	//void bindRenderTarget(RenderTarget & rt,UINT miplevel = 0);
 	/*************************/
 	void bindRenderTarget(SwapChainBuffer & rt);
 	
@@ -71,7 +70,7 @@ public:
 
 	/********************************/
 
-	void bindCubeRenderTarget(CubeRenderTarget & crt, UINT face,UINT level = 0);
+	//void bindCubeRenderTarget(CubeRenderTarget & crt, UINT face,UINT level = 0);
 
 
 
@@ -88,9 +87,9 @@ public:
 	void unsetPrediction(D3D12_PREDICATION_OP type);
 
 
-	void clearRenderTarget(RenderTarget &rt, const float *color,UINT miplevel = 0);
-	void clearRenderTarget(RenderTarget &rt, UINT miplevel = 0);
-	void clearDepthStencil(RenderTarget &rt, D3D12_CLEAR_FLAGS flag = D3D12_CLEAR_FLAG_DEPTH, float depth = 1.0f, UINT stencil = 1,UINT miplevel = 0);
+	//void clearRenderTarget(RenderTarget &rt, const float *color,UINT miplevel = 0);
+	//void clearRenderTarget(RenderTarget &rt, UINT miplevel = 0);
+	//void clearDepthStencil(RenderTarget &rt, D3D12_CLEAR_FLAGS flag = D3D12_CLEAR_FLAG_DEPTH, float depth = 1.0f, UINT stencil = 1,UINT miplevel = 0);
 
 	/******************************************/
 	void clearDepthStencil(Texture &dsbuffer, D3D12_CLEAR_FLAGS flag = D3D12_CLEAR_FLAG_DEPTH, float depth = 1.0f, UINT stencil = 1, UINT miplevel = 0);
@@ -101,11 +100,11 @@ public:
 
 
 	/***********************************/
-	void clearcubeRenderTarget(CubeRenderTarget &crt, UINT face, UINT level = 0);
-	void clearcubeDepthStencil(CubeRenderTarget &crt, UINT face, UINT level = 0,D3D12_CLEAR_FLAGS flag = D3D12_CLEAR_FLAG_DEPTH, float depth = 1.0f, UINT stencil = 1);
-	
-	void resourceBarrier(Resource& res, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-		D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
+	//void clearcubeRenderTarget(CubeRenderTarget &crt, UINT face, UINT level = 0);
+	//void clearcubeDepthStencil(CubeRenderTarget &crt, UINT face, UINT level = 0,D3D12_CLEAR_FLAGS flag = D3D12_CLEAR_FLAG_DEPTH, float depth = 1.0f, UINT stencil = 1);
+	//
+	//void resourceBarrier(Resource& res, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
+	//	D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
 	void resourceTransition(Resource& res,D3D12_RESOURCE_STATES stataf, bool barrier = false,UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
 		D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
 
@@ -116,19 +115,19 @@ public:
 	void setBarrier();
 
 	// This one should not be used after finish frame buffering, or could change this to use via swapchain's render target
-    void resourceBarrier(ID3D12Resource* res, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-		D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
-	void renderTargetBarrier(RenderTarget &rt, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-		D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
-	void depthBufferBarrier(RenderTarget &rt, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-		D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
-	void cubeRenderTargetBarrier(CubeRenderTarget &crt, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-		D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
-	void cubeDepthBufferBarrier(CubeRenderTarget &crt, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-		D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
+ /*   void resourceBarrier(ID3D12Resource* res, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
+		D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);*/
+	//void renderTargetBarrier(RenderTarget &rt, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
+	//	D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
+	//void depthBufferBarrier(RenderTarget &rt, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
+	//	D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
+	//void cubeRenderTargetBarrier(CubeRenderTarget &crt, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
+	//	D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
+	//void cubeDepthBufferBarrier(CubeRenderTarget &crt, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
+	//	D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
 
-
-
+	// this metod can only use when these 2 resource are exactly the same, or their format is comptable
+	bool copyResource(Resource &src, Resource &desc);
 	bool updateTextureData(Texture& texture, void  const * data);
 
 	bool updateTextureCubeData(Texture& texture, void  const ** data);
@@ -142,7 +141,7 @@ public:
 	RootSignature* mCurrentBindGraphicsRootSig;
 	RootSignature* mCurrentBindComputeRootSig;
 private:
-	vector<D3D12_RESOURCE_BARRIER> mAccuBarriers;
+	std::vector<D3D12_RESOURCE_BARRIER> mAccuBarriers;
 	template <typename T>
 	void vertexbindhelp(std::initializer_list<T>&& bufferlist) {
 		// do something
@@ -161,19 +160,6 @@ private:
 		}
 		mDx12CommandList->IASetVertexBuffers(0, (UINT)bufferlist.size(), vbs);
 
-	}
-	template <typename T>
-	void bindrendertargetsonlyhelp(std::initializer_list<T>& bufferlist,UINT miplevel)
-	{
-		UINT i = 0;
-		CD3DX12_CPU_DESCRIPTOR_HANDLE  cpuhandles[8];
-		for (auto buffer : bufferlist)
-		{
-			cpuhandles[i] = buffer.mRTV[miplevel].Cpu;
-			++i;
-		}
-
-		mDx12CommandList->OMSetRenderTargets(i, (cpuhandles), false, nullptr);
 	}
 
 };

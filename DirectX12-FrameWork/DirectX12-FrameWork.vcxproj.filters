@@ -204,7 +204,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="..\Shaders\DirectX12-Framework\DownScale_Srgba_Box.hlsl">
+    <FxCompile Include="..\Shaders\DirectX12-Framework\DownScale_Srgb_A_Box_Clamp.hlsl">
       <Filter>Render\Shader</Filter>
     </FxCompile>
   </ItemGroup>

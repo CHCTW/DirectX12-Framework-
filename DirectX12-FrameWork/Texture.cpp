@@ -301,94 +301,94 @@ Texture::Texture(): mByteSize(0), mCubeMap(false)
 }
 
 
-void Texture::CreateTexture(ID3D12Device* device, DXGI_FORMAT format, UINT width, UINT height, UINT arraySize, bool isCubeMap, UINT mipLevel, D3D12_RESOURCE_FLAGS usage, ClearValue& clear, D3D12_RESOURCE_DIMENSION dem, D3D12_RESOURCE_STATES state)
-{
-	textureDesc = {};
-	mByteSize = getSize(format);
-	mFormat = format;
-	mUsage = usage;
-	mCubeMap = isCubeMap;
-	D3D12_CLEAR_VALUE* tempclear = nullptr;
-
-	if ((usage&D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET)>0)
-	{
-		mClearVal.Format = format;
-		mClearVal.Color[0] = clear.Color[0];
-		mClearVal.Color[1] = clear.Color[1];
-		mClearVal.Color[2] = clear.Color[2];
-		mClearVal.Color[3] = clear.Color[3];
-		tempclear = &mClearVal;
-	}
-
-	if ( (usage&D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)>0)
-	{
-
-		//if (mClearVal.Format == DXGI_FORMAT_R16_TYPELESS)
-		//	mClearVal.Format = DXGI_FORMAT_D16_FLOAT;
-		mClearVal.Format = format;
-		if (mClearVal.Format == DXGI_FORMAT_R32_TYPELESS)
-			mClearVal.Format = DXGI_FORMAT_D32_FLOAT;
-
-		if (mClearVal.Format == DXGI_FORMAT_R16_TYPELESS)
-			mClearVal.Format = DXGI_FORMAT_D16_UNORM;
-
-
-		mClearVal.DepthStencil = clear.DepthStencil;
-		tempclear = &mClearVal;
-	}
-
-
-
-	switch (dem)
-	{
-	case D3D12_RESOURCE_DIMENSION_TEXTURE2D:
-		textureDesc.Width = width;
-		textureDesc.Height = height;
-		textureDesc.DepthOrArraySize = (UINT16)arraySize;
-		if (mCubeMap)
-		{
-			textureDesc.DepthOrArraySize *=6;
-			//textureDesc.Width = height *6;
-		}
-		textureDesc.MipLevels = mipLevel;
-		textureDesc.Format = format;
-		textureDesc.Flags = usage;
-
-		textureDesc.Dimension = dem;
-		textureDesc.SampleDesc.Count = 1;
-		textureDesc.SampleDesc.Quality = 0;
-		break;
-	}
-	ThrowIfFailed(device->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-		D3D12_HEAP_FLAG_NONE,
-		&textureDesc,
-		state,
-		tempclear,
-		IID_PPV_ARGS(&mResource)));
-	int totalsub = mipLevel*textureDesc.DepthOrArraySize;
-	mState.resize(totalsub, state);
-	//GpuAddress = mResource->GetGPUVirtualAddress();  because only buffer can read with out descriptor, so texture can't use gpuvirtualadress. Intereseting stuff
-	const UINT64 uploadBufferSize = GetRequiredIntermediateSize(mResource, 0, textureDesc.DepthOrArraySize*textureDesc.MipLevels);
-
-//	textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	CD3DX12_RESOURCE_DESC textdesc = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
-	//textdesc.SampleDesc.Count = 
-
-	// Create the GPU upload buffer.
-	ThrowIfFailed(device->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-		D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize),
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&mUploadBuffer)));
-
-
-
-	//GpuAddress = mResource->GetGPUVirtualAddress();
-
-}
+//void Texture::CreateTexture(ID3D12Device* device, DXGI_FORMAT format, UINT width, UINT height, UINT arraySize, bool isCubeMap, UINT mipLevel, D3D12_RESOURCE_FLAGS usage, ClearValue& clear, D3D12_RESOURCE_DIMENSION dem, D3D12_RESOURCE_STATES state)
+//{
+//	textureDesc = {};
+//	mByteSize = getSize(format);
+//	mFormat = format;
+//	mUsage = usage;
+//	mCubeMap = isCubeMap;
+//	D3D12_CLEAR_VALUE* tempclear = nullptr;
+//
+//	if ((usage&D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET)>0)
+//	{
+//		mClearVal.Format = format;
+//		mClearVal.Color[0] = clear.Color[0];
+//		mClearVal.Color[1] = clear.Color[1];
+//		mClearVal.Color[2] = clear.Color[2];
+//		mClearVal.Color[3] = clear.Color[3];
+//		tempclear = &mClearVal;
+//	}
+//
+//	if ( (usage&D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)>0)
+//	{
+//
+//		//if (mClearVal.Format == DXGI_FORMAT_R16_TYPELESS)
+//		//	mClearVal.Format = DXGI_FORMAT_D16_FLOAT;
+//		mClearVal.Format = format;
+//		if (mClearVal.Format == DXGI_FORMAT_R32_TYPELESS)
+//			mClearVal.Format = DXGI_FORMAT_D32_FLOAT;
+//
+//		if (mClearVal.Format == DXGI_FORMAT_R16_TYPELESS)
+//			mClearVal.Format = DXGI_FORMAT_D16_UNORM;
+//
+//
+//		mClearVal.DepthStencil = clear.DepthStencil;
+//		tempclear = &mClearVal;
+//	}
+//
+//
+//
+//	switch (dem)
+//	{
+//	case D3D12_RESOURCE_DIMENSION_TEXTURE2D:
+//		textureDesc.Width = width;
+//		textureDesc.Height = height;
+//		textureDesc.DepthOrArraySize = (UINT16)arraySize;
+//		if (mCubeMap)
+//		{
+//			textureDesc.DepthOrArraySize *=6;
+//			//textureDesc.Width = height *6;
+//		}
+//		textureDesc.MipLevels = mipLevel;
+//		textureDesc.Format = format;
+//		textureDesc.Flags = usage;
+//
+//		textureDesc.Dimension = dem;
+//		textureDesc.SampleDesc.Count = 1;
+//		textureDesc.SampleDesc.Quality = 0;
+//		break;
+//	}
+//	ThrowIfFailed(device->CreateCommittedResource(
+//		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+//		D3D12_HEAP_FLAG_NONE,
+//		&textureDesc,
+//		state,
+//		tempclear,
+//		IID_PPV_ARGS(&mResource)));
+//	int totalsub = mipLevel*textureDesc.DepthOrArraySize;
+//	mState.resize(totalsub, state);
+//	//GpuAddress = mResource->GetGPUVirtualAddress();  because only buffer can read with out descriptor, so texture can't use gpuvirtualadress. Intereseting stuff
+//	const UINT64 uploadBufferSize = GetRequiredIntermediateSize(mResource, 0, textureDesc.DepthOrArraySize*textureDesc.MipLevels);
+//
+////	textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+//	CD3DX12_RESOURCE_DESC textdesc = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
+//	//textdesc.SampleDesc.Count = 
+//
+//	// Create the GPU upload buffer.
+//	ThrowIfFailed(device->CreateCommittedResource(
+//		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+//		D3D12_HEAP_FLAG_NONE,
+//		&CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize),
+//		D3D12_RESOURCE_STATE_GENERIC_READ,
+//		nullptr,
+//		IID_PPV_ARGS(&mUploadBuffer)));
+//
+//
+//
+//	//GpuAddress = mResource->GetGPUVirtualAddress();
+//
+//}
 void Texture::addSahderResorceView(DescriptorHeap& heap)
 {	
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
