@@ -45,7 +45,7 @@ public:
 		TEXTURE_SRV_TYPE srvtype = TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE usage = TEXTURE_USAGE_SRV,TEXTURE_ALL_MIPS_USE mipuse = TEXTURE_ALL_MIPS_USE_NONE,
 		ClearValue& clear = DefaultClearValue, D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-
+	void release();
 	void addSahderResorceView(DescriptorHeap& heap);
 	void addDepgthStencilView(DescriptorHeap& heap,UINT level  = 0);
 	void addRenderTargetView(DescriptorHeap& heap);
@@ -62,6 +62,7 @@ public:
 	TEXTURE_ALL_MIPS_USE mMipsUse;
 	TEXTURE_SRV_TYPE mSRVType;
 	DXGI_FORMAT mFormat;
+	D3D12_PLACED_SUBRESOURCE_FOOTPRINT* mLayouts;
 	//Handles mSRV;
 	//Handles mUAV;
 private:

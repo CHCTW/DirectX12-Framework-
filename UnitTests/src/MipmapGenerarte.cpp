@@ -195,7 +195,14 @@ void loadAsset()
 	cmdlist.updateBufferData(vertexBuffer, mesh->mVertices, mesh->mNumVertices * 3 * sizeof(float));
 	cmdlist.updateBufferData(indexBuffer, indexdata.data(), mesh->mNumFaces * 3 * sizeof(unsigned int));
 	cmdlist.updateBufferData(normalBuffer, mesh->mNormals, mesh->mNumVertices * 3 * sizeof(float));
-	cmdlist.updateTextureCubeData(skyBox, (void const **)skyboxdata);
+	//cmdlist.updateTextureCubeData(skyBox, (void const **)skyboxdata);
+
+	cmdlist.updateTextureData(skyBox, skyboxdata[0], 0, 10, 0,1);
+	cmdlist.updateTextureData(skyBox, skyboxdata[1], 0, 10, 1, 1);
+	cmdlist.updateTextureData(skyBox, skyboxdata[2], 0, 10, 2, 1);
+	cmdlist.updateTextureData(skyBox, skyboxdata[3], 0, 10, 3, 1);
+	cmdlist.updateTextureData(skyBox, skyboxdata[4], 0, 10, 4, 1);
+	cmdlist.updateTextureData(skyBox, skyboxdata[5], 0, 10, 5, 1);
 
 
 	cmdlist.resourceTransition(vertexBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);

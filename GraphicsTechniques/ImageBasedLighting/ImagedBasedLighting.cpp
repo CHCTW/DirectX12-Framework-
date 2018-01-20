@@ -585,7 +585,15 @@ void loadAsset()
 	cmdlist.updateBufferData(Cube.mStructeredBuffer, Cube.mBufferData.data(), Cube.mNum * sizeof(InstancedInformation));
 
 	cmdlist.updateBufferData(lightDataBuffer, lightlist.data(), lightlist.size() * sizeof(PointLightData));
-	cmdlist.updateTextureCubeData(skyBox, (void const **)skyboxdata);
+//	cmdlist.updateTextureCubeData(skyBox, (void const **)skyboxdata);
+
+	cmdlist.updateTextureData(skyBox, skyboxdata[0], 0, 5, 0, 1);
+	cmdlist.updateTextureData(skyBox, skyboxdata[1], 0, 5, 1, 1);
+	cmdlist.updateTextureData(skyBox, skyboxdata[2], 0, 5, 2, 1);
+	cmdlist.updateTextureData(skyBox, skyboxdata[3], 0, 5, 3, 1);
+	cmdlist.updateTextureData(skyBox, skyboxdata[4], 0, 5, 4, 1);
+	cmdlist.updateTextureData(skyBox, skyboxdata[5], 0, 5, 5, 1);
+
 
 	cmdlist.resourceTransition(Bunnys.mVertexBufferData, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 	cmdlist.resourceTransition(Bunnys.mNormalBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);

@@ -565,9 +565,17 @@ void Texture::CreateTexture(Render& render, DescriptorHeap& srvuavheap, DXGI_FOR
 	int totalsub = mipLevel*textureDesc.DepthOrArraySize;
 	mState.resize(totalsub, state);
 
-	//GpuAddress = mResource->GetGPUVirtualAddress();  because only buffer can read with out descriptor, so texture can't use gpuvirtualadress. Intereseting stuff
-	const UINT64 uploadBufferSize = GetRequiredIntermediateSize(mResource, 0, textureDesc.DepthOrArraySize*textureDesc.MipLevels);
+	mLayouts = new D3D12_PLACED_SUBRESOURCE_FOOTPRINT[mState.size()];
 
+	//GpuAddress = mResource->GetGPUVirtualAddress();  because only buffer can read with out descriptor, so texture can't use gpuvirtualadress. Intereseting stuff
+	UINT64 uploadBufferSize;
+
+
+	render.mDevice->GetCopyableFootprints(&textureDesc, 0, textureDesc.DepthOrArraySize*textureDesc.MipLevels, 0, mLayouts, nullptr, nullptr, &uploadBufferSize);
+	for (int i = 0; i < totalsub; ++i)
+	{
+		cout << mLayouts[i].Offset << "   " << mLayouts[i].Footprint.Width << "   " << mLayouts[i].Footprint.Height << "   " << mLayouts[i].Footprint.RowPitch << endl;
+	}
 	//	textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 	CD3DX12_RESOURCE_DESC textdesc = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
 
@@ -589,6 +597,16 @@ void Texture::CreateTexture(Render& render, DescriptorHeap& srvuavheap, DXGI_FOR
 	if ((usage&TEXTURE_USAGE_UAV))
 		createUAVs(srvuavheap);
 
+}
+
+void Texture::release()
+{
+	delete[] mLayouts;
+	mRTV.clear();
+	mDSV.clear();
+	mUAV.clear();
+	SAFE_RELEASE(mResource);
+	SAFE_RELEASE(mUploadBuffer);
 }
 void Texture::createSRV(DescriptorHeap& heap)
 {

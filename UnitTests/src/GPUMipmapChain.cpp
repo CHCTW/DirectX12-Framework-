@@ -187,8 +187,8 @@ void loadAsset()
 	/****************Continuous regist to heap, usig array of texture here***************/
 
 	Image blockbasecolor;
-	blockbasecolor.load("Assets/Textures/mossy_wall_hor_tile_Base_Color.jpg");
-	blockbase.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, blockbasecolor.mWidth, blockbasecolor.mHeight,1,1);
+	blockbasecolor.load("Assets/Textures/mossy_wall_hor_tile_Base_Color.jpg",5);
+	blockbase.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, blockbasecolor.mWidth, blockbasecolor.mHeight,1,5);
 	//blockbase.addSahderResorceView(srvheap);
 
 	Image blockn;
@@ -363,7 +363,7 @@ void loadAsset()
 
 
 
-	cmdlist.updateTextureData(blockbase, blockbasecolor.mData);
+	cmdlist.updateTextureData(blockbase, blockbasecolor.mData,0,5);
 	cmdlist.updateTextureData(blocknormal, blockn.mData);
 	cmdlist.updateTextureData(blockheight, blockh.mData);
 	cmdlist.updateTextureData(blockrough, blockr.mData);

@@ -220,7 +220,14 @@ void loadAsset()
 	cmdlist.updateBufferData(vertexBuffer, mesh->mVertices, mesh->mNumVertices * 3 * sizeof(float));
 	cmdlist.updateBufferData(indexBuffer, indexdata.data(), mesh->mNumFaces * 3 * sizeof(unsigned int));
 	cmdlist.updateBufferData(normalBuffer, mesh->mNormals, mesh->mNumVertices * 3 * sizeof(float));
-	cmdlist.updateTextureCubeData(skyBox, (void const **)skyboxdata);
+	//cmdlist.updateTextureCubeData(skyBox, (void const **)skyboxdata);
+
+	cmdlist.updateTextureData(skyBox, skyboxdata[0], 0, 5, 0, 1);
+	cmdlist.updateTextureData(skyBox, skyboxdata[1], 0, 5, 1, 1);
+	cmdlist.updateTextureData(skyBox, skyboxdata[2], 0, 5, 2, 1);
+	cmdlist.updateTextureData(skyBox, skyboxdata[3], 0, 5, 3, 1);
+	cmdlist.updateTextureData(skyBox, skyboxdata[4], 0, 5, 4, 1);
+	cmdlist.updateTextureData(skyBox, skyboxdata[5], 0, 5, 5, 1);
 
 
 	cmdlist.resourceTransition(vertexBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
@@ -306,7 +313,7 @@ void generateIrrMap()
 		cmdalloc.reset();
 		cmdlist.reset(IrraidancePipeline);
 
-		cmdlist.resourceTransition(IrradianceMap,D3D12_RESOURCE_STATE_RENDER_TARGET,true,face);
+		cmdlist.resourceTransition(IrradianceMap,D3D12_RESOURCE_STATE_RENDER_TARGET,true);
 
 		cmdlist.setViewPort(tempviewport);
 		cmdlist.setScissor(tempscissor);
@@ -322,7 +329,7 @@ void generateIrrMap()
 
 	//	cmdlist.cubeRenderTargetBarrier(IrradianceMap, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ);
 
-		cmdlist.resourceTransition(IrradianceMap, D3D12_RESOURCE_STATE_GENERIC_READ, true, face);
+		cmdlist.resourceTransition(IrradianceMap, D3D12_RESOURCE_STATE_GENERIC_READ, true);
 
 		cmdlist.close();
 		render.executeCommands(&cmdlist);

@@ -23,5 +23,5 @@ public:
 	{
 
 	}
-	void release();
+	virtual void release();
 };
