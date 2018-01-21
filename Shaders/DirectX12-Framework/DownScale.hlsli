@@ -31,17 +31,31 @@ example SRGBA+BOX_FILTER
 
 #define BlockSize 16
 #define gaussinwindow 5
+#define FOURCHANNELDATA 
 
-Texture2DArray SrcTexture : register(t0);
 cbuffer mipdata : register(b0)
 {
     uint SrcSliceNum;
     uint SrcMipLevel; // Texture level of source mip
 }
 
+//#define SRGB_ALPHA_MASK     // temporary for test
+//#define GAUSSIAN_FILTER  // temporary for test, the very basic way to down scale
 //#define CLAMP
-//#define SRGB_A  // temporary for test
-//#define BOX_FILTER  // temporary for test, the very basic way to down scale
+
+//defined(SRGB_ALPHA_MASK)||defined(SRGB_A)||defined(RGBA_LINEAR)||defined(SRGB_ALPHA_TRANSPARENCY)||defined(RGBA_NORMAL_VECTOR) // all 4 channel data
+
+
+
+
+#if defined(SRGB_ALPHA_MASK)||defined(SRGB_A)||defined(RGBA_LINEAR)||defined(SRGB_ALPHA_TRANSPARENCY)||defined(RGBA_NORMAL_VECTOR) 
+RWTexture2DArray<float4> SrcTexture : register(u0);
+RWTexture2DArray<float4> DesTexture : register(u1);
+
+#endif
+
+
+
 
 
 #ifdef BOX_FILTER
@@ -52,8 +66,58 @@ static int2 offset[4] =
     int2(1, 0),
     int2(1, 1),
 };
+void boxfilterandwrite(float4 data[4],uint2 pos) // we decide how to dealing with differnt usage of data
+{
+    float4 result = float4(0.0f,0.0f,0.0f,0.0f);
+#if defined(SRGB_A)
+    [unroll]
+    for (uint i = 0; i < 4; ++i)  // move rgb sapce to linear space
+    {
+        data[i].xyz = pow(data[i].xyz, 2.2f);
+        result += data[i];
+    }
+    result *= 0.25;
+    result.xyz = pow(result.xyz, 1.0/2.2f);
+    DesTexture[uint3(pos,SrcSliceNum)] = result;
+#endif
+#if defined(SRGB_ALPHA_MASK)
+    float total = 0.0f;
+    float alphatotal = 0.0f; 
+    [unroll]
+    for (uint i = 0; i < 4; ++i)  // move rgb sapce to linear space
+    {
+        data[i].xyz = pow(data[i].xyz, 2.2f);
+        result += data[i];
+        total += data[i].w;
 
-#elif GAUSSION_FILTER
+    }
+
+    
+    result *=0.25;
+    result.xyz = pow(result.xyz, 1.0 / 2.2f);
+    result.w = step(2.0+0.001,total);
+    DesTexture[uint3(pos, SrcSliceNum)] = result;
+    
+#endif
+
+
+#if defined(RGBA_LINEAR)
+    [unroll]
+    for (uint i = 0; i < 4; ++i)  // move rgb sapce to linear space
+    {
+        result += data[i];
+    }
+    result *= 0.25;
+    DesTexture[uint3(pos,SrcSliceNum)] = result;
+#endif
+
+}
+
+#endif
+
+
+
+#if defined(GAUSSIAN_FILTER)
 static float gaussweight[5][5] =
 {
     1.0,4.0,7.0,4.0,1.0,
@@ -62,12 +126,65 @@ static float gaussweight[5][5] =
     4.0, 16.0, 26.0, 16.0, 4.0,
     1.0, 4.0, 7.0, 4.0, 1.0,
 };
+static float totalinv = 1.0f/273.0f;
+void gaussianfilterandwrite(float4 data[5][5], uint2 pos)
+{
+    float4 result = float4(0.0f, 0.0f, 0.0f, 0.0f);
+#if defined(SRGB_A)
+   
+    for (int u = 0; u < 5; ++u)
+    {
+        for (int v = 0; v < 5; ++v)
+        {
+            data[u][v].xyz = pow(data[u][v].xyz, 2.2f);
+            result += data[u][v] * gaussweight[u][v];
+            
+        }
+    }
+    result *= totalinv;
+    result.xyz = pow(result.xyz, 1.0 / 2.2f);
+    DesTexture[uint3(pos, SrcSliceNum)] = result;
+#endif
+#if defined(SRGB_ALPHA_MASK)
+  
+    float totalweight = 0.0f;
+    for (int u = 0; u < 5; ++u)
+    {
+        for (int v = 0; v < 5; ++v)
+        {
+            data[u][v].xyz = pow(data[u][v].xyz, 2.2f);
+            result += data[u][v] * gaussweight[u][v]*data[u][v].w;
+            totalweight+=gaussweight[u][v]*data[u][v].w;
+                   
+        }
+    }
+    result /= totalweight;
+    totalweight *= totalinv;
+    result.xyz = pow(result.xyz, 1.0 / 2.2f);
+    result.w = step(0.5f, totalweight);
+    DesTexture[uint3(pos, SrcSliceNum)] = result;
+#endif
+#if defined(RGBA_LINEAR)
+    for (int u = 0; u < 5; ++u)
+    {
+        for (int v = 0; v < 5; ++v)
+        {
+            result += data[u][v] * gaussweight[u][v];
+            
+        }
+    }
+    result *= totalinv;
+    DesTexture[uint3(pos, SrcSliceNum)] = result;
+#endif
+}
+
+
 #endif
 
-#if defined(SRGB_ALPHA_MASK)||defined(SRGB_A) // all 4 channel data
-RWTexture2DArray<float4> DesTexture : register(u0);
-#endif
-uint2 addressPos(int2 pos,int2 dim)
+
+
+
+uint2 addressPos(int2 pos, int2 dim)
 {
     int2 spos = pos;
  
@@ -91,21 +208,7 @@ uint2 addressPos(int2 pos,int2 dim)
     return spos;
 }
 
-void boxfilterandwrite(float4 data[4],uint2 pos) // we decide how to dealing with differnt usage of data
-{
-    float4 result = float4(0.0f,0.0f,0.0f,0.0f);
-#if defined(SRGB_A)
-    [unroll]
-    for (uint i = 0; i < 4; ++i)  // move rgb sapce to linear space
-    {
-        data[i].xyz = pow(data[i].xyz, 2.2f);
-        result += data[i];
-    }
-    result *= 0.25;
-    result.xyz = pow(result.xyz, 1.0/2.2f);
-    DesTexture[uint3(pos,SrcSliceNum)] = result;
-#endif
-}
+
 
 
 
@@ -115,15 +218,40 @@ void CSMain(uint gid : SV_GroupIndex, uint3 tid : SV_DispatchThreadID) // tid is
       int3 pos = tid;
       pos.z = 0;
     uint3 dim;
-    SrcTexture.GetDimensions(dim.x, dim.y, dim.z);
-#ifdef BOX_FILTER
-    float4 data[4];
+   
+   
 
-    
+#ifdef BOX_FILTER
+
+
+#if defined(SRGB_ALPHA_MASK)||defined(SRGB_A)||defined(RGBA_LINEAR)||defined(SRGB_ALPHA_TRANSPARENCY)||defined(RGBA_NORMAL_VECTOR)// all 4 channel data
+    float4 data[4];
+    SrcTexture.GetDimensions(dim.x, dim.y, dim.z);
+#endif
+
+
     // no mether what type of data in source input, still going to real them all
     [unroll]
     for (uint i = 0; i < 4; ++i)
-        data[i] = SrcTexture.Load(uint4(addressPos(pos.xy * 2 + offset[i], dim.xy), SrcSliceNum, SrcMipLevel)); // read all four nearby data, .mips[][]not support
+        data[i] = SrcTexture[uint3(addressPos(pos.xy * 2 + offset[i], dim.xy), SrcSliceNum)]; // read all four nearby data, .mips[][]not support
     boxfilterandwrite(data, tid.xy);
+#endif
+
+
+#ifdef GAUSSIAN_FILTER
+#if defined(SRGB_ALPHA_MASK)||defined(SRGB_A)||defined(RGBA_LINEAR)||defined(SRGB_ALPHA_TRANSPARENCY)||defined(RGBA_NORMAL_VECTOR)// all 4 channel data
+    float4 data[5][5];
+    SrcTexture.GetDimensions(dim.x, dim.y, dim.z);
+#endif
+    for (int u = -2; u <= 2; ++u)
+    {
+        for (int v = -2; v <= 2; ++v)
+        {
+            data[u+2][v+2] = SrcTexture[uint3(addressPos(pos.xy * 2 + int2(u, v), dim.xy), SrcSliceNum)];
+        }
+
+    }
+    gaussianfilterandwrite(data, tid.xy);
+
 #endif
 }

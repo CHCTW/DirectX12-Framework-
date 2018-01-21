@@ -198,12 +198,22 @@ static ClearValue DefaultClearValue(ClearValue::ClearType::CLEAR_TYPE_DEFAUTL);
 
 enum Mip_Map_Generate_Type
 {
-	MIP_MAP_GEN_SRGB_A_BOX_CLAMP,
+	MIP_MAP_GEN_SRGB_A_BOX_CLAMP = 0,
+	MIP_MAP_GEN_RGBA_LINEAR_BOX_CLAMP = 1,
+	MIP_MAP_GEN_SRGB_ALPHA_MASK_LINEAR_BOX_CLAMP = 2,
+	MIP_MAP_GEN_SRGB_A_GAUSSIAN_CLAMP = 3,
+	MIP_MAP_GEN_RGBA_LINEAR_GAUSSIAN_CLAMP = 4,
+	MIP_MAP_GEN_SRGB_ALPHA_MASK_LINEAR_GAUSSIAN_CLAMP = 5,
 	MIP_MAP_GEN_COUNT
 };
 
 
 const static char *MipMapShadersName[MIP_MAP_GEN_COUNT]
 {
-	"DownScale_Srgb_A_Box_Clamp.hlsl"
+	"DownScale_Srgb_A_Box_Clamp.hlsl",
+	"DownScale_Rgba_Linear_Box_Clamp.hlsl",
+	"DownScale_Srgb_Alpha_Mask_Box_Clamp.hlsl",
+	"DownScale_Srgb_A_Gaussian_Clamp.hlsl",
+	"DownScale_Rgba_Linear_Gaussian_Clamp.hlsl",
+	"DownScale_Srgb_Alpha_Mask_Gaussian_Clamp.hlsl",
 };

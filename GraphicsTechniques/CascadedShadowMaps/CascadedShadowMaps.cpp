@@ -615,6 +615,8 @@ void loadAsset()
 
 	//create the first defualt texture, a 1*1 texture with value(0.5,0.5,1.0), which can use as defualt value for normal mapping that has no normal map
 	textureList.resize(maxtexturecount);
+	vector<int> diffuseindex;
+	vector<int> linearindex;
 	imageList.resize(maxtexturecount);
 
 
@@ -660,11 +662,13 @@ void loadAsset()
 			string fullpath = Path + string(tex.C_Str());
 			//			cout << fullpath << endl;
 			imageList[texturecount].load(fullpath.c_str());
-			textureList[texturecount].CreateTexture(render,srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, imageList[texturecount].mWidth, imageList[texturecount].mHeight);
+			textureList[texturecount].CreateTexture(render,srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, imageList[texturecount].mWidth, imageList[texturecount].mHeight,1,8);
 		//	textureList[texturecount].addSahderResorceView(srvheap);
 			mat.mChoose[MATERIALMAP_INDEX_COLOR] = 0.0;
 			mat.mTextureIndex[MATERIALMAP_INDEX_COLOR] = texturecount + 1;// always +1 since 0 is default
+			diffuseindex.push_back(texturecount);
 			++texturecount;
+			
 		}
 		else
 		{
@@ -700,10 +704,11 @@ void loadAsset()
 			string fullpath = Path + string(tex.C_Str());
 			//			cout << fullpath << endl;
 			imageList[texturecount].load(fullpath.c_str());
-			textureList[texturecount].CreateTexture(render,srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, imageList[texturecount].mWidth, imageList[texturecount].mHeight);
+			textureList[texturecount].CreateTexture(render,srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, imageList[texturecount].mWidth, imageList[texturecount].mHeight,1,8);
 		//	textureList[texturecount].addSahderResorceView(srvheap);
 			mat.mChoose[MATERIALMAP_INDEX_ROUGHNESS] = 0.0;
 			mat.mTextureIndex[MATERIALMAP_INDEX_ROUGHNESS] = texturecount + 1;// always +1 since 0 is default
+			linearindex.push_back(texturecount);
 			++texturecount;
 		}
 
@@ -717,10 +722,11 @@ void loadAsset()
 			string fullpath = Path + string(tex.C_Str());
 			//			cout << fullpath << endl;
 			imageList[texturecount].load(fullpath.c_str());
-			textureList[texturecount].CreateTexture(render,srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, imageList[texturecount].mWidth, imageList[texturecount].mHeight);
+			textureList[texturecount].CreateTexture(render,srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, imageList[texturecount].mWidth, imageList[texturecount].mHeight,1,8);
 	//		textureList[texturecount].addSahderResorceView(srvheap);
 			mat.mChoose[MATERIALMAP_INDEX_METALIC] = 0.0;
 			mat.mTextureIndex[MATERIALMAP_INDEX_METALIC] = texturecount + 1;// always +1 since 0 is default
+			linearindex.push_back(texturecount);
 			++texturecount;
 		}
 
@@ -810,7 +816,7 @@ void loadAsset()
 
 	for (int i = 0; i < texturecount; ++i)
 	{
-		cmdlist.updateTextureData(textureList[i], imageList[i].mData);
+		cmdlist.updateTextureData(textureList[i], imageList[i].mData,0,1);
 	}
 	for (int i = 0; i < texturecount; ++i)
 	{
@@ -836,6 +842,17 @@ void loadAsset()
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
 	render.waitCommandsDone();
+
+	for (int i = 0; i < diffuseindex.size(); ++i)
+	{
+		render.generateMipMapOffline(textureList[diffuseindex[i]], MIP_MAP_GEN_SRGB_ALPHA_MASK_LINEAR_BOX_CLAMP, 1);
+	}
+
+	for (int i = 0; i < linearindex.size(); ++i)
+	{
+		render.generateMipMapOffline(textureList[linearindex[i]], MIP_MAP_GEN_RGBA_LINEAR_GAUSSIAN_CLAMP, 1);
+	}
+	//linearindex
 	pre = std::chrono::high_resolution_clock::now();
 }
 
@@ -876,7 +893,7 @@ void releaseRender()
 	rtvheap.release();
 	dsvheap.release();
 	samplerheap.release();
-	for (int i = 0; i < textureList.size(); ++i)
+	for (int i = 0; i < texturecount; ++i)
 		textureList[i].release();
 	DefualtTexture.release();
 	GeoDrawPipeline.release();

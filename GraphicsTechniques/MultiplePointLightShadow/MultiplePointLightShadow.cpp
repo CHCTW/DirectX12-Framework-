@@ -710,8 +710,8 @@ void loadAsset()
 	imageList.resize(maxtexturecount);
 
 
-	DefualtTexture.CreateTexture(render.mDevice, DXGI_FORMAT_R8G8B8A8_UNORM, 1, 1);
-	DefualtTexture.addSahderResorceView(srvheap);
+	DefualtTexture.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, 1, 1);
+	//DefualtTexture.addSahderResorceView(srvheap);
 	//++texturecount;
 	char defaultnormal[4];
 	defaultnormal[0] = 127;

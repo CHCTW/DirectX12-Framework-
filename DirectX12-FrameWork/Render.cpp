@@ -4,7 +4,7 @@
 #include <string>
 #include <algorithm>
 //WCHAR* downSampleShader = "";
-
+#define MipMapChainBLockSize 16u
 
 
 
@@ -95,16 +95,13 @@ bool Render::initialize()
 
 	// create pipelien for generate  mipmpaps
 	
-	mMipmapsig.mParameters.resize(3);
+	mMipmapsig.mParameters.resize(2);
 	mMipmapsig.mParameters[0].mType = PARAMETERTYPE_ROOTCONSTANT; // mips level
 	mMipmapsig.mParameters[0].mBindSlot = 0;
 	mMipmapsig.mParameters[0].mResCounts = 2;
-	mMipmapsig.mParameters[1].mType = PARAMETERTYPE_SRV; // input
+	mMipmapsig.mParameters[1].mType = PARAMETERTYPE_UAV; // input+ouput, both uav state
 	mMipmapsig.mParameters[1].mBindSlot = 0;
-	mMipmapsig.mParameters[1].mResCounts = 1;
-	mMipmapsig.mParameters[2].mType = PARAMETERTYPE_UAV; // ouput
-	mMipmapsig.mParameters[2].mBindSlot = 0;
-	mMipmapsig.mParameters[2].mResCounts = 1;
+	mMipmapsig.mParameters[1].mResCounts = 2;
 	mMipmapsig.initialize(this->mDevice);
 
 	std::string shaderpath("Shaders/DirectX12-Framework/");
@@ -189,7 +186,7 @@ void Render::release()
 
 	for (int i = 0; i < MIP_MAP_GEN_COUNT; ++i)
 	{
-		mMipmapPipelines->release();
+		mMipmapPipelines[i].release();
 	}
 	mMipmapsig.realease();
 
@@ -250,11 +247,11 @@ bool Render::present()
 	return true;
 }
 
-void Render::generateMipMapOffline(Texture& texture, Mip_Map_Generate_Type type, UINT baselevel, UINT gentolevel)
+void Render::generateMipMapOffline(Texture& texture, Mip_Map_Generate_Type type, UINT genstartlevel, UINT genendlevel)
 {
 
 	
-	unsigned int levelto = min(gentolevel, texture.textureDesc.MipLevels-1);
+	unsigned int levelto = min(genendlevel, texture.textureDesc.MipLevels-1);
 	DescriptorHeap tempHeaps;
 	tempHeaps.ininitialize(this->mDevice, 1); // a temp descriptor heap
 	CommandAllocator cmdalloc;
@@ -275,26 +272,29 @@ void Render::generateMipMapOffline(Texture& texture, Mip_Map_Generate_Type type,
 		} srcslice;
 		gentexture.CreateTexture(*this, tempHeaps, texture.mFormat, texture.textureDesc.Width, texture.textureDesc.Height, texture.textureDesc.DepthOrArraySize, texture.textureDesc.MipLevels, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_SRV_UAV, TEXTURE_ALL_MIPS_USE_UAV);
 		cmdalloc.reset();
-		cmdlist.reset(mMipmapPipelines[MIP_MAP_GEN_SRGB_A_BOX_CLAMP]);
+		cmdlist.reset(mMipmapPipelines[type]);
 		// copy data;
+		cmdlist.bindDescriptorHeaps(&tempHeaps);
 		cmdlist.resourceTransition(texture, D3D12_RESOURCE_STATE_COPY_SOURCE);
 		cmdlist.resourceTransition(gentexture, D3D12_RESOURCE_STATE_COPY_DEST,true);
 		cmdlist.copyResource(texture, gentexture);
+		cmdlist.resourceTransition(gentexture, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, true);
+
 		cmdlist.bindComputeRootSigature(mMipmapsig, false);
-		for (srcslice.miplevel = baselevel; srcslice.miplevel < levelto; ++srcslice.miplevel)
+		for (srcslice.miplevel = genstartlevel; srcslice.miplevel <= levelto; ++srcslice.miplevel)
 		{
-			for (srcslice.slicenum = 0; srcslice.slicenum < texture.textureDesc.DepthOrArraySize; ++srcslice.slicenum)// for each mip level ,we set all resource to srv and uav state
-			{
-				cmdlist.resourceTransition(gentexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, srcslice.slicenum*texture.textureDesc.MipLevels +baselevel);
-				cmdlist.resourceTransition(gentexture, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, srcslice.slicenum*texture.textureDesc.MipLevels + baselevel + 1);
-			}
+		
 			cmdlist.setBarrier();
-			cmdlist.bindComputeResource(1, gentexture, srcslice.miplevel);
-			cmdlist.bindComputeResource(2, gentexture, srcslice.miplevel+1);
+			cmdlist.bindComputeResource(1, gentexture, srcslice.miplevel-1);// bind miplevel-1 and miplevel, miplevel-1 is src texture, miplevel is desttexture
+			unsigned int width = gentexture.mLayouts[srcslice.miplevel].Footprint.Width; // since each slice should have the same format, can always take the first slice
+			unsigned int height = gentexture.mLayouts[srcslice.miplevel].Footprint.Height;
 			for (srcslice.slicenum = 0; srcslice.slicenum < texture.textureDesc.DepthOrArraySize; ++srcslice.slicenum)
 			{
 				cmdlist.bindComputeConstant(0, &srcslice);
+				cmdlist.dispatch((width + MipMapChainBLockSize - 1) / MipMapChainBLockSize, (height + MipMapChainBLockSize - 1) / MipMapChainBLockSize, 1);
+
 			}
+			cmdlist.UAVWait(gentexture, true); // wait for current mip level finish writing
 		}
 		cmdlist.resourceTransition(gentexture, D3D12_RESOURCE_STATE_COPY_SOURCE);
 		cmdlist.resourceTransition(texture, D3D12_RESOURCE_STATE_COPY_DEST, true);

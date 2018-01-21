@@ -4,7 +4,7 @@
 #include <iostream>
 #include <PerlinNoise/PerlinNoise.hpp>
 using namespace std;
-void QuadPatch::generatePatch(float width, float height, unsigned int widthres, unsigned int heightres, IndexGenerateMode indexmode,YGenerateMode mode, unsigned int seed, float xfreqency, float yfreqency, unsigned int scale)
+void QuadPatch::generatePatch(float width, float height, unsigned int widthres, unsigned int heightres, IndexGenerateMode indexmode,YGenerateMode mode, unsigned int seed, float xfreqency, float yfreqency, unsigned int scale,float uscale,float vscale)
 {
 	if (width <= 0 || height <= 0 || widthres == 0 || heightres == 0)
 	{
@@ -41,7 +41,7 @@ void QuadPatch::generatePatch(float width, float height, unsigned int widthres, 
 				mNormal.push_back(normal[k]);
 				mTangent.push_back(tangent[k]);
 			}
-			glm::vec2 uv((float)i / widthres, (float)j / heightres);
+			glm::vec2 uv((float)i / widthres*uscale, (float)j / heightres*vscale);
 		//	cout << uv.x << endl;
 			for (int k = 0; k < 2; ++k)
 				mUV.push_back(uv[k]);

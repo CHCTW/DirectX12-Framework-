@@ -49,7 +49,19 @@ void CommandList::bindPipeline(Pipeline& pipeline)
 //	else
 //		res.mState[subresource] = stataf;
 //}
+void CommandList::UAVWait(Resource& res, bool barrier)
+{
+	D3D12_RESOURCE_BARRIER wait;
+	wait.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+	wait.UAV.pResource = res.mResource;
+	wait.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	mAccuBarriers.push_back(wait); // add to current
+	if (barrier) // if set barrier
+	{
+		setBarrier();
+	}
 
+}
 void CommandList::resourceTransition(Resource& res, D3D12_RESOURCE_STATES stataf, bool barrier, UINT subresource,D3D12_RESOURCE_BARRIER_FLAGS flags)
 {
 	if (subresource == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)

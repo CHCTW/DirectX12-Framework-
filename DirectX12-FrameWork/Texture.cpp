@@ -572,10 +572,10 @@ void Texture::CreateTexture(Render& render, DescriptorHeap& srvuavheap, DXGI_FOR
 
 
 	render.mDevice->GetCopyableFootprints(&textureDesc, 0, textureDesc.DepthOrArraySize*textureDesc.MipLevels, 0, mLayouts, nullptr, nullptr, &uploadBufferSize);
-	for (int i = 0; i < totalsub; ++i)
-	{
-		cout << mLayouts[i].Offset << "   " << mLayouts[i].Footprint.Width << "   " << mLayouts[i].Footprint.Height << "   " << mLayouts[i].Footprint.RowPitch << endl;
-	}
+	//for (int i = 0; i < totalsub; ++i)
+	//{
+	//	cout << mLayouts[i].Offset << "   " << mLayouts[i].Footprint.Width << "   " << mLayouts[i].Footprint.Height << "   " << mLayouts[i].Footprint.RowPitch << endl;
+	//}
 	//	textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 	CD3DX12_RESOURCE_DESC textdesc = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
 

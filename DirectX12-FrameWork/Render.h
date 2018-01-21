@@ -28,7 +28,7 @@ public:
 	void executeCommands(CommandList *cmds, UINT counts = 1);
 	void waitCommandsDone();
 	// when genlevels = -1, means generate to the end of the level in texture, this should only use for offline
-	void generateMipMapOffline(Texture& texture, Mip_Map_Generate_Type type, UINT start = 0,UINT gentolevel = -1);
+	void generateMipMapOffline(Texture& texture, Mip_Map_Generate_Type type,UINT genstartlevel = 1, UINT genendlevelnum = -1);
 	bool present();
 	
 	UINT mSwapChainAccout;

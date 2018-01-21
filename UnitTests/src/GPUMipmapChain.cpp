@@ -160,13 +160,13 @@ void initializeRender()
 
 	rootsig.initialize(render.mDevice);
 
-	shaderset.shaders[VS].load("Shaders/DisplacementMap.hlsl", "VSMain", VS);
-	shaderset.shaders[PS].load("Shaders/DisplacementMap.hlsl", "PSMain", PS);
-	shaderset.shaders[HS].load("Shaders/DisplacementMap.hlsl", "HSMain", HS);
-	shaderset.shaders[DS].load("Shaders/DisplacementMap.hlsl", "DSMain", DS);
+	shaderset.shaders[VS].load("Shaders/GPUMipmapChain.hlsl", "VSMain", VS);
+	shaderset.shaders[PS].load("Shaders/GPUMipmapChain.hlsl", "PSMain", PS);
+	//shaderset.shaders[HS].load("Shaders/GPUMipmapChain.hlsl", "HSMain", HS);
+	//shaderset.shaders[DS].load("Shaders/GPUMipmapChain.hlsl", "DSMain", DS);
 
-	pipeline.createGraphicsPipeline(render.mDevice, rootsig, shaderset, retformat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(D3D12_CULL_MODE_BACK, D3D12_FILL_MODE_SOLID), VERTEX_LAYOUT_TYPE_SPLIT_ALL, D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH);
-	wirepipeline.createGraphicsPipeline(render.mDevice, rootsig, shaderset, retformat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(D3D12_CULL_MODE_BACK, D3D12_FILL_MODE_WIREFRAME), VERTEX_LAYOUT_TYPE_SPLIT_ALL, D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH);
+	pipeline.createGraphicsPipeline(render.mDevice, rootsig, shaderset, retformat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(D3D12_CULL_MODE_FRONT, D3D12_FILL_MODE_SOLID), VERTEX_LAYOUT_TYPE_SPLIT_ALL, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
+	wirepipeline.createGraphicsPipeline(render.mDevice, rootsig, shaderset, retformat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(D3D12_CULL_MODE_FRONT, D3D12_FILL_MODE_WIREFRAME), VERTEX_LAYOUT_TYPE_SPLIT_ALL, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
 
 	viewport.setup(0.0f, 0.0f, (float)windows.mWidth, (float)windows.mHeight);
 	scissor.setup(0, windows.mWidth, 0, windows.mHeight);
@@ -187,8 +187,8 @@ void loadAsset()
 	/****************Continuous regist to heap, usig array of texture here***************/
 
 	Image blockbasecolor;
-	blockbasecolor.load("Assets/Textures/mossy_wall_hor_tile_Base_Color.jpg",5);
-	blockbase.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, blockbasecolor.mWidth, blockbasecolor.mHeight,1,5);
+	blockbasecolor.load("Assets/Textures/VasePlant_diffuse.tga");
+	blockbase.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, blockbasecolor.mWidth, blockbasecolor.mHeight,1,8);
 	//blockbase.addSahderResorceView(srvheap);
 
 	Image blockn;
@@ -199,12 +199,12 @@ void loadAsset()
 
 	Image blockh;
 	blockh.load("Assets/Textures/mossy_wall_hor_tile_Height.jpg");
-	blockheight.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, blockn.mWidth, blockn.mHeight);
+	blockheight.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, blockn.mWidth, blockn.mHeight,1,5);
 	//	blockheight.addSahderResorceView(srvheap);
 
 	Image blockr;
 	blockr.load("Assets/Textures/mossy_wall_hor_tile_Glossiness.jpg");
-	blockrough.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, blockn.mWidth, blockn.mHeight);
+	blockrough.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, blockn.mWidth, blockn.mHeight,1,5);
 	//	blockrough.addSahderResorceView(srvheap);
 
 
@@ -229,7 +229,7 @@ void loadAsset()
 
 
 
-	patch.generatePatch(50, 50, 20, 20, Triangle, ZERO, 0, 3, 3, 5);
+	patch.generatePatch(500, 500, 20, 20, Triangle, ZERO, 0, 3, 3, 5,5.0,10.0);
 	Ground.mVertexBufferData.createVertexBuffer(render.mDevice, patch.mPosition.size() * sizeof(float), sizeof(float) * 3);
 	Ground.mNormalBuffer.createVertexBuffer(render.mDevice, patch.mNormal.size() * sizeof(float), sizeof(float) * 3);
 	Ground.mUVBuffer.createVertexBuffer(render.mDevice, patch.mUV.size() * sizeof(float), sizeof(float) * 2);
@@ -363,10 +363,10 @@ void loadAsset()
 
 
 
-	cmdlist.updateTextureData(blockbase, blockbasecolor.mData,0,5);
+	cmdlist.updateTextureData(blockbase, blockbasecolor.mData,0,1);
 	cmdlist.updateTextureData(blocknormal, blockn.mData);
-	cmdlist.updateTextureData(blockheight, blockh.mData);
-	cmdlist.updateTextureData(blockrough, blockr.mData);
+	cmdlist.updateTextureData(blockheight, blockh.mData,0,1);
+	cmdlist.updateTextureData(blockrough, blockr.mData,0,1);
 
 
 	cmdlist.resourceTransition(blockbase, D3D12_RESOURCE_STATE_GENERIC_READ);
@@ -398,16 +398,10 @@ void loadAsset()
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
 	render.waitCommandsDone();
-	/*const UINT64 fenval = fence.fenceValue;
-	render.mCommandQueue->Signal(fence.mDx12Fence, fenval);
-	fence.fenceValue++;
 
-	if (fence.mDx12Fence->GetCompletedValue() < fenval)
-	{
-	fence.mDx12Fence->SetEventOnCompletion(fenval, fenceEvet);
-	WaitForSingleObject(fenceEvet, INFINITE);
-	}*/
-	//	import.FreeScene();
+	render.generateMipMapOffline(blockbase, MIP_MAP_GEN_SRGB_ALPHA_MASK_LINEAR_BOX_CLAMP, 1);
+	render.generateMipMapOffline(blockheight, MIP_MAP_GEN_RGBA_LINEAR_GAUSSIAN_CLAMP, 1);
+	render.generateMipMapOffline(blockrough, MIP_MAP_GEN_RGBA_LINEAR_GAUSSIAN_CLAMP, 1);
 }
 
 void releaseRender()
@@ -513,20 +507,11 @@ void onrender()
 	const float clearColor[] = { 0.0f, 0.1f, 0.3f, 1.0f };
 	cmdlist.clearRenderTarget(render.mSwapChainRenderTarget[frameIndex], clearColor);
 	cmdlist.clearDepthStencil(depthBuffer[frameIndex]);
-	cmdlist.setTopolgy(D3D_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST);
+	cmdlist.setTopolgy(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 
 
 	cmdlist.bindGraphicsResource(1, Sphere.mInstancedBuffer);
-
-	/*cmdlist.bindIndexBuffer(testMesh.mIndexBuffer);
-	cmdlist.bindVertexBuffers(testMesh.mPositionBuffer, testMesh.mNormalBuffer, testMesh.mUVBuffer, testMesh.mTangentBuffer);*/
-
-	cmdlist.bindIndexBuffer(Sphere.mIndexBuffer);
-	cmdlist.bindVertexBuffers(Sphere.mVertexBufferData, Sphere.mNormalBuffer, Sphere.mUVBuffer, Sphere.mTangentBuffer);
-	cmdlist.drawIndexedInstanced(Sphere.indexCount, Sphere.mNum, 0, 0);
-
-
 	cmdlist.bindGraphicsResource(1, Ground.mInstancedBuffer);
 	cmdlist.bindIndexBuffer(Ground.mIndexBuffer);
 	cmdlist.bindVertexBuffers(Ground.mVertexBufferData, Ground.mNormalBuffer, Ground.mUVBuffer, Ground.mTangentBuffer);
