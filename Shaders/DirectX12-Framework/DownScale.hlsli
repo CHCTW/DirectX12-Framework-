@@ -11,7 +11,7 @@ data type:
 #define SRGB_ALPHA_MASK // 4 channel
 #define SRGB_ALPHA_TRANSPARENCY // 4 channel
 #define R_LINEAR // 1 channel not rgba data
-#define RGBA_NORMAL_VECTOR // 4 channel
+#define RGBA_NORMAL // 4 channel
 #define RGBA_LINEAR // can use in hdr mode or other....
 
 filter type:
@@ -39,7 +39,7 @@ cbuffer mipdata : register(b0)
     uint SrcMipLevel; // Texture level of source mip
 }
 
-//#define SRGB_ALPHA_MASK     // temporary for test
+//#define RGBA_NORMAL     // temporary for test
 //#define GAUSSIAN_FILTER  // temporary for test, the very basic way to down scale
 //#define CLAMP
 
@@ -48,7 +48,7 @@ cbuffer mipdata : register(b0)
 
 
 
-#if defined(SRGB_ALPHA_MASK)||defined(SRGB_A)||defined(RGBA_LINEAR)||defined(SRGB_ALPHA_TRANSPARENCY)||defined(RGBA_NORMAL_VECTOR) 
+#if defined(SRGB_ALPHA_MASK)||defined(SRGB_A)||defined(RGBA_LINEAR)||defined(SRGB_ALPHA_TRANSPARENCY)||defined(RGBA_NORMAL) 
 RWTexture2DArray<float4> SrcTexture : register(u0);
 RWTexture2DArray<float4> DesTexture : register(u1);
 
@@ -108,6 +108,19 @@ void boxfilterandwrite(float4 data[4],uint2 pos) // we decide how to dealing wit
         result += data[i];
     }
     result *= 0.25;
+    DesTexture[uint3(pos,SrcSliceNum)] = result;
+#endif
+
+
+#if defined(RGBA_NORMAL)
+    [unroll]
+    for (uint i = 0; i < 4; ++i)  // move rgb sapce to linear space
+    {
+        result += (data[i] * 2.0 - 1.0);
+    }
+    result *= 0.25;
+    result.xyz = normalize(result.xyz);
+    result.xyz = result.xyz * 0.5f + 0.5f;
     DesTexture[uint3(pos,SrcSliceNum)] = result;
 #endif
 
@@ -176,6 +189,21 @@ void gaussianfilterandwrite(float4 data[5][5], uint2 pos)
     result *= totalinv;
     DesTexture[uint3(pos, SrcSliceNum)] = result;
 #endif
+
+#if defined(RGBA_NORMAL)
+    for (int u = 0; u < 5; ++u)
+    {
+        for (int v = 0; v < 5; ++v)
+        {
+            result += (data[u][v] * 2.0 - 1.0) * gaussweight[u][v];
+            
+        }
+    }
+    result *= totalinv;
+    result.xyz = normalize(result.xyz);
+    result.xyz = result.xyz * 0.5f + 0.5f;
+    DesTexture[uint3(pos, SrcSliceNum)] = result;
+#endif
 }
 
 
@@ -224,7 +252,7 @@ void CSMain(uint gid : SV_GroupIndex, uint3 tid : SV_DispatchThreadID) // tid is
 #ifdef BOX_FILTER
 
 
-#if defined(SRGB_ALPHA_MASK)||defined(SRGB_A)||defined(RGBA_LINEAR)||defined(SRGB_ALPHA_TRANSPARENCY)||defined(RGBA_NORMAL_VECTOR)// all 4 channel data
+#if defined(SRGB_ALPHA_MASK)||defined(SRGB_A)||defined(RGBA_LINEAR)||defined(SRGB_ALPHA_TRANSPARENCY)||defined(RGBA_NORMAL)// all 4 channel data
     float4 data[4];
     SrcTexture.GetDimensions(dim.x, dim.y, dim.z);
 #endif
@@ -239,7 +267,7 @@ void CSMain(uint gid : SV_GroupIndex, uint3 tid : SV_DispatchThreadID) // tid is
 
 
 #ifdef GAUSSIAN_FILTER
-#if defined(SRGB_ALPHA_MASK)||defined(SRGB_A)||defined(RGBA_LINEAR)||defined(SRGB_ALPHA_TRANSPARENCY)||defined(RGBA_NORMAL_VECTOR)// all 4 channel data
+#if defined(SRGB_ALPHA_MASK)||defined(SRGB_A)||defined(RGBA_LINEAR)||defined(SRGB_ALPHA_TRANSPARENCY)||defined(RGBA_NORMAL)// all 4 channel data
     float4 data[5][5];
     SrcTexture.GetDimensions(dim.x, dim.y, dim.z);
 #endif

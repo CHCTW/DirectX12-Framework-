@@ -90,7 +90,7 @@ QuadPatch patch;
 
 Texture blockbase;
 Texture blocknormal;
-Texture blockheight;
+Texture blockmetal;
 Texture blockrough;
 float heightscale = 1.0f;
 bool wire = false;
@@ -187,24 +187,24 @@ void loadAsset()
 	/****************Continuous regist to heap, usig array of texture here***************/
 
 	Image blockbasecolor;
-	blockbasecolor.load("Assets/Textures/VasePlant_diffuse.tga");
+	blockbasecolor.load("Assets/Textures/Sponza_Curtain_Red_diffuse.tga");
 	blockbase.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, blockbasecolor.mWidth, blockbasecolor.mHeight,1,8);
 	//blockbase.addSahderResorceView(srvheap);
 
 	Image blockn;
-	blockn.load("Assets/Textures/mossy_wall_hor_tile_Normal.jpg");
-	blocknormal.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, blockn.mWidth, blockn.mHeight);
+	blockn.load("Assets/Textures/Sponza_Curtain_Red_normal.tga");
+	blocknormal.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, blockn.mWidth, blockn.mHeight,1,8);
 	//blocknormal.addSahderResorceView(srvheap);
 
 
 	Image blockh;
-	blockh.load("Assets/Textures/mossy_wall_hor_tile_Height.jpg");
-	blockheight.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, blockn.mWidth, blockn.mHeight,1,5);
-	//	blockheight.addSahderResorceView(srvheap);
+	blockh.load("Assets/Textures/Sponza_Curtain_metallic.tga");
+	blockmetal.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, blockn.mWidth, blockn.mHeight,1,8);
+	//	blockmetal.addSahderResorceView(srvheap);
 
 	Image blockr;
-	blockr.load("Assets/Textures/mossy_wall_hor_tile_Glossiness.jpg");
-	blockrough.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, blockn.mWidth, blockn.mHeight,1,5);
+	blockr.load("Assets/Textures/Sponza_Curtain_roughness.tga");
+	blockrough.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, blockn.mWidth, blockn.mHeight,1,8);
 	//	blockrough.addSahderResorceView(srvheap);
 
 
@@ -220,16 +220,17 @@ void loadAsset()
 	lightBuffer.createConstantBuffer(render.mDevice, srvheap, sizeof(SpotLightData));
 	lightBuffer.maptoCpu();
 
-	light.setRadius(100);
+	light.setRadius(1500);
+	light.setIntensity(15000);
 	light.setColor(1, 1, 1);
-	light.setConeAngle(45);
-	light.addZoom(10);
+	light.setConeAngle(90);
+	light.addZoom(50);
 	light.addAngle(0, 90);
 
 
 
 
-	patch.generatePatch(500, 500, 20, 20, Triangle, ZERO, 0, 3, 3, 5,5.0,10.0);
+	patch.generatePatch(500, 500, 20, 20, Triangle, ZERO, 0, 3, 3, 5,10.0,10.0);
 	Ground.mVertexBufferData.createVertexBuffer(render.mDevice, patch.mPosition.size() * sizeof(float), sizeof(float) * 3);
 	Ground.mNormalBuffer.createVertexBuffer(render.mDevice, patch.mNormal.size() * sizeof(float), sizeof(float) * 3);
 	Ground.mUVBuffer.createVertexBuffer(render.mDevice, patch.mUV.size() * sizeof(float), sizeof(float) * 2);
@@ -338,7 +339,7 @@ void loadAsset()
 	cmdlist.resourceTransition(blockbase, D3D12_RESOURCE_STATE_COPY_DEST);
 	cmdlist.resourceTransition(blocknormal, D3D12_RESOURCE_STATE_COPY_DEST);
 
-	cmdlist.resourceTransition(blockheight, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(blockmetal, D3D12_RESOURCE_STATE_COPY_DEST);
 	cmdlist.resourceTransition(blockrough, D3D12_RESOURCE_STATE_COPY_DEST, true);
 
 	cmdlist.updateBufferData(Sphere.mVertexBufferData, mesh->mVertices, mesh->mNumVertices * 3 * sizeof(float));
@@ -364,14 +365,14 @@ void loadAsset()
 
 
 	cmdlist.updateTextureData(blockbase, blockbasecolor.mData,0,1);
-	cmdlist.updateTextureData(blocknormal, blockn.mData);
-	cmdlist.updateTextureData(blockheight, blockh.mData,0,1);
+	cmdlist.updateTextureData(blocknormal, blockn.mData,0,1);
+	cmdlist.updateTextureData(blockmetal, blockh.mData,0,1);
 	cmdlist.updateTextureData(blockrough, blockr.mData,0,1);
 
 
 	cmdlist.resourceTransition(blockbase, D3D12_RESOURCE_STATE_GENERIC_READ);
 	cmdlist.resourceTransition(blocknormal, D3D12_RESOURCE_STATE_GENERIC_READ);
-	cmdlist.resourceTransition(blockheight, D3D12_RESOURCE_STATE_GENERIC_READ);
+	cmdlist.resourceTransition(blockmetal, D3D12_RESOURCE_STATE_GENERIC_READ);
 	cmdlist.resourceTransition(blockrough, D3D12_RESOURCE_STATE_GENERIC_READ);
 
 
@@ -399,9 +400,10 @@ void loadAsset()
 	render.executeCommands(&cmdlist);
 	render.waitCommandsDone();
 
-	render.generateMipMapOffline(blockbase, MIP_MAP_GEN_SRGB_ALPHA_MASK_LINEAR_BOX_CLAMP, 1);
-	render.generateMipMapOffline(blockheight, MIP_MAP_GEN_RGBA_LINEAR_GAUSSIAN_CLAMP, 1);
+	render.generateMipMapOffline(blockbase, MIP_MAP_GEN_SRGB_ALPHA_MASK_LINEAR_GAUSSIAN_CLAMP, 1);
+	render.generateMipMapOffline(blockmetal, MIP_MAP_GEN_RGBA_LINEAR_GAUSSIAN_CLAMP, 1);
 	render.generateMipMapOffline(blockrough, MIP_MAP_GEN_RGBA_LINEAR_GAUSSIAN_CLAMP, 1);
+	render.generateMipMapOffline(blocknormal, MIP_MAP_GEN_RGBA_NORMAL_BOX_CLAMP, 1);
 }
 
 void releaseRender()
@@ -412,7 +414,7 @@ void releaseRender()
 	samplerheap.release();
 	blocknormal.release();
 	blockbase.release();
-	blockheight.release();
+	blockmetal.release();
 	blockrough.release();
 
 

@@ -107,7 +107,7 @@ float4 PSMain(VSOutput input) : SV_TARGET
 {
 
 
-    float3 normaltext = blockbase[1].SampleLevel(loopsample, input.uv,0)*2.0-1.0;
+    float3 normaltext = normalize(blockbase[1].Sample(loopsample, input.uv) * 2.0 - 1.0);
     float3 normalobject = normalize(input.normal);
     float3 tan = normalize(input.tangent);
     float3 bitan = cross(tan,normalobject);
@@ -117,15 +117,15 @@ float4 PSMain(VSOutput input) : SV_TARGET
         float3 normal = normaltext.x * tan + normaltext.y * bitan + normaltext.z * normalobject;
 
         float roughness = blockbase[3].Sample(loopsample, input.uv).r;
-        float metallic = 0.0;
+    float metallic = blockbase[1].Sample(loopsample, input.uv).r;
 
 
         float3 albedo = pow(blockbase[0].Sample(loopsample, input.uv), 2.2);
-    if (blockbase[0].Sample(loopsample, input.uv).w==0.0f)
-        discard;
+    //if (blockbase[0].Sample(loopsample, input.uv).w==0.0f)
+    //    discard;
         float ao = 1.0f;
         
-        return float4(albedo, 0.0f);
+   // return float4(normal, 0.0f);
         
     
 
@@ -167,7 +167,7 @@ float4 PSMain(VSOutput input) : SV_TARGET
         float ta = saturate(angle - lightconeangle) / (1.0 - lightconeangle);
 
         float t = pow(dist / lightradius, 4);
-        float att = saturate(pow(1 - t, 2)) / (dist * dist + 1)*ta;
+        float att = saturate(pow(1 - t, 2)) / (dist * dist + 1);
         float3 ambient = float3(0.0005f, 0.0005, 0.0005) * albedo * float3(ao, ao, ao);
 
         float3 final = ambient + (diff + spec) * NL * lightcolor.xyz * att * lightintensity;

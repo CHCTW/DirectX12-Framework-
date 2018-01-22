@@ -222,5 +222,11 @@
     <FxCompile Include="..\Shaders\DirectX12-Framework\DownScale_Srgb_Alpha_Mask_Gaussian_Clamp.hlsl">
       <Filter>Render\Shader</Filter>
     </FxCompile>
+    <FxCompile Include="..\Shaders\DirectX12-Framework\DownScale_Rgba_Normal_Box_Clamp.hlsl">
+      <Filter>Render\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Shaders\DirectX12-Framework\DownScale_Rgba_Normal_Gaussian_Clamp.hlsl">
+      <Filter>Render\Shader</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
