@@ -2,9 +2,6 @@
 A framework for learning DirectX12 and demonstrate graphics techniques 
 ![image](https://user-images.githubusercontent.com/30221942/34930601-1682d296-f97f-11e7-9211-8c52055a1d42.png)
 
-
-## All Unitest and Graphic Techniques pojects files working space is incorrect. Right click the project file and select properties.Click Debugging and find Working Directory area. Change it to $(SolutionDir) .
-
 ## The framework sperate into sveral parts:
 
 ### 1. Unit Tests: This part has a lot of little projects to test or demostrate the basic funcionality of this framework. The contents are:
