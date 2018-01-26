@@ -24,7 +24,7 @@
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\..\Shaders\StructerBuffer.hlsl">
-      <Filter>Source Files</Filter>
+      <Filter>Shader</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

@@ -36,7 +36,7 @@ void initializeRender()
 	cmdalloc.initialize(render.mDevice);
 	cmdlist.initial(render.mDevice, cmdalloc);
 
-	fence.initialize(render.mDevice);
+	fence.initialize(render);
 
 	fence.fenceValue = 1;
 
@@ -55,7 +55,7 @@ void initializeRender()
 
 
 
-	texture.CreateTexture(render.mDevice, DXGI_FORMAT_R8G8B8A8_UNORM, TextureWidth, TextureHeight);
+	texture.CreateTexture(render,srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, TextureWidth, TextureHeight);
 	texture.addSahderResorceView(srvheap);
 	rootsig.mParameters.resize(2);
 	rootsig.mParameters[0].mType = PARAMETERTYPE_SRV;
@@ -141,15 +141,8 @@ void loadAsset()
 	cmdlist.resourceTransition(indexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER,true);
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
-	const UINT64 fenval = fence.fenceValue;
-	render.mCommandQueue->Signal(fence.mDx12Fence, fenval);
-	fence.fenceValue++;
-
-	if (fence.mDx12Fence->GetCompletedValue() < fenval)
-	{
-		fence.mDx12Fence->SetEventOnCompletion(fenval, fenceEvet);
-		WaitForSingleObject(fenceEvet, INFINITE);
-	}
+	render.insertSignalFence(fence);
+	render.waitFence(fence);
 }
 
 void releaseRender()
@@ -191,17 +184,8 @@ void update()
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
 	render.present();
-
-
-	const UINT64 fenval = fence.fenceValue;
-	render.mCommandQueue->Signal(fence.mDx12Fence, fenval);
-	fence.fenceValue++;
-
-	if (fence.mDx12Fence->GetCompletedValue() < fenval)
-	{
-		fence.mDx12Fence->SetEventOnCompletion(fenval, fenceEvet);
-		WaitForSingleObject(fenceEvet, INFINITE);
-	}
+	render.insertSignalFence(fence);
+	render.waitFence(fence);
 }
 int main()
 {

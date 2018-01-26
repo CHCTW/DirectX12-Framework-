@@ -35,7 +35,7 @@ DescriptorHeap srvheap;
 DescriptorHeap rtvheap;
 DescriptorHeap dsvheap;
 static uint32_t swapChainCount = 3;
-
+Fence fence;
 ShaderSet shaderset;
 Assimp::Importer import;
 SpecCamera camera;
@@ -166,6 +166,7 @@ void initializeRender()
 	render.initialize();
 	RenderTargetFormat retformat;
 	render.createSwapChain(windows, swapChainCount, retformat.mRenderTargetFormat[0]);
+	fence.initialize(render);
 	cmdalloc.initialize(render.mDevice);
 	cmdlist.initial(render.mDevice, cmdalloc);
 
@@ -843,7 +844,8 @@ void loadAsset()
 
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
-	render.waitCommandsDone();
+	render.insertSignalFence(fence);
+	render.waitFence(fence);
 
 	for (int i = 0; i < diffuseindex.size(); ++i)
 	{
@@ -864,6 +866,7 @@ void loadAsset()
 
 void releaseRender()
 {
+	fence.release();
 	depthDiscRootsig.realease();
 	disconMap.release();
 
@@ -1102,8 +1105,8 @@ void update()
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
 	render.present();
-
-	render.waitCommandsDone();
+	render.insertSignalFence(fence);
+	render.waitFence(fence);
 }
 
 

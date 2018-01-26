@@ -40,9 +40,7 @@ void initializeRender()
 	cmdalloc.initialize(render.mDevice);
 	cmdlist.initial(render.mDevice, cmdalloc);
 
-	fence.initialize(render.mDevice);
-	fence.fenceValue = 1;
-	fenceEvet = CreateEvent(NULL, FALSE, FALSE, NULL);
+	fence.initialize(render);
 
 	srvheap.ininitialize(render.mDevice, 1);
 	rtvheap.ininitialize(render.mDevice, 1, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
@@ -157,23 +155,16 @@ void loadAsset()
 
 
 
-	cmdlist.resourceBarrier(vertexBuffer.mResource, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceBarrier(texture.mResource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(vertexBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist.resourceTransition(texture, D3D12_RESOURCE_STATE_COPY_DEST,true);
 	cmdlist.updateBufferData(vertexBuffer, tridata, 3 * 4 * sizeof(float));
 	cmdlist.updateTextureData(texture, &(data[0]));
-	cmdlist.resourceBarrier(vertexBuffer.mResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceBarrier(texture.mResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	cmdlist.resourceTransition(vertexBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist.resourceTransition(texture, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,true);
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
-	const UINT64 fenval = fence.fenceValue;
-	render.mCommandQueue->Signal(fence.mDx12Fence, fenval);
-	fence.fenceValue++;
-
-	if (fence.mDx12Fence->GetCompletedValue() < fenval)
-	{
-		fence.mDx12Fence->SetEventOnCompletion(fenval, fenceEvet);
-		WaitForSingleObject(fenceEvet, INFINITE);
-	}
+	render.insertSignalFence(fence);
+	render.waitFence(fence);
 }
 
 void releaseRender()
@@ -252,15 +243,8 @@ void update()
 	render.present();
 
 
-	const UINT64 fenval = fence.fenceValue;
-	render.mCommandQueue->Signal(fence.mDx12Fence, fenval);
-	fence.fenceValue++;
-
-	if (fence.mDx12Fence->GetCompletedValue() < fenval)
-	{
-		fence.mDx12Fence->SetEventOnCompletion(fenval, fenceEvet);
-		WaitForSingleObject(fenceEvet, INFINITE);
-	}
+	render.insertSignalFence(fence);
+	render.waitFence(fence);
 }
 int main()
 {

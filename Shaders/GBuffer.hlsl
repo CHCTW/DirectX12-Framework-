@@ -41,11 +41,11 @@ PSInput VSMain(float3 position : POSITION, float3 normal : NORMAL, uint instance
 }
 struct PSOut
 {
-	float4 NorMet : COLOR0;
-	float4 AlbRou : COLOR1;
+    float4 NorMet : SV_Target0;
+    float4 AlbRou : SV_Target1;
 };
 
-PSOut PSMain(PSInput input) : SV_TARGET
+PSOut PSMain(PSInput input)
 {
 	PSOut res;
 	float roughness = instances[input.id].material.roughness;

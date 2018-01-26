@@ -61,9 +61,8 @@ void initializeRender()
 	cmdalloc.initialize(render.mDevice);
 	cmdlist.initial(render.mDevice, cmdalloc);
 
-	fence.initialize(render.mDevice);
-	fence.fenceValue = 1;
-	fenceEvet = CreateEvent(NULL, FALSE, FALSE, NULL);
+	fence.initialize(render);
+
 
 	srvheap.ininitialize(render.mDevice, 1);
 	samplerheap.ininitialize(render.mDevice, 1, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
@@ -198,14 +197,8 @@ void loadAsset()
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
 	const UINT64 fenval = fence.fenceValue;
-	render.mCommandQueue->Signal(fence.mDx12Fence, fenval);
-	fence.fenceValue++;
-
-	if (fence.mDx12Fence->GetCompletedValue() < fenval)
-	{
-		fence.mDx12Fence->SetEventOnCompletion(fenval, fenceEvet);
-		WaitForSingleObject(fenceEvet, INFINITE);
-	}
+	render.insertSignalFence(fence);
+	render.waitFence(fence);
 	//	import.FreeScene();
 	for(int i = 0 ; i< 6 ; i++)
 		stbi_image_free(skyboxdata[i]);
@@ -260,15 +253,8 @@ void update()
 	render.present();
 
 
-	const UINT64 fenval = fence.fenceValue;
-	render.mCommandQueue->Signal(fence.mDx12Fence, fenval);
-	fence.fenceValue++;
-
-	if (fence.mDx12Fence->GetCompletedValue() < fenval)
-	{
-		fence.mDx12Fence->SetEventOnCompletion(fenval, fenceEvet);
-		WaitForSingleObject(fenceEvet, INFINITE);
-	}
+	render.insertSignalFence(fence);
+	render.waitFence(fence);
 }
 
 

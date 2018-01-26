@@ -404,7 +404,7 @@ void loadAsset()
 	cmdlist[0].close();
 	render.executeCommands(&cmdlist[0]);
 	//render.waitCommandsDone();
-	render.insertSignalFenceValue(fences[0]);
+	render.insertSignalFence(fences[0]);
 	render.waitFence(fences[0]);
 
 
@@ -544,7 +544,7 @@ void onrender()
 	render.executeCommands(&cmdlist[frameIndex]);
 	render.present();
 	//render.waitCommandsDone();
-	render.insertSignalFenceValue(fences[frameIndex]); 
+	render.insertSignalFence(fences[frameIndex]); 
 	//render.waitFence(fences[frameIndex]);
 
 

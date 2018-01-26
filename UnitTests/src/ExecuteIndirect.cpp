@@ -349,7 +349,7 @@ void loadAsset()
 	cmdlist[0].resourceTransition(cullIndirectBuffer[2], D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT,true);
 	cmdlist[0].close();
 	render.executeCommands(&cmdlist[0]);
-	render.insertSignalFenceValue(fence[0]);
+	render.insertSignalFence(fence[0]);
 	render.waitFence(fence[0]);
 	//const UINT64 fenval = fence.fenceValue;
 	//render.mCommandQueue->Signal(fence.mDx12Fence, fenval);
@@ -448,7 +448,7 @@ void update()
 	cmdlist[frameIndex].close();
 	render.executeCommands(&cmdlist[frameIndex]);
 	render.present();
-	render.insertSignalFenceValue(fence[frameIndex]);
+	render.insertSignalFence(fence[frameIndex]);
 	render.waitFence(fence[frameIndex]);
 
 	//const UINT64 fenval = fence.fenceValue;

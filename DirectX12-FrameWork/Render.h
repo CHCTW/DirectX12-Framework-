@@ -30,7 +30,7 @@ public:
 	// when genlevels = -1, means generate to the end of the level in texture, this should only use for offline
 	void generateMipMapOffline(Texture& texture, Mip_Map_Generate_Type type,UINT genstartlevel = 1, UINT genendlevelnum = -1);
 	bool present();
-	void insertSignalFenceValue(Fence& fence,CommandType cmdtype = COMMAND_TYPE_GRAPHICS);
+	void insertSignalFence(Fence& fence,CommandType cmdtype = COMMAND_TYPE_GRAPHICS);
 	void waitFence(Fence& fence);
 	UINT mSwapChainAccout;
 	ID3D12Device* mDevice;

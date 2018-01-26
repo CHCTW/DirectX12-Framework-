@@ -95,7 +95,7 @@ bool Mesh::loadMesh(aiMesh* assmesh, Render& render, CommandAllocator& cmdalloc,
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
 	//render.waitCommandsDone();
-	render.insertSignalFenceValue(tempfence);
+	render.insertSignalFence(tempfence);
 	render.waitFence(tempfence);
 	tempfence.release();
 //	if(assmesh->hahasf)

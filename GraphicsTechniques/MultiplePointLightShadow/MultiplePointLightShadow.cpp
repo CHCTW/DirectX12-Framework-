@@ -942,7 +942,7 @@ void loadAsset()
 
 	cmdlist[0].close();
 	render.executeCommands(&cmdlist[0]);
-	render.insertSignalFenceValue(fences[0]);
+	render.insertSignalFence(fences[0]);
 	render.waitFence(fences[0]);
 
 	for (int i = 0; i < diffuseindex.size(); ++i)
@@ -1231,7 +1231,7 @@ void update()
 	render.executeCommands(&cmdlist[frameIndex]);
 	render.present();
 
-	render.insertSignalFenceValue(fences[frameIndex]);
+	render.insertSignalFence(fences[frameIndex]);
 	render.waitFence(fences[frameIndex]);
 }
 

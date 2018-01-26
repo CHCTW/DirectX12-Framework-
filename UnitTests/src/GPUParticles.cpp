@@ -261,7 +261,7 @@ void loadAsset()
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
 
-	render.insertSignalFenceValue(fence);
+	render.insertSignalFence(fence);
 	render.waitFence(fence);
 	InitPar.release();
 
@@ -330,7 +330,7 @@ void update()
 	cmdlist.close();
 
 	render.executeCommands(&cmdlist);
-	render.insertSignalFenceValue(fence);
+	render.insertSignalFence(fence);
 	render.waitFence(fence);
 
 
@@ -405,8 +405,8 @@ void update()
 	render.executeCommands(&cmdlist);
 	///fffff
 	
-	render.insertSignalFenceValue(comfence, COMMAND_TYPE_COMPUTE);
-	render.insertSignalFenceValue(fence);
+	render.insertSignalFence(comfence, COMMAND_TYPE_COMPUTE);
+	render.insertSignalFence(fence);
 	render.waitFence(fence);
 	render.waitFence(comfence);
 
@@ -421,7 +421,7 @@ void update()
 
 	render.present();
 
-	render.insertSignalFenceValue(fence);
+	render.insertSignalFence(fence);
 	render.waitFence(fence);
 
 

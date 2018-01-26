@@ -240,7 +240,7 @@ void Render::executeCommands(CommandList *cmds, UINT counts)
 }
 
 
-void Render::insertSignalFenceValue(Fence& fence, CommandType cmdtype)
+void Render::insertSignalFence(Fence& fence, CommandType cmdtype)
 {
 	mCommandQueue[cmdtype]->Signal(fence.mDx12Fence, fence.fenceValue);
 	fence.insert = true;
@@ -332,7 +332,7 @@ void Render::generateMipMapOffline(Texture& texture, Mip_Map_Generate_Type type,
 		cmdlist.close();
 		this->executeCommands(&cmdlist);
 	//	UINT64 getcurrent = mFence.mDx12Fence->GetCompletedValue();
-		this->insertSignalFenceValue(tempfenses);
+		this->insertSignalFence(tempfenses);
 		this->waitFence(tempfenses);
 		
 	}

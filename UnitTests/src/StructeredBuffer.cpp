@@ -36,11 +36,8 @@ void initializeRender()
 	cmdalloc.initialize(render.mDevice);
 	cmdlist.initial(render.mDevice, cmdalloc);
 
-	fence.initialize(render.mDevice);
+	fence.initialize(render);
 
-	fence.fenceValue = 1;
-
-	fenceEvet = CreateEvent(NULL, FALSE, FALSE, NULL);
 
 	srvheap.ininitialize(render.mDevice, 1);
 	samplerheap.ininitialize(render.mDevice, 1, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
@@ -149,15 +146,8 @@ void loadAsset()
 	cmdlist.resourceTransition(structerBuffer,D3D12_RESOURCE_STATE_GENERIC_READ,true);
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
-	const UINT64 fenval = fence.fenceValue;
-	render.mCommandQueue->Signal(fence.mDx12Fence, fenval);
-	fence.fenceValue++;
-
-	if (fence.mDx12Fence->GetCompletedValue() < fenval)
-	{
-		fence.mDx12Fence->SetEventOnCompletion(fenval, fenceEvet);
-		WaitForSingleObject(fenceEvet, INFINITE);
-	}
+	render.insertSignalFence(fence);
+	render.waitFence(fence);
 }
 
 void releaseRender()
@@ -201,16 +191,8 @@ void update()
 	render.executeCommands(&cmdlist);
 	render.present();
 
-
-	const UINT64 fenval = fence.fenceValue;
-	render.mCommandQueue->Signal(fence.mDx12Fence, fenval);
-	fence.fenceValue++;
-
-	if (fence.mDx12Fence->GetCompletedValue() < fenval)
-	{
-		fence.mDx12Fence->SetEventOnCompletion(fenval, fenceEvet);
-		WaitForSingleObject(fenceEvet, INFINITE);
-	}
+	render.insertSignalFence(fence);
+	render.waitFence(fence);
 }
 int main()
 {

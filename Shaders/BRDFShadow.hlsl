@@ -106,9 +106,10 @@ float ShadowTest(float3 pos)
 	if (shadowcood.w >= 0)
 	{
 
-
+        [unroll]
         for (int y = -2; y <= 2; y++)
         {
+            [unroll]
             for (int x = -2; x <= 2; x++)
             {
                 float lightdepth = ShadowMap.Sample(Sampler, shadowcood.xy + float2(xOffset*x,yOffset*y)).r;
@@ -123,10 +124,10 @@ float ShadowTest(float3 pos)
 
 
 
-				if (pixdepth > ShadowMap.Sample(Sampler, shadowcood.xy).r+0.0001f)
-					return 1.0f;
-				//return ShadowMap.Sample(Sampler, shadowcood.xy / shadowcood.w*0.5f + 0.5f);
-				return 0.0f;
+		//if (pixdepth > ShadowMap.Sample(Sampler, shadowcood.xy).r+0.0001f)
+		//	return 1.0f;
+		////return ShadowMap.Sample(Sampler, shadowcood.xy / shadowcood.w*0.5f + 0.5f);
+		//return 0.0f;
 
 	}
 	return 1.0f;

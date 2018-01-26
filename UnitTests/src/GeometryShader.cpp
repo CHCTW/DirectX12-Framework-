@@ -98,10 +98,8 @@ void initializeRender()
 	cmdalloc.initialize(render.mDevice);
 	cmdlist.initial(render.mDevice, cmdalloc);
 
-	fence.initialize(render.mDevice);
-	fence.fenceValue = 1;
-	fenceEvet = CreateEvent(NULL, FALSE, FALSE, NULL);
-
+	fence.initialize(render);
+	
 	srvheap.ininitialize(render.mDevice, 1);
 
 	depthBuffer.resize(swapChainCount);
@@ -328,15 +326,8 @@ void loadAsset()
 
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
-	const UINT64 fenval = fence.fenceValue;
-	render.mCommandQueue->Signal(fence.mDx12Fence, fenval);
-	fence.fenceValue++;
-
-	if (fence.mDx12Fence->GetCompletedValue() < fenval)
-	{
-		fence.mDx12Fence->SetEventOnCompletion(fenval, fenceEvet);
-		WaitForSingleObject(fenceEvet, INFINITE);
-	}
+	render.insertSignalFence(fence);
+	render.waitFence(fence);
 	//	import.FreeScene();
 
 	pre = std::chrono::high_resolution_clock::now();
@@ -344,7 +335,9 @@ void loadAsset()
 
 void releaseRender()
 {
-
+	depthBuffer[2].release();
+	depthBuffer[1].release();
+	depthBuffer[0].release();
 	Ground.mNormalBuffer.release();
 	Ground.mVertexBufferData.release();
 	Ground.mStructeredBuffer.release();
@@ -461,17 +454,8 @@ void onrender()
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
 	render.present();
-
-
-	const UINT64 fenval = fence.fenceValue;
-	render.mCommandQueue->Signal(fence.mDx12Fence, fenval);
-	fence.fenceValue++;
-
-	if (fence.mDx12Fence->GetCompletedValue() < fenval)
-	{
-		fence.mDx12Fence->SetEventOnCompletion(fenval, fenceEvet);
-		WaitForSingleObject(fenceEvet, INFINITE);
-	}
+	render.insertSignalFence(fence);
+	render.waitFence(fence);
 }
 
 

@@ -116,12 +116,9 @@ void initializeRender()
 
 	cmdalloc.initialize(render.mDevice);
 	cmdlist.initial(render.mDevice, cmdalloc);
+	srvheap.ininitialize(render.mDevice,1);
+	fence.initialize(render);
 
-	fence.initialize(render.mDevice);
-	fence.fenceValue = 1;
-	fenceEvet = CreateEvent(NULL, FALSE, FALSE, NULL);
-
-	srvheap.ininitialize(render.mDevice, 1);
 
 	depthBuffer.resize(swapChainCount);
 	depthBuffer[0].CreateTexture(render, srvheap, retformat.mDepthStencilFormat, windows.mWidth, windows.mHeight, 1, 1, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_DSV);
@@ -403,15 +400,8 @@ void loadAsset()
 
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
-	const UINT64 fenval = fence.fenceValue;
-	render.mCommandQueue->Signal(fence.mDx12Fence, fenval);
-	fence.fenceValue++;
-
-	if (fence.mDx12Fence->GetCompletedValue() < fenval)
-	{
-		fence.mDx12Fence->SetEventOnCompletion(fenval, fenceEvet);
-		WaitForSingleObject(fenceEvet, INFINITE);
-	}
+	render.insertSignalFence(fence);
+	render.waitFence(fence);
 	//	import.FreeScene();
 }
 
@@ -562,16 +552,8 @@ void onrender()
 	render.executeCommands(&cmdlist);
 	render.present();
 
-
-	const UINT64 fenval = fence.fenceValue;
-	render.mCommandQueue->Signal(fence.mDx12Fence, fenval);
-	fence.fenceValue++;
-
-	if (fence.mDx12Fence->GetCompletedValue() < fenval)
-	{
-		fence.mDx12Fence->SetEventOnCompletion(fenval, fenceEvet);
-		WaitForSingleObject(fenceEvet, INFINITE);
-	}
+	render.insertSignalFence(fence);
+	render.waitFence(fence);
 }
 
 
