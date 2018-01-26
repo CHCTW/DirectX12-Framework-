@@ -132,7 +132,7 @@ public:
 	bool updateTextureData(Texture& texture, void  const * data,UINT startlevel = 0,UINT levelnum = -1 , UINT startslice = 0, UINT slicenum = -1);
 	bool updateBufferData(Buffer& buffer, void  const  * data, UINT datasize);
 	bool setCounterforStructeredBuffer(Buffer& buffer, UINT value);
-	D3D12_COMMAND_LIST_TYPE mType;
+	CommandType mType;
 	ID3D12GraphicsCommandList* mDx12CommandList;
 	ID3D12CommandAllocator* mDx12Allocater;
 

@@ -1,13 +1,25 @@
 #include "CommandAllocator.h"
 #include "stdafx.h"
-CommandAllocator::CommandAllocator():mDx12Allocater(NULL), mType(D3D12_COMMAND_LIST_TYPE_DIRECT)
+CommandAllocator::CommandAllocator():mDx12Allocater(NULL)
 {
 
 }
-bool CommandAllocator::initialize(ID3D12Device* device, D3D12_COMMAND_LIST_TYPE type)
+bool CommandAllocator::initialize(ID3D12Device* device,CommandType cmdtype)
 {
 	HRESULT hr;
-	hr = device->CreateCommandAllocator(type, IID_PPV_ARGS(&mDx12Allocater));
+	mType = cmdtype;
+	switch (cmdtype)
+	{
+	case COMMAND_TYPE_GRAPHICS:
+			hr = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&mDx12Allocater));
+			break;
+	case COMMAND_TYPE_COMPUTE:
+		hr = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_COMPUTE, IID_PPV_ARGS(&mDx12Allocater));
+		break;
+	case COMMAND_TYPE_COPY:
+		hr = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_COPY, IID_PPV_ARGS(&mDx12Allocater));
+		break;
+	}
 	if (FAILED(hr))
 	{
 		cout << "Fail to create Command Allocator" << endl;

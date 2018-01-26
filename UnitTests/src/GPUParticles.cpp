@@ -15,9 +15,14 @@ using namespace std;
 Render render;
 CommandAllocator cmdalloc;
 CommandList cmdlist;
+
+CommandAllocator compcmdalloc;
+CommandList compcmdlist;
+
 Window windows;
 Pipeline pipeline;
 Fence fence;
+Fence comfence;
 HANDLE fenceEvet;
 UINT frameIndex;
 Buffer vertexBuffer;
@@ -57,6 +62,7 @@ struct SceneData
 } sceneData;
 Buffer sceneBuffer;
 RootSignature ParticleRootsig;
+RootSignature ParticleDrawRootsig;
 Pipeline ParticleDraw;
 Pipeline ParticleUpdate;
 std::chrono::high_resolution_clock::time_point pre;
@@ -74,9 +80,14 @@ void initializeRender()
 	cmdalloc.initialize(render.mDevice);
 	cmdlist.initial(render.mDevice, cmdalloc);
 
-	fence.initialize(render.mDevice);
-	fence.fenceValue = 1;
-	fenceEvet = CreateEvent(NULL, FALSE, FALSE, NULL);
+	compcmdalloc.initialize(render.mDevice,COMMAND_TYPE_COMPUTE);
+	compcmdlist.initial(render.mDevice, compcmdalloc);
+
+
+	fence.initialize(render);
+	comfence.initialize(render);
+//	fence.fenceValue = 1;
+//	fenceEvet = CreateEvent(NULL, FALSE, FALSE, NULL);
 
 	srvheap.ininitialize(render.mDevice, 1);
 	depthBuffer.resize(swapChainCount);
@@ -124,17 +135,35 @@ void initializeRender()
 	
 //	ParticleDrawRootSig.mParameters.resize(2);
 //	ParticleDrawRootSig.
+	
+
+	ShaderSet ParUpdateShader;
+	ParUpdateShader.shaders[CS].load("Shaders/ParticleUpdate.hlsl", "CSMain", CS);
+	ParticleUpdate.createComputePipeline(render.mDevice, ParticleRootsig, ParUpdateShader);
+
+
+
+	ParticleDrawRootsig.mParameters.resize(2);
+	ParticleDrawRootsig.mParameters[0].mType = PARAMETERTYPE_CBV;
+	ParticleDrawRootsig.mParameters[0].mResCounts = 1;
+	ParticleDrawRootsig.mParameters[0].mBindSlot = 0;
+	ParticleDrawRootsig.mParameters[0].mResource = &sceneBuffer;
+	ParticleDrawRootsig.mParameters[1].mType = PARAMETERTYPE_SRV;
+	ParticleDrawRootsig.mParameters[1].mResCounts = 1;
+	ParticleDrawRootsig.mParameters[1].mBindSlot = 0;
+	ParticleDrawRootsig.mParameters[1].mVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+	ParticleDrawRootsig.initialize(render.mDevice);
+
+
+
+
 	ShaderSet ParDrawShader;
 	ParDrawShader.shaders[VS].load("Shaders/ParticleDraw.hlsl", "VSMain", VS);
 	ParDrawShader.shaders[PS].load("Shaders/ParticleDraw.hlsl", "PSMain", PS);
 
-	ParticleDraw.createGraphicsPipeline(render.mDevice, ParticleRootsig, ParDrawShader, retformat, DepthStencilState::DepthStencilState(), BlendState::BlendState(true), RasterizerState::RasterizerState(),VERTEX_LAYOUT_TYPE_NONE_SPLIT, D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT);
+	ParticleDraw.createGraphicsPipeline(render.mDevice, ParticleDrawRootsig, ParDrawShader, retformat, DepthStencilState::DepthStencilState(), BlendState::BlendState(true), RasterizerState::RasterizerState(), VERTEX_LAYOUT_TYPE_NONE_SPLIT, D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT);
 
 
-	ShaderSet ParUpdateShader;
-	ParUpdateShader.shaders[CS].load("Shaders/ParticleUpdate.hlsl", "CSMain", CS);
-
-	ParticleUpdate.createComputePipeline(render.mDevice, ParticleRootsig, ParUpdateShader);
 
 }
 
@@ -219,9 +248,9 @@ void loadAsset()
 	cmdlist.bindComputeResource(2, particleBuffers[0]);
 	cmdlist.dispatch((particleNum / 512) + 1, 1, 1);
 //	cmdlist.resourceBarrier(particleBuffers[0], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
-
-	cmdlist.resourceTransition(particleBuffers[1], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE| D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	cmdlist.resourceTransition(particleBuffers[2], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE| D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,true);
+	cmdlist.resourceTransition(particleBuffers[0], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	cmdlist.resourceTransition(particleBuffers[1], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	cmdlist.resourceTransition(particleBuffers[2], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,true);
 
 
 
@@ -231,16 +260,9 @@ void loadAsset()
 
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
-	const UINT64 fenval = fence.fenceValue;
-	render.mCommandQueue->Signal(fence.mDx12Fence, fenval);
-	fence.fenceValue++;
 
-	if (fence.mDx12Fence->GetCompletedValue() < fenval)
-	{
-		fence.mDx12Fence->SetEventOnCompletion(fenval, fenceEvet);
-		WaitForSingleObject(fenceEvet, INFINITE);
-	}
-
+	render.insertSignalFenceValue(fence);
+	render.waitFence(fence);
 	InitPar.release();
 
 
@@ -256,6 +278,7 @@ void releaseRender()
 	ParticleUpdate.release();
 	ParticleDraw.release();
 	ParticleRootsig.realease();
+	ParticleDrawRootsig.realease();
 	sceneBuffer.release();
 	for (int i = 0; i < 3; ++i)
 		particleBuffers[i].release();
@@ -268,6 +291,10 @@ void releaseRender()
 	rootsig.realease();
 	vertexBuffer.release();
 	fence.release();
+	comfence.release();
+	compcmdlist.release();
+	compcmdalloc.release();
+
 	cmdlist.release();
 	cmdalloc.release();
 	render.releaseSwapChain();
@@ -292,16 +319,52 @@ void update()
 	camera.updateViewProj();
 	cameraBuffer.updateBufferfromCpu(camera.getMatrix(), sizeof(ViewProjection));
 	frameIndex = render.getCurrentSwapChainIndex();
+
+
+
+	// all resource transition
+	cmdalloc.reset();
+	cmdlist.reset(pipeline);
+	cmdlist.resourceTransition(particleBuffers[(currentDraw + 1) % 3], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, true);
+	cmdlist.close();
+
+	render.executeCommands(&cmdlist);
+	render.insertSignalFenceValue(fence);
+	render.waitFence(fence);
+
+
+
+	// compute part
+	compcmdalloc.reset();
+	compcmdlist.reset(ParticleDraw);
+	compcmdlist.bindDescriptorHeaps(&srvheap);
+	compcmdlist.bindPipeline(ParticleUpdate);
+	compcmdlist.bindComputeRootSigature(ParticleRootsig);
+	compcmdlist.bindComputeResource(0, sceneBuffer);
+	compcmdlist.bindComputeResource(1, particleBuffers[currentDraw]);
+	compcmdlist.bindComputeResource(2, particleBuffers[(currentDraw + 1) % 3]);
+
+//	compcmdlist.resourceTransition(particleBuffers[(currentDraw + 1) % 3], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, true);
+	compcmdlist.dispatch(((particleNum / 1024) + 1), 1, 1);
+//	compcmdlist.resourceTransition(particleBuffers[(currentDraw + 1) % 3], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,true);
+	compcmdlist.close();
+
+
+
+
+
+
+
+	//draw part
 	cmdalloc.reset();
 	cmdlist.reset(pipeline);
 	cmdlist.bindDescriptorHeaps(&srvheap);
-	cmdlist.bindGraphicsRootSigature(rootsig);
 	cmdlist.setViewPort(viewport);
 	cmdlist.setScissor(scissor);
-	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET);
-
-	cmdlist.resourceTransition(particleBuffers[currentDraw], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE| D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	cmdlist.resourceTransition(particleBuffers[(currentDraw+1)%3],D3D12_RESOURCE_STATE_UNORDERED_ACCESS,true);
+//	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET,true);
+//	cmdlist.resourceTransition(particleBuffers[currentDraw], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE| D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+//	cmdlist.resourceTransition(particleBuffers[(currentDraw+1)%3],D3D12_RESOURCE_STATE_UNORDERED_ACCESS,true);
 
 
 	cmdlist.bindRenderTarget(render.mSwapChainRenderTarget[frameIndex],depthBuffer[frameIndex]);
@@ -311,42 +374,59 @@ void update()
 
 
 
-	cmdlist.bindGraphicsRootSigature(ParticleRootsig);
+	cmdlist.bindGraphicsRootSigature(ParticleDrawRootsig);
 	cmdlist.bindPipeline(ParticleDraw);
 	cmdlist.setTopolgy(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
 	cmdlist.bindGraphicsResource(0, cameraBuffer);
 	cmdlist.bindGraphicsResource(1, particleBuffers[currentDraw]);
-	cmdlist.bindGraphicsResource(2, particleBuffers[(currentDraw+1)%3]);
 	cmdlist.drawInstance(particleNum,1, 0, 0);
 
-	cmdlist.bindPipeline(ParticleUpdate);
-	cmdlist.bindComputeRootSigature(ParticleRootsig);
-	cmdlist.bindComputeResource(0, sceneBuffer);
-	cmdlist.bindComputeResource(1, particleBuffers[currentDraw]);
-	cmdlist.bindComputeResource(2, particleBuffers[(currentDraw+1) % 3]);
+	//cmdlist.bindPipeline(ParticleUpdate);
+	//cmdlist.bindComputeRootSigature(ParticleRootsig);
+	//cmdlist.bindComputeResource(0, sceneBuffer);
+	//cmdlist.bindComputeResource(1, particleBuffers[currentDraw]);
+	//cmdlist.bindComputeResource(2, particleBuffers[(currentDraw+1) % 3]);
 
-	currentDraw = (currentDraw + 1) % 3;
-	//cout << currentDraw << endl;
-	cmdlist.dispatch(((particleNum / 1024) + 1), 1, 1);
-
-
+	//currentDraw = (currentDraw + 1) % 3;
+	////cout << currentDraw << endl;
+	//cmdlist.dispatch(((particleNum / 1024) + 1), 1, 1);
 
 
-	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT,true);
+
+	//cmdlist.resourceTransition(particleBuffers[(currentDraw + 1) % 3], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+//	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT,true);
 	cmdlist.close();
+
+	
+
+
+	render.executeCommands(&compcmdlist);
+	
 	render.executeCommands(&cmdlist);
+
+
+	render.insertSignalFenceValue(comfence, COMMAND_TYPE_COMPUTE);
+	render.insertSignalFenceValue(fence);
+	render.waitFence(fence);
+	render.waitFence(comfence);
+
+	//resource transition end
+	cmdalloc.reset();
+	cmdlist.reset(pipeline);
+	cmdlist.resourceTransition(particleBuffers[(currentDraw + 1) % 3], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT, true);
+	cmdlist.close();
+
+	render.executeCommands(&cmdlist);
+
 	render.present();
 
+	render.insertSignalFenceValue(fence);
+	render.waitFence(fence);
 
-	const UINT64 fenval = fence.fenceValue;
-	render.mCommandQueue->Signal(fence.mDx12Fence, fenval);
-	fence.fenceValue++;
 
-	if (fence.mDx12Fence->GetCompletedValue() < fenval)
-	{
-		fence.mDx12Fence->SetEventOnCompletion(fenval, fenceEvet);
-		WaitForSingleObject(fenceEvet, INFINITE);
-	}
+	currentDraw = (currentDraw + 1) % 3;
+
 }
 
 

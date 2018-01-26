@@ -32,11 +32,12 @@ struct ObjectData
 
 using namespace std;
 Render render;
-CommandAllocator cmdalloc;
-CommandList cmdlist;
+static const uint32_t swapChainCount = 3;
+CommandAllocator cmdalloc[swapChainCount];
+CommandList cmdlist[swapChainCount];
 Window windows;
 Pipeline pipeline;
-Fence fence;
+Fence fence[swapChainCount];
 HANDLE fenceEvet;
 UINT frameIndex;
 Buffer cameraBuffer;
@@ -45,7 +46,7 @@ RootSignature rootsig;
 ViewPort viewport;
 Scissor scissor;
 DescriptorHeap srvheap;
-static uint32_t swapChainCount = 3;
+
 vector<Texture> depthBuffer;
 ShaderSet shaderset;
 Assimp::Importer import;
@@ -64,6 +65,7 @@ bool press = false;
 
 
 ObjectData Bunnys;
+Buffer bunnyTrans[swapChainCount];
 
 const UINT rowcount = 10;
 const UINT collomcount = 5;
@@ -92,12 +94,12 @@ void initializeRender()
 	render.initialize();
 	RenderTargetFormat retformat(true);
 	render.createSwapChain(windows, swapChainCount, retformat.mRenderTargetFormat[0]);
-	cmdalloc.initialize(render.mDevice);
-	cmdlist.initial(render.mDevice, cmdalloc);
-
-	fence.initialize(render.mDevice);
-	fence.fenceValue = 1;
-	fenceEvet = CreateEvent(NULL, FALSE, FALSE, NULL);
+	for (int i = 0; i < swapChainCount; ++i)
+	{
+		cmdalloc[i].initialize(render.mDevice);
+		cmdlist[i].initial(render.mDevice, cmdalloc[i]);
+		fence[i].initialize(render);
+	}
 
 	srvheap.ininitialize(render.mDevice, 1);
 
@@ -117,7 +119,7 @@ void initializeRender()
 	rootsig.mParameters[1].mType = PARAMETERTYPE_SRV;
 	rootsig.mParameters[1].mResCounts = 1;
 	rootsig.mParameters[1].mBindSlot = 0;
-	rootsig.mParameters[1].mResource = &Bunnys.mStructeredBuffer;
+//	rootsig.mParameters[1].mResource = &Bunnys.mStructeredBuffer;
 	rootsig.mParameters[2].mType = PARAMETERTYPE_CBV;
 	rootsig.mParameters[2].mResCounts = 1;
 	rootsig.mParameters[2].mBindSlot = 1;
@@ -249,6 +251,10 @@ void loadAsset()
 	Bunnys.mPosition.resize(Bunnys.mNum);
 
 	Bunnys.mStructeredBuffer.createStructeredBuffer(render.mDevice, srvheap, sizeof(InstancedInformation), Bunnys.mNum, STRUCTERED_BUFFER_TYPE_READ);
+	bunnyTrans[0].createStructeredBuffer(render.mDevice, srvheap, sizeof(InstancedInformation), Bunnys.mNum, STRUCTERED_BUFFER_TYPE_READ);
+	bunnyTrans[2].createStructeredBuffer(render.mDevice, srvheap, sizeof(InstancedInformation), Bunnys.mNum, STRUCTERED_BUFFER_TYPE_READ);
+	bunnyTrans[1].createStructeredBuffer(render.mDevice, srvheap, sizeof(InstancedInformation), Bunnys.mNum, STRUCTERED_BUFFER_TYPE_READ);
+
 
 	radian = 2*3.14159f/ rowcount;
 	float rough = 1.0f / (rowcount-1);
@@ -270,73 +276,69 @@ void loadAsset()
 
 
 
-	cmdalloc.reset();
-	cmdlist.reset(Pipeline());
-	cmdlist.resourceTransition(depthBuffer[0], D3D12_RESOURCE_STATE_DEPTH_WRITE);
-	cmdlist.resourceTransition(depthBuffer[1], D3D12_RESOURCE_STATE_DEPTH_WRITE);
-	cmdlist.resourceTransition(depthBuffer[2], D3D12_RESOURCE_STATE_DEPTH_WRITE);
-	cmdlist.resourceTransition(Bunnys.mVertexBufferData, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceTransition(Bunnys.mNormalBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceTransition(Bunnys.mIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceTransition(Bunnys.mStructeredBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceTransition(Buddha.mVertexBufferData, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceTransition(Buddha.mNormalBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceTransition(Buddha.mIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceTransition(Buddha.mStructeredBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdalloc[0].reset();
+	cmdlist[0].reset(Pipeline());
+	cmdlist[0].resourceTransition(depthBuffer[0], D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	cmdlist[0].resourceTransition(depthBuffer[1], D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	cmdlist[0].resourceTransition(depthBuffer[2], D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	cmdlist[0].resourceTransition(Bunnys.mVertexBufferData, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[0].resourceTransition(Bunnys.mNormalBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[0].resourceTransition(Bunnys.mIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[0].resourceTransition(Bunnys.mStructeredBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[0].resourceTransition(Buddha.mVertexBufferData, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[0].resourceTransition(Buddha.mNormalBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[0].resourceTransition(Buddha.mIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[0].resourceTransition(Buddha.mStructeredBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
 
-	cmdlist.resourceTransition(Ground.mVertexBufferData, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceTransition(Ground.mNormalBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceTransition(Ground.mIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceTransition(Ground.mStructeredBuffer, D3D12_RESOURCE_STATE_COPY_DEST,true);
-
-
-	cmdlist.updateBufferData(Bunnys.mVertexBufferData, mesh->mVertices, mesh->mNumVertices * 3 * sizeof(float));
-	cmdlist.updateBufferData(Bunnys.mIndexBuffer, indexdata.data(), mesh->mNumFaces * 3 * sizeof(unsigned int));
-	cmdlist.updateBufferData(Bunnys.mNormalBuffer, mesh->mNormals, mesh->mNumVertices * 3 * sizeof(float));
-	cmdlist.updateBufferData(Bunnys.mStructeredBuffer, Bunnys.mBufferData.data(), Bunnys.mNum * sizeof(InstancedInformation));
-
-	cmdlist.updateBufferData(Buddha.mVertexBufferData, buddha->mVertices, buddha->mNumVertices * 3 * sizeof(float));
-	cmdlist.updateBufferData(Buddha.mIndexBuffer, buddhaindexdata.data(), buddha->mNumFaces * 3 * sizeof(unsigned int));
-	cmdlist.updateBufferData(Buddha.mNormalBuffer, buddha->mNormals, buddha->mNumVertices * 3 * sizeof(float));
-	cmdlist.updateBufferData(Buddha.mStructeredBuffer, Buddha.mBufferData.data(), Buddha.mNum * sizeof(InstancedInformation));
-
-	cmdlist.updateBufferData(Ground.mVertexBufferData, ground->mVertices, ground->mNumVertices * 3 * sizeof(float));
-	cmdlist.updateBufferData(Ground.mIndexBuffer, groundindexdata.data(), ground->mNumFaces * 3 * sizeof(unsigned int));
-	cmdlist.updateBufferData(Ground.mNormalBuffer, ground->mNormals, ground->mNumVertices * 3 * sizeof(float));
-	cmdlist.updateBufferData(Ground.mStructeredBuffer, Ground.mBufferData.data(), Ground.mNum * sizeof(InstancedInformation));
-
-	cmdlist.resourceTransition(Bunnys.mVertexBufferData, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceTransition(Bunnys.mNormalBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceTransition(Bunnys.mIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER);
-	cmdlist.resourceTransition(Bunnys.mStructeredBuffer, D3D12_RESOURCE_STATE_GENERIC_READ);
-
-	cmdlist.resourceTransition(Buddha.mVertexBufferData, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceTransition(Buddha.mNormalBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceTransition(Buddha.mIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER);
-	cmdlist.resourceTransition(Buddha.mStructeredBuffer, D3D12_RESOURCE_STATE_GENERIC_READ);
-
-	cmdlist.resourceTransition(Ground.mVertexBufferData, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceTransition(Ground.mNormalBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceTransition(Ground.mIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER);
-	cmdlist.resourceTransition(Ground.mStructeredBuffer, D3D12_RESOURCE_STATE_GENERIC_READ,true);
+	cmdlist[0].resourceTransition(Ground.mVertexBufferData, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[0].resourceTransition(Ground.mNormalBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[0].resourceTransition(Ground.mIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[0].resourceTransition(Ground.mStructeredBuffer, D3D12_RESOURCE_STATE_COPY_DEST,true);
 
 
-	cmdlist.close();
-	render.executeCommands(&cmdlist);
-	const UINT64 fenval = fence.fenceValue;
-	render.mCommandQueue->Signal(fence.mDx12Fence, fenval);
-	fence.fenceValue++;
+	cmdlist[0].updateBufferData(Bunnys.mVertexBufferData, mesh->mVertices, mesh->mNumVertices * 3 * sizeof(float));
+	cmdlist[0].updateBufferData(Bunnys.mIndexBuffer, indexdata.data(), mesh->mNumFaces * 3 * sizeof(unsigned int));
+	cmdlist[0].updateBufferData(Bunnys.mNormalBuffer, mesh->mNormals, mesh->mNumVertices * 3 * sizeof(float));
+	cmdlist[0].updateBufferData(Bunnys.mStructeredBuffer, Bunnys.mBufferData.data(), Bunnys.mNum * sizeof(InstancedInformation));
 
-	if (fence.mDx12Fence->GetCompletedValue() < fenval)
-	{
-		fence.mDx12Fence->SetEventOnCompletion(fenval, fenceEvet);
-		WaitForSingleObject(fenceEvet, INFINITE);
-	}
-	//	import.FreeScene();
+	cmdlist[0].updateBufferData(Buddha.mVertexBufferData, buddha->mVertices, buddha->mNumVertices * 3 * sizeof(float));
+	cmdlist[0].updateBufferData(Buddha.mIndexBuffer, buddhaindexdata.data(), buddha->mNumFaces * 3 * sizeof(unsigned int));
+	cmdlist[0].updateBufferData(Buddha.mNormalBuffer, buddha->mNormals, buddha->mNumVertices * 3 * sizeof(float));
+	cmdlist[0].updateBufferData(Buddha.mStructeredBuffer, Buddha.mBufferData.data(), Buddha.mNum * sizeof(InstancedInformation));
+
+	cmdlist[0].updateBufferData(Ground.mVertexBufferData, ground->mVertices, ground->mNumVertices * 3 * sizeof(float));
+	cmdlist[0].updateBufferData(Ground.mIndexBuffer, groundindexdata.data(), ground->mNumFaces * 3 * sizeof(unsigned int));
+	cmdlist[0].updateBufferData(Ground.mNormalBuffer, ground->mNormals, ground->mNumVertices * 3 * sizeof(float));
+	cmdlist[0].updateBufferData(Ground.mStructeredBuffer, Ground.mBufferData.data(), Ground.mNum * sizeof(InstancedInformation));
+
+	cmdlist[0].resourceTransition(Bunnys.mVertexBufferData, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist[0].resourceTransition(Bunnys.mNormalBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist[0].resourceTransition(Bunnys.mIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+	cmdlist[0].resourceTransition(Bunnys.mStructeredBuffer, D3D12_RESOURCE_STATE_GENERIC_READ);
+
+	cmdlist[0].resourceTransition(Buddha.mVertexBufferData, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist[0].resourceTransition(Buddha.mNormalBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist[0].resourceTransition(Buddha.mIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+	cmdlist[0].resourceTransition(Buddha.mStructeredBuffer, D3D12_RESOURCE_STATE_GENERIC_READ);
+
+	cmdlist[0].resourceTransition(Ground.mVertexBufferData, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist[0].resourceTransition(Ground.mNormalBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist[0].resourceTransition(Ground.mIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+	cmdlist[0].resourceTransition(Ground.mStructeredBuffer, D3D12_RESOURCE_STATE_GENERIC_READ,true);
+
+
+	cmdlist[0].close();
+	render.executeCommands(&cmdlist[0]);
+	render.insertSignalFenceValue(fence[0]);
+	render.waitFence(fence[0]);
+
 }
 
 void releaseRender()
 {
+	render.waitFence(fence[0]);
+	render.waitFence(fence[1]);
+	render.waitFence(fence[2]);
 	depthBuffer[2].release();
 	depthBuffer[1].release();
 	depthBuffer[0].release();
@@ -358,9 +360,15 @@ void releaseRender()
 	pipeline.release();
 	rootsig.realease();
 	Bunnys.mNormalBuffer.release();
-	fence.release();
-	cmdlist.release();
-	cmdalloc.release();
+	for (int i = 0; i < swapChainCount; ++i)
+	{
+		fence[i].release();
+		cmdlist[i].release();
+		cmdalloc[i].release();
+		bunnyTrans[0].release();
+		bunnyTrans[1].release();
+		bunnyTrans[2].release();
+	}
 	render.releaseSwapChain();
 	render.release();
 	CloseHandle(fenceEvet);
@@ -392,16 +400,17 @@ void onrender()
 {
 	
 	frameIndex = render.getCurrentSwapChainIndex();
-	cmdalloc.reset();
-	cmdlist.reset(pipeline);
+	render.waitFence(fence[frameIndex]);
+	cmdalloc[frameIndex].reset();
+	cmdlist[frameIndex].reset(pipeline);
 
 
 
 
 
-	cmdlist.resourceTransition(Bunnys.mStructeredBuffer, D3D12_RESOURCE_STATE_COPY_DEST,true);
-	cmdlist.updateBufferData(Bunnys.mStructeredBuffer, Bunnys.mBufferData.data(), Bunnys.mNum * sizeof(InstancedInformation));
-	cmdlist.resourceTransition(Bunnys.mStructeredBuffer, D3D12_RESOURCE_STATE_GENERIC_READ,true);
+	cmdlist[frameIndex].resourceTransition(bunnyTrans[frameIndex], D3D12_RESOURCE_STATE_COPY_DEST,true);
+	cmdlist[frameIndex].updateBufferData(bunnyTrans[frameIndex], Bunnys.mBufferData.data(), Bunnys.mNum * sizeof(InstancedInformation));
+	cmdlist[frameIndex].resourceTransition(bunnyTrans[frameIndex], D3D12_RESOURCE_STATE_GENERIC_READ,true);
 
 
 
@@ -413,50 +422,42 @@ void onrender()
 
 
 
-	cmdlist.bindDescriptorHeaps(&srvheap);
-	cmdlist.bindGraphicsRootSigature(rootsig);
-	cmdlist.setViewPort(viewport);
-	cmdlist.setScissor(scissor);
-	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET,true);
-	cmdlist.bindRenderTarget(render.mSwapChainRenderTarget[frameIndex],depthBuffer[frameIndex]);
+	cmdlist[frameIndex].bindDescriptorHeaps(&srvheap);
+	cmdlist[frameIndex].bindGraphicsRootSigature(rootsig);
+	cmdlist[frameIndex].setViewPort(viewport);
+	cmdlist[frameIndex].setScissor(scissor);
+	cmdlist[frameIndex].swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET,true);
+	cmdlist[frameIndex].bindRenderTarget(render.mSwapChainRenderTarget[frameIndex],depthBuffer[frameIndex]);
 	const float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	cmdlist.clearRenderTarget(render.mSwapChainRenderTarget[frameIndex], clearColor);
-	cmdlist.clearDepthStencil(depthBuffer[frameIndex]);
-	cmdlist.setTopolgy(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	cmdlist[frameIndex].clearRenderTarget(render.mSwapChainRenderTarget[frameIndex], clearColor);
+	cmdlist[frameIndex].clearDepthStencil(depthBuffer[frameIndex]);
+	cmdlist[frameIndex].setTopolgy(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	cmdlist[frameIndex].bindGraphicsResource(1, bunnyTrans[frameIndex]);
+	cmdlist[frameIndex].bindIndexBuffer(Bunnys.mIndexBuffer);
+	cmdlist[frameIndex].bindVertexBuffers(Bunnys.mVertexBufferData, Bunnys.mNormalBuffer);
+	cmdlist[frameIndex].drawIndexedInstanced(Bunnys.indexCount, Bunnys.mNum, 0, 0);
 
-	cmdlist.bindIndexBuffer(Bunnys.mIndexBuffer);
-	cmdlist.bindVertexBuffers(Bunnys.mVertexBufferData, Bunnys.mNormalBuffer);
-	cmdlist.drawIndexedInstanced(Bunnys.indexCount, Bunnys.mNum, 0, 0);
-
-	cmdlist.bindGraphicsResource(1, Buddha.mStructeredBuffer);
-	cmdlist.bindIndexBuffer(Buddha.mIndexBuffer);
-	cmdlist.bindVertexBuffers(Buddha.mVertexBufferData, Buddha.mNormalBuffer);
-	cmdlist.drawIndexedInstanced(Buddha.indexCount, Buddha.mNum, 0, 0);
-
-
-	cmdlist.bindGraphicsResource(1, Ground.mStructeredBuffer);
-	cmdlist.bindIndexBuffer(Ground.mIndexBuffer);
-	cmdlist.bindVertexBuffers(Ground.mVertexBufferData, Ground.mNormalBuffer);
-	cmdlist.drawIndexedInstanced(Ground.indexCount, Ground.mNum, 0, 0);
+	cmdlist[frameIndex].bindGraphicsResource(1, Buddha.mStructeredBuffer);
+	cmdlist[frameIndex].bindIndexBuffer(Buddha.mIndexBuffer);
+	cmdlist[frameIndex].bindVertexBuffers(Buddha.mVertexBufferData, Buddha.mNormalBuffer);
+	cmdlist[frameIndex].drawIndexedInstanced(Buddha.indexCount, Buddha.mNum, 0, 0);
 
 
+	cmdlist[frameIndex].bindGraphicsResource(1, Ground.mStructeredBuffer);
+	cmdlist[frameIndex].bindIndexBuffer(Ground.mIndexBuffer);
+	cmdlist[frameIndex].bindVertexBuffers(Ground.mVertexBufferData, Ground.mNormalBuffer);
+	cmdlist[frameIndex].drawIndexedInstanced(Ground.indexCount, Ground.mNum, 0, 0);
 
 
-	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT,true);
-	cmdlist.close();
-	render.executeCommands(&cmdlist);
+
+
+	cmdlist[frameIndex].swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT,true);
+	cmdlist[frameIndex].close();
+	render.executeCommands(&cmdlist[frameIndex]);
 	render.present();
 
-
-	const UINT64 fenval = fence.fenceValue;
-	render.mCommandQueue->Signal(fence.mDx12Fence, fenval);
-	fence.fenceValue++;
-
-	if (fence.mDx12Fence->GetCompletedValue() < fenval)
-	{
-		fence.mDx12Fence->SetEventOnCompletion(fenval, fenceEvet);
-		WaitForSingleObject(fenceEvet, INFINITE);
-	}
+	render.insertSignalFenceValue(fence[frameIndex]);
+//	render.waitFence(fence[frameIndex]);
 }
 
 

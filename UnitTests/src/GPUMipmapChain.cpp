@@ -37,12 +37,14 @@ struct ObjectData
 
 using namespace std;
 Render render;
-CommandAllocator cmdalloc;
-CommandList cmdlist;
+static const uint32_t swapChainCount = 3;
+CommandAllocator cmdalloc[swapChainCount];
+CommandList cmdlist[swapChainCount];
 Window windows;
 Pipeline pipeline;
 Pipeline wirepipeline;
-Fence fence;
+Fence fences[3];
+unsigned long long fencevalue = 1;
 HANDLE fenceEvet;
 UINT frameIndex;
 Buffer cameraBuffer;
@@ -51,7 +53,7 @@ RootSignature rootsig;
 ViewPort viewport;
 Scissor scissor;
 DescriptorHeap srvheap;
-static uint32_t swapChainCount = 3;
+
 vector<Texture> depthBuffer;
 ShaderSet shaderset;
 Assimp::Importer import;
@@ -111,12 +113,15 @@ void initializeRender()
 	render.initialize();
 	RenderTargetFormat retformat(true);
 	render.createSwapChain(windows, swapChainCount, retformat.mRenderTargetFormat[0]);
-	cmdalloc.initialize(render.mDevice);
-	cmdlist.initial(render.mDevice, cmdalloc);
+	for (int i = 0; i < swapChainCount; ++i)
+	{
+		cmdalloc[i].initialize(render.mDevice);
+		cmdlist[i].initial(render.mDevice, cmdalloc[i]);
+	}
+	fences[0].initialize(render);
+	fences[1].initialize(render);
+	fences[2].initialize(render);
 
-	fence.initialize(render.mDevice);
-	fence.fenceValue = 1;
-	fenceEvet = CreateEvent(NULL, FALSE, FALSE, NULL);
 
 	srvheap.ininitialize(render.mDevice, 1);
 	depthBuffer.resize(swapChainCount);
@@ -311,94 +316,97 @@ void loadAsset()
 
 
 
-	cmdalloc.reset();
-	cmdlist.reset(Pipeline());
-	cmdlist.resourceTransition(depthBuffer[0], D3D12_RESOURCE_STATE_DEPTH_WRITE);
-	cmdlist.resourceTransition(depthBuffer[1], D3D12_RESOURCE_STATE_DEPTH_WRITE);
-	cmdlist.resourceTransition(depthBuffer[2], D3D12_RESOURCE_STATE_DEPTH_WRITE);
-	cmdlist.resourceTransition(Sphere.mVertexBufferData, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceTransition(Sphere.mNormalBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceTransition(Sphere.mUVBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceTransition(Sphere.mTangentBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceTransition(Sphere.mIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceTransition(Sphere.mInstancedBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdalloc[0].reset();
+	cmdlist[0].reset(Pipeline());
+	cmdlist[0].resourceTransition(depthBuffer[0], D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	cmdlist[0].resourceTransition(depthBuffer[1], D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	cmdlist[0].resourceTransition(depthBuffer[2], D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	cmdlist[0].resourceTransition(Sphere.mVertexBufferData, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[0].resourceTransition(Sphere.mNormalBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[0].resourceTransition(Sphere.mUVBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[0].resourceTransition(Sphere.mTangentBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[0].resourceTransition(Sphere.mIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[0].resourceTransition(Sphere.mInstancedBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
 
 
 
 
-	cmdlist.resourceTransition(Ground.mVertexBufferData, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceTransition(Ground.mNormalBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceTransition(Ground.mUVBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceTransition(Ground.mTangentBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceTransition(Ground.mIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceTransition(Ground.mInstancedBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[0].resourceTransition(Ground.mVertexBufferData, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[0].resourceTransition(Ground.mNormalBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[0].resourceTransition(Ground.mUVBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[0].resourceTransition(Ground.mTangentBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[0].resourceTransition(Ground.mIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[0].resourceTransition(Ground.mInstancedBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
 
 
 
 
-	cmdlist.resourceTransition(blockbase, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceTransition(blocknormal, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[0].resourceTransition(blockbase, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[0].resourceTransition(blocknormal, D3D12_RESOURCE_STATE_COPY_DEST);
 
-	cmdlist.resourceTransition(blockmetal, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceTransition(blockrough, D3D12_RESOURCE_STATE_COPY_DEST, true);
+	cmdlist[0].resourceTransition(blockmetal, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[0].resourceTransition(blockrough, D3D12_RESOURCE_STATE_COPY_DEST, true);
 
-	cmdlist.updateBufferData(Sphere.mVertexBufferData, mesh->mVertices, mesh->mNumVertices * 3 * sizeof(float));
-	cmdlist.updateBufferData(Sphere.mIndexBuffer, indexdata.data(), mesh->mNumFaces * 3 * sizeof(unsigned int));
-	cmdlist.updateBufferData(Sphere.mNormalBuffer, mesh->mNormals, mesh->mNumVertices * 3 * sizeof(float));
-	cmdlist.updateBufferData(Sphere.mUVBuffer, mesh->mTextureCoords[0], mesh->mNumVertices * 3 * sizeof(float));
-	cmdlist.updateBufferData(Sphere.mTangentBuffer, mesh->mTangents, mesh->mNumVertices * 3 * sizeof(float));
+	cmdlist[0].updateBufferData(Sphere.mVertexBufferData, mesh->mVertices, mesh->mNumVertices * 3 * sizeof(float));
+	cmdlist[0].updateBufferData(Sphere.mIndexBuffer, indexdata.data(), mesh->mNumFaces * 3 * sizeof(unsigned int));
+	cmdlist[0].updateBufferData(Sphere.mNormalBuffer, mesh->mNormals, mesh->mNumVertices * 3 * sizeof(float));
+	cmdlist[0].updateBufferData(Sphere.mUVBuffer, mesh->mTextureCoords[0], mesh->mNumVertices * 3 * sizeof(float));
+	cmdlist[0].updateBufferData(Sphere.mTangentBuffer, mesh->mTangents, mesh->mNumVertices * 3 * sizeof(float));
 
-	cmdlist.updateBufferData(Sphere.mInstancedBuffer, Sphere.mBufferData.data(), Sphere.mNum * sizeof(InstancedInformation));
-
-
-
-	cmdlist.updateBufferData(Ground.mVertexBufferData, patch.mPosition.data(), patch.mPosition.size() * sizeof(float));
-	cmdlist.updateBufferData(Ground.mIndexBuffer, patch.mIndex.data(), patch.mIndex.size() * sizeof(unsigned int));
-	cmdlist.updateBufferData(Ground.mNormalBuffer, patch.mNormal.data(), patch.mNormal.size() * sizeof(float));
-	cmdlist.updateBufferData(Ground.mUVBuffer, patch.mUV.data(), patch.mUV.size() * sizeof(float));
-	cmdlist.updateBufferData(Ground.mTangentBuffer, patch.mTangent.data(), patch.mTangent.size() * sizeof(float));
-
-
-	cmdlist.updateBufferData(Ground.mInstancedBuffer, Ground.mBufferData.data(), Ground.mNum * sizeof(InstancedInformation));
+	cmdlist[0].updateBufferData(Sphere.mInstancedBuffer, Sphere.mBufferData.data(), Sphere.mNum * sizeof(InstancedInformation));
 
 
 
-
-	cmdlist.updateTextureData(blockbase, blockbasecolor.mData,0,1);
-	cmdlist.updateTextureData(blocknormal, blockn.mData,0,1);
-	cmdlist.updateTextureData(blockmetal, blockh.mData,0,1);
-	cmdlist.updateTextureData(blockrough, blockr.mData,0,1);
-
-
-	cmdlist.resourceTransition(blockbase, D3D12_RESOURCE_STATE_GENERIC_READ);
-	cmdlist.resourceTransition(blocknormal, D3D12_RESOURCE_STATE_GENERIC_READ);
-	cmdlist.resourceTransition(blockmetal, D3D12_RESOURCE_STATE_GENERIC_READ);
-	cmdlist.resourceTransition(blockrough, D3D12_RESOURCE_STATE_GENERIC_READ);
+	cmdlist[0].updateBufferData(Ground.mVertexBufferData, patch.mPosition.data(), patch.mPosition.size() * sizeof(float));
+	cmdlist[0].updateBufferData(Ground.mIndexBuffer, patch.mIndex.data(), patch.mIndex.size() * sizeof(unsigned int));
+	cmdlist[0].updateBufferData(Ground.mNormalBuffer, patch.mNormal.data(), patch.mNormal.size() * sizeof(float));
+	cmdlist[0].updateBufferData(Ground.mUVBuffer, patch.mUV.data(), patch.mUV.size() * sizeof(float));
+	cmdlist[0].updateBufferData(Ground.mTangentBuffer, patch.mTangent.data(), patch.mTangent.size() * sizeof(float));
 
 
-	cmdlist.resourceTransition(Sphere.mVertexBufferData, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceTransition(Sphere.mNormalBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceTransition(Sphere.mUVBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceTransition(Sphere.mTangentBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-
-	cmdlist.resourceTransition(Sphere.mIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER);
-	cmdlist.resourceTransition(Sphere.mInstancedBuffer, D3D12_RESOURCE_STATE_GENERIC_READ);
+	cmdlist[0].updateBufferData(Ground.mInstancedBuffer, Ground.mBufferData.data(), Ground.mNum * sizeof(InstancedInformation));
 
 
 
-	cmdlist.resourceTransition(Ground.mVertexBufferData, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceTransition(Ground.mNormalBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceTransition(Ground.mUVBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceTransition(Ground.mTangentBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+
+	cmdlist[0].updateTextureData(blockbase, blockbasecolor.mData,0,1);
+	cmdlist[0].updateTextureData(blocknormal, blockn.mData,0,1);
+	cmdlist[0].updateTextureData(blockmetal, blockh.mData,0,1);
+	cmdlist[0].updateTextureData(blockrough, blockr.mData,0,1);
 
 
-	cmdlist.resourceTransition(Ground.mIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER);
-	cmdlist.resourceTransition(Ground.mInstancedBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, true);
+	cmdlist[0].resourceTransition(blockbase, D3D12_RESOURCE_STATE_GENERIC_READ);
+	cmdlist[0].resourceTransition(blocknormal, D3D12_RESOURCE_STATE_GENERIC_READ);
+	cmdlist[0].resourceTransition(blockmetal, D3D12_RESOURCE_STATE_GENERIC_READ);
+	cmdlist[0].resourceTransition(blockrough, D3D12_RESOURCE_STATE_GENERIC_READ);
 
 
-	cmdlist.close();
-	render.executeCommands(&cmdlist);
-	render.waitCommandsDone();
+	cmdlist[0].resourceTransition(Sphere.mVertexBufferData, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist[0].resourceTransition(Sphere.mNormalBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist[0].resourceTransition(Sphere.mUVBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist[0].resourceTransition(Sphere.mTangentBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+
+	cmdlist[0].resourceTransition(Sphere.mIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+	cmdlist[0].resourceTransition(Sphere.mInstancedBuffer, D3D12_RESOURCE_STATE_GENERIC_READ);
+
+
+
+	cmdlist[0].resourceTransition(Ground.mVertexBufferData, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist[0].resourceTransition(Ground.mNormalBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist[0].resourceTransition(Ground.mUVBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist[0].resourceTransition(Ground.mTangentBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+
+
+	cmdlist[0].resourceTransition(Ground.mIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+	cmdlist[0].resourceTransition(Ground.mInstancedBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, true);
+
+
+	cmdlist[0].close();
+	render.executeCommands(&cmdlist[0]);
+	//render.waitCommandsDone();
+	render.insertSignalFenceValue(fences[0]);
+	render.waitFence(fences[0]);
+
 
 	render.generateMipMapOffline(blockbase, MIP_MAP_GEN_SRGB_ALPHA_MASK_LINEAR_GAUSSIAN_CLAMP, 1);
 	render.generateMipMapOffline(blockmetal, MIP_MAP_GEN_RGBA_LINEAR_GAUSSIAN_CLAMP, 1);
@@ -442,9 +450,15 @@ void releaseRender()
 	pipeline.release();
 	rootsig.realease();
 
-	fence.release();
-	cmdlist.release();
-	cmdalloc.release();
+	fences[2].release();
+	fences[1].release();
+	fences[0].release();
+	cmdlist[2].release();
+	cmdlist[1].release();
+	cmdlist[0].release();
+	cmdalloc[2].release();
+	cmdalloc[1].release();
+	cmdalloc[0].release();
 	render.releaseSwapChain();
 	render.release();
 	CloseHandle(fenceEvet);
@@ -478,11 +492,13 @@ void onrender()
 {
 
 	frameIndex = render.getCurrentSwapChainIndex();
-	cmdalloc.reset();
+	
+	render.waitFence(fences[frameIndex]);
+	cmdalloc[frameIndex].reset();
 	if (!wire)
-		cmdlist.reset(pipeline);
+		cmdlist[frameIndex].reset(pipeline);
 	else
-		cmdlist.reset(wirepipeline);
+		cmdlist[frameIndex].reset(wirepipeline);
 
 
 
@@ -500,35 +516,36 @@ void onrender()
 
 
 
-	cmdlist.bindDescriptorHeaps(&srvheap, &samplerheap);
-	cmdlist.bindGraphicsRootSigature(rootsig);
-	cmdlist.setViewPort(viewport);
-	cmdlist.setScissor(scissor);
-	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, true);
-	cmdlist.bindRenderTarget(render.mSwapChainRenderTarget[frameIndex], depthBuffer[frameIndex]);
+	cmdlist[frameIndex].bindDescriptorHeaps(&srvheap, &samplerheap);
+	cmdlist[frameIndex].bindGraphicsRootSigature(rootsig);
+	cmdlist[frameIndex].setViewPort(viewport);
+	cmdlist[frameIndex].setScissor(scissor);
+	cmdlist[frameIndex].swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, true);
+	cmdlist[frameIndex].bindRenderTarget(render.mSwapChainRenderTarget[frameIndex], depthBuffer[frameIndex]);
 	const float clearColor[] = { 0.0f, 0.1f, 0.3f, 1.0f };
-	cmdlist.clearRenderTarget(render.mSwapChainRenderTarget[frameIndex], clearColor);
-	cmdlist.clearDepthStencil(depthBuffer[frameIndex]);
-	cmdlist.setTopolgy(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	cmdlist[frameIndex].clearRenderTarget(render.mSwapChainRenderTarget[frameIndex], clearColor);
+	cmdlist[frameIndex].clearDepthStencil(depthBuffer[frameIndex]);
+	cmdlist[frameIndex].setTopolgy(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 
 
-	cmdlist.bindGraphicsResource(1, Sphere.mInstancedBuffer);
-	cmdlist.bindGraphicsResource(1, Ground.mInstancedBuffer);
-	cmdlist.bindIndexBuffer(Ground.mIndexBuffer);
-	cmdlist.bindVertexBuffers(Ground.mVertexBufferData, Ground.mNormalBuffer, Ground.mUVBuffer, Ground.mTangentBuffer);
-	cmdlist.drawIndexedInstanced(Ground.indexCount, Ground.mNum, 0, 0);
+	cmdlist[frameIndex].bindGraphicsResource(1, Sphere.mInstancedBuffer);
+	cmdlist[frameIndex].bindGraphicsResource(1, Ground.mInstancedBuffer);
+	cmdlist[frameIndex].bindIndexBuffer(Ground.mIndexBuffer);
+	cmdlist[frameIndex].bindVertexBuffers(Ground.mVertexBufferData, Ground.mNormalBuffer, Ground.mUVBuffer, Ground.mTangentBuffer);
+	cmdlist[frameIndex].drawIndexedInstanced(Ground.indexCount, Ground.mNum, 0, 0);
 
 
 
 
 
-	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT, true);
-	cmdlist.close();
-	render.executeCommands(&cmdlist);
+	cmdlist[frameIndex].swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT, true);
+	cmdlist[frameIndex].close();
+	render.executeCommands(&cmdlist[frameIndex]);
 	render.present();
-	render.waitCommandsDone();
-
+	//render.waitCommandsDone();
+	render.insertSignalFenceValue(fences[frameIndex]); 
+	//render.waitFence(fences[frameIndex]);
 
 
 }

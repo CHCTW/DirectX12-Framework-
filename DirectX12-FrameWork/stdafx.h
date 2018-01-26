@@ -28,6 +28,13 @@ inline void ThrowIfFailed(HRESULT hr)
 // Render configuration 
 static const unsigned int RTVHeapSize = 30;
 static const unsigned int MaxSubmitCommandList = 30;
+enum CommandType
+{
+	COMMAND_TYPE_GRAPHICS,
+	COMMAND_TYPE_COMPUTE,
+	COMMAND_TYPE_COPY,
+	COMMAND_TYPE_COUNT
+};
 enum ViewType
 {
 	CBV,

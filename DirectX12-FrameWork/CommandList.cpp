@@ -7,10 +7,26 @@ CommandList::CommandList():mDx12CommandList(nullptr), mDx12Allocater(nullptr), m
 bool CommandList::initial(ID3D12Device* device, CommandAllocator &alloc)
 {
 	HRESULT hr;
-	hr = device->CreateCommandList(0, alloc.mType, alloc.mDx12Allocater, NULL, IID_PPV_ARGS(&mDx12CommandList));
+
+	mType = alloc.mType;
+	switch (mType)
+	{
+	case COMMAND_TYPE_GRAPHICS:
+		hr = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, alloc.mDx12Allocater, NULL, IID_PPV_ARGS(&mDx12CommandList));
+		break;
+	case COMMAND_TYPE_COMPUTE:
+		hr = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_COMPUTE, alloc.mDx12Allocater, NULL, IID_PPV_ARGS(&mDx12CommandList));
+		break;
+	case COMMAND_TYPE_COPY:
+		hr = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_COPY, alloc.mDx12Allocater, NULL, IID_PPV_ARGS(&mDx12CommandList));
+		break;
+	}
+
+
+	
 	if (FAILED(hr))
 		return false;
-	mType = alloc.mType;
+	
 	mDx12Allocater = alloc.mDx12Allocater;
 	mDx12CommandList->Close();
 	return true;

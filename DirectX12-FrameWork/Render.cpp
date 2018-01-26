@@ -9,10 +9,12 @@
 
 
 static Pipeline DownSamplePipeline;
-Render::Render():mDevice(NULL), mCommandQueue(NULL), mSwapChainAccout(0),
+Render::Render():mDevice(NULL), mSwapChainAccout(0),
 mDxgiFactory(NULL), mDxgiAdaptor(NULL), mSwapChain(NULL), mSwapChainRenderTarget(NULL)
 {
-
+	mCommandQueue[COMMAND_TYPE_GRAPHICS] = nullptr;
+	mCommandQueue[COMMAND_TYPE_COMPUTE] = nullptr;
+	mCommandQueue[COMMAND_TYPE_COPY] = nullptr;
 }
 bool Render::initialize()
 {
@@ -67,7 +69,13 @@ bool Render::initialize()
 	queueDes.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
 	queueDes.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
 	queueDes.NodeMask = 0;
-	hr = mDevice->CreateCommandQueue(&queueDes, IID_PPV_ARGS(&mCommandQueue));
+	hr = mDevice->CreateCommandQueue(&queueDes, IID_PPV_ARGS(&mCommandQueue[COMMAND_TYPE_GRAPHICS]));
+	queueDes.Type = D3D12_COMMAND_LIST_TYPE_COMPUTE;
+	hr = mDevice->CreateCommandQueue(&queueDes, IID_PPV_ARGS(&mCommandQueue[COMMAND_TYPE_COMPUTE]));
+	queueDes.Type = D3D12_COMMAND_LIST_TYPE_COPY;
+	hr = mDevice->CreateCommandQueue(&queueDes, IID_PPV_ARGS(&mCommandQueue[COMMAND_TYPE_COPY]));
+
+
 	
 	if (!SUCCEEDED(hr))
 	{
@@ -76,7 +84,7 @@ bool Render::initialize()
 	}
 
 	//NAME_D3D12_OBJECT(mCommandQueue);
-	mFence.initialize(mDevice);
+	mFence.initialize(*this);
 	mFence.fenceValue = 1;
 	mFenceEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 	
@@ -139,7 +147,7 @@ bool Render::createSwapChain(Window& window, UINT  count, DXGI_FORMAT format)
 	swapChainDesc.Windowed = true;
 
 
-	HRESULT hr = mDxgiFactory->CreateSwapChain(mCommandQueue, &swapChainDesc, &tempSwapChain);
+	HRESULT hr = mDxgiFactory->CreateSwapChain(mCommandQueue[COMMAND_TYPE_GRAPHICS], &swapChainDesc, &tempSwapChain);
 	//	HRESULT hr = mDxgiFactory->CreateSwapChainForHwnd(mCommandQueue, glfwGetWin32Window(window.mWindow), &swapChainDesc, nullptr, nullptr, &tempSwapChain);
 	if (!SUCCEEDED(hr))
 	{
@@ -196,7 +204,9 @@ void Render::release()
 	mRTVDescriptorHeap.release();
 	for (int i = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV; i < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES; i++)
 		mDescriptorHeaps[i].release();
-	SAFE_RELEASE(mCommandQueue);
+	SAFE_RELEASE(mCommandQueue[COMMAND_TYPE_GRAPHICS]);
+	SAFE_RELEASE(mCommandQueue[COMMAND_TYPE_COMPUTE]);
+	SAFE_RELEASE(mCommandQueue[COMMAND_TYPE_COPY]);
 	SAFE_RELEASE(mDevice);
 	SAFE_RELEASE(mDxgiFactory);
 	SAFE_RELEASE(mDxgiAdaptor);
@@ -222,19 +232,32 @@ void Render::executeCommands(CommandList *cmds, UINT counts)
 		cmds[i].mCurrentBindGraphicsRootSig = nullptr;
 		cmds[i].mCurrentBindComputeRootSig = nullptr;
 	}
-	mCommandQueue->ExecuteCommandLists(counts, lists);
-}
-void Render::waitCommandsDone()
-{
-	const UINT64 fenval = mFence.fenceValue;
-	mCommandQueue->Signal(mFence.mDx12Fence, fenval);
-	mFence.fenceValue++;
+	//cmds[0].mType
 
-	if (mFence.mDx12Fence->GetCompletedValue() < fenval)
+	
+	mCommandQueue[cmds[0].mType]->ExecuteCommandLists(counts, lists);
+	//mCommandQueue[COMMAND_TYPE_GRAPHICS]->ExecuteCommandLists(counts, lists);
+}
+
+
+void Render::insertSignalFenceValue(Fence& fence, CommandType cmdtype)
+{
+	mCommandQueue[cmdtype]->Signal(fence.mDx12Fence, fence.fenceValue);
+	fence.insert = true;
+}
+void Render::waitFence(Fence& fence)
+{
+//	HANDLE handle;
+	if (fence.insert)
 	{
-		mFence.mDx12Fence->SetEventOnCompletion(fenval, mFenceEvent);
-		WaitForSingleObject(mFenceEvent, INFINITE);
+		if (fence.mDx12Fence->GetCompletedValue() < fence.fenceValue)
+		{
+			fence.mDx12Fence->SetEventOnCompletion(fence.fenceValue, fence.event);
+			WaitForSingleObject(fence.event, INFINITE);
+		}
+		++fence.fenceValue;
 	}
+	fence.insert = false;
 }
 bool Render::present()
 {
@@ -258,8 +281,8 @@ void Render::generateMipMapOffline(Texture& texture, Mip_Map_Generate_Type type,
 	CommandList cmdlist;
 	cmdalloc.initialize(this->mDevice);
 	cmdlist.initial(this->mDevice, cmdalloc);
-
-
+	Fence tempfenses;
+	tempfenses.initialize(*this);
 	Texture gentexture;
 	vector<D3D12_RESOURCE_STATES> srcprevstate = texture.mState;
 
@@ -308,7 +331,9 @@ void Render::generateMipMapOffline(Texture& texture, Mip_Map_Generate_Type type,
 
 		cmdlist.close();
 		this->executeCommands(&cmdlist);
-		this->waitCommandsDone();
+	//	UINT64 getcurrent = mFence.mDx12Fence->GetCompletedValue();
+		this->insertSignalFenceValue(tempfenses);
+		this->waitFence(tempfenses);
 		
 	}
 	else
@@ -318,7 +343,7 @@ void Render::generateMipMapOffline(Texture& texture, Mip_Map_Generate_Type type,
 	tempHeaps.release();
 	cmdalloc.release();
 	cmdlist.release();
-
+	tempfenses.release();
 	
 
 }

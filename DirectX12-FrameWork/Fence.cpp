@@ -1,21 +1,24 @@
 #include "Fence.h"
 #include "stdafx.h"
+#include "StructureHeaders.h"
 Fence::Fence():mDx12Fence(NULL)
 {
 
 }
-bool Fence::initialize(ID3D12Device* device, D3D12_FENCE_FLAGS flag)
+bool Fence::initialize(Render& render, D3D12_FENCE_FLAGS flag)
 {
 	HRESULT hr;
 
-	hr = device->CreateFence(0, flag, IID_PPV_ARGS(&mDx12Fence));
+	hr = render.mDevice->CreateFence(0, flag, IID_PPV_ARGS(&mDx12Fence));
 	if (FAILED(hr))
 	{
 		cout << "Fail to create Fence" << endl;
 		return false;
 	}
+	event = CreateEvent(NULL, FALSE, FALSE, NULL);
 	Flag = flag;
-	fenceValue = 0;
+	fenceValue = 1;
+	insert = false;
 	return true;
 }
 void Fence::release()
