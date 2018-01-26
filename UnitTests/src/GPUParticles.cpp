@@ -403,8 +403,8 @@ void update()
 	render.executeCommands(&compcmdlist);
 	
 	render.executeCommands(&cmdlist);
-
-
+	///fffff
+	
 	render.insertSignalFenceValue(comfence, COMMAND_TYPE_COMPUTE);
 	render.insertSignalFenceValue(fence);
 	render.waitFence(fence);
