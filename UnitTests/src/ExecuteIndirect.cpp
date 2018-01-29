@@ -350,7 +350,7 @@ void loadAsset()
 	cmdlist[0].close();
 	render.executeCommands(&cmdlist[0]);
 	render.insertSignalFence(fence[0]);
-	render.waitFence(fence[0]);
+	render.waitFenceIncreament(fence[0]);
 	//const UINT64 fenval = fence.fenceValue;
 	//render.mCommandQueue->Signal(fence.mDx12Fence, fenval);
 	//fence.fenceValue++;
@@ -365,9 +365,9 @@ void loadAsset()
 
 void releaseRender()
 {
-	render.waitFence(fence[0]);
-	render.waitFence(fence[1]);
-	render.waitFence(fence[2]);
+	render.waitFenceIncreament(fence[0]);
+	render.waitFenceIncreament(fence[1]);
+	render.waitFenceIncreament(fence[2]);
 
 	depthBuffer[2].release();
 	depthBuffer[1].release();
@@ -408,7 +408,7 @@ void update()
 	cameraBuffer.updateBufferfromCpu(camera.getMatrix(), sizeof(ViewProjection));
 	cameraBuffer2.updateBufferfromCpu(camera2.getMatrix(), sizeof(ViewProjection));
 	frameIndex = render.getCurrentSwapChainIndex();
-	render.waitFence(fence[frameIndex]);
+	render.waitFenceIncreament(fence[frameIndex]);
 	cmdalloc[frameIndex].reset();
 	cmdlist[frameIndex].reset(cullPipeline);
 	cmdlist[frameIndex].bindDescriptorHeaps(&srvheap);
@@ -449,7 +449,7 @@ void update()
 	render.executeCommands(&cmdlist[frameIndex]);
 	render.present();
 	render.insertSignalFence(fence[frameIndex]);
-	render.waitFence(fence[frameIndex]);
+	render.waitFenceIncreament(fence[frameIndex]);
 
 	//const UINT64 fenval = fence.fenceValue;
 	//render.mCommandQueue->Signal(fence.mDx12Fence, fenval);

@@ -262,7 +262,7 @@ void loadAsset()
 	render.executeCommands(&cmdlist);
 
 	render.insertSignalFence(fence);
-	render.waitFence(fence);
+	render.waitFenceIncreament(fence);
 	InitPar.release();
 
 
@@ -331,7 +331,7 @@ void update()
 
 	render.executeCommands(&cmdlist);
 	render.insertSignalFence(fence);
-	render.waitFence(fence);
+	render.waitFenceIncreament(fence);
 
 
 
@@ -407,8 +407,8 @@ void update()
 	
 	render.insertSignalFence(comfence, COMMAND_TYPE_COMPUTE);
 	render.insertSignalFence(fence);
-	render.waitFence(fence);
-	render.waitFence(comfence);
+	render.waitFenceIncreament(fence);
+	render.waitFenceIncreament(comfence);
 
 	//resource transition end
 	cmdalloc.reset();
@@ -422,13 +422,112 @@ void update()
 	render.present();
 
 	render.insertSignalFence(fence);
-	render.waitFence(fence);
+	render.waitFenceIncreament(fence);
 
 
 	currentDraw = (currentDraw + 1) % 3;
 
 }
+void update2()
+{
 
+	std::chrono::high_resolution_clock::time_point t = std::chrono::high_resolution_clock::now();
+
+
+
+	std::chrono::duration<float> delta = t - pre;
+	pre = t;
+
+	//	cout << delta.count() << endl;
+	sceneData.delta = delta.count();
+	sceneBuffer.updateBufferfromCpu(&sceneData, sizeof(SceneData));
+
+	camera.updateViewProj();
+	cameraBuffer.updateBufferfromCpu(camera.getMatrix(), sizeof(ViewProjection));
+	frameIndex = render.getCurrentSwapChainIndex();
+
+
+	// compute part
+	compcmdalloc.reset();
+	compcmdlist.reset(ParticleDraw);
+	compcmdlist.bindDescriptorHeaps(&srvheap);
+	compcmdlist.bindPipeline(ParticleUpdate);
+	compcmdlist.bindComputeRootSigature(ParticleRootsig);
+	compcmdlist.bindComputeResource(0, sceneBuffer);
+	compcmdlist.bindComputeResource(1, particleBuffers[currentDraw]);
+	compcmdlist.bindComputeResource(2, particleBuffers[(currentDraw + 1) % 3]);
+
+	compcmdlist.resourceTransition(particleBuffers[(currentDraw + 1) % 3], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, true);
+	compcmdlist.dispatch(((particleNum / 1024) + 1), 1, 1);
+	compcmdlist.resourceTransition(particleBuffers[(currentDraw + 1) % 3], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,true);
+	compcmdlist.close();
+
+
+
+
+
+
+
+	//draw part
+	cmdalloc.reset();
+	cmdlist.reset(pipeline);
+	cmdlist.bindDescriptorHeaps(&srvheap);
+	cmdlist.setViewPort(viewport);
+	cmdlist.setScissor(scissor);
+	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET,true);
+	//	cmdlist.resourceTransition(particleBuffers[currentDraw], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE| D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	//	cmdlist.resourceTransition(particleBuffers[(currentDraw+1)%3],D3D12_RESOURCE_STATE_UNORDERED_ACCESS,true);
+
+
+	cmdlist.bindRenderTarget(render.mSwapChainRenderTarget[frameIndex], depthBuffer[frameIndex]);
+	const float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	cmdlist.clearRenderTarget(render.mSwapChainRenderTarget[frameIndex], clearColor);
+	cmdlist.clearDepthStencil(depthBuffer[frameIndex]);
+
+
+
+	cmdlist.bindGraphicsRootSigature(ParticleDrawRootsig);
+	cmdlist.bindPipeline(ParticleDraw);
+	cmdlist.setTopolgy(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
+	cmdlist.bindGraphicsResource(0, cameraBuffer);
+	cmdlist.bindGraphicsResource(1, particleBuffers[currentDraw]);
+	cmdlist.drawInstance(particleNum, 1, 0, 0);
+
+	//cmdlist.bindPipeline(ParticleUpdate);
+	//cmdlist.bindComputeRootSigature(ParticleRootsig);
+	//cmdlist.bindComputeResource(0, sceneBuffer);
+	//cmdlist.bindComputeResource(1, particleBuffers[currentDraw]);
+	//cmdlist.bindComputeResource(2, particleBuffers[(currentDraw+1) % 3]);
+
+	//currentDraw = (currentDraw + 1) % 3;
+	////cout << currentDraw << endl;
+	//cmdlist.dispatch(((particleNum / 1024) + 1), 1, 1);
+
+
+
+	//cmdlist.resourceTransition(particleBuffers[(currentDraw + 1) % 3], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT,true);
+	cmdlist.close();
+
+
+
+
+	render.executeCommands(&compcmdlist);
+
+	render.executeCommands(&cmdlist);
+	///fffff
+	render.present();
+	render.insertSignalFence(comfence, COMMAND_TYPE_COMPUTE);
+	render.insertSignalFence(fence);
+
+	render.waitFenceIncreament(fence);
+	render.waitFenceIncreament(comfence);
+
+	
+
+	currentDraw = (currentDraw + 1) % 3;
+
+}
 
 void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
 {
@@ -475,7 +574,7 @@ int main()
 	{
 
 		windows.pollInput();
-		update();
+		update2();
 	}
 	releaseRender();
 	windows.closeWindow();

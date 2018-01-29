@@ -943,7 +943,7 @@ void loadAsset()
 	cmdlist[0].close();
 	render.executeCommands(&cmdlist[0]);
 	render.insertSignalFence(fences[0]);
-	render.waitFence(fences[0]);
+	render.waitFenceIncreament(fences[0]);
 
 	for (int i = 0; i < diffuseindex.size(); ++i)
 	{
@@ -965,9 +965,9 @@ void loadAsset()
 void releaseRender()
 {
 	
-	render.waitFence(fences[0]);
-	render.waitFence(fences[1]);
-	render.waitFence(fences[0]);
+	render.waitFenceIncreament(fences[0]);
+	render.waitFenceIncreament(fences[1]);
+	render.waitFenceIncreament(fences[2]);
 
 	combinePipe.release();
 	combinesig.realease();
@@ -1065,6 +1065,8 @@ void update()
 	gamecamera.updateViewProj();
 	cameraBuffer.updateBufferfromCpu(gamecamera.getMatrix(), sizeof(ViewProjection));
 	frameIndex = render.getCurrentSwapChainIndex();
+
+	
 	cmdalloc[frameIndex].reset();
 	cmdlist[frameIndex].reset(GeoCmdGenPipeline);
 	cmdlist[frameIndex].bindDescriptorHeaps(&srvheap,&samplerheap);
@@ -1232,7 +1234,7 @@ void update()
 	render.present();
 
 	render.insertSignalFence(fences[frameIndex]);
-	render.waitFence(fences[frameIndex]);
+	render.waitFenceIncreament(fences[frameIndex]);
 }
 
 

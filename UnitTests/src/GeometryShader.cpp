@@ -327,7 +327,7 @@ void loadAsset()
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
 	render.insertSignalFence(fence);
-	render.waitFence(fence);
+	render.waitFenceIncreament(fence);
 	//	import.FreeScene();
 
 	pre = std::chrono::high_resolution_clock::now();
@@ -455,7 +455,7 @@ void onrender()
 	render.executeCommands(&cmdlist);
 	render.present();
 	render.insertSignalFence(fence);
-	render.waitFence(fence);
+	render.waitFenceIncreament(fence);
 }
 
 

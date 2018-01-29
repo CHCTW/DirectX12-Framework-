@@ -397,7 +397,7 @@ void loadAsset()
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
 	render.insertSignalFence(fence);
-	render.waitFence(fence);
+	render.waitFenceIncreament(fence);
 	/*const UINT64 fenval = fence.fenceValue;
 	render.mCommandQueue->Signal(fence.mDx12Fence, fenval);
 	fence.fenceValue++;
@@ -541,7 +541,7 @@ void onrender()
 	render.executeCommands(&cmdlist);
 	render.present();
 	render.insertSignalFence(fence);
-	render.waitFence(fence);
+	render.waitFenceIncreament(fence);
 
 
 

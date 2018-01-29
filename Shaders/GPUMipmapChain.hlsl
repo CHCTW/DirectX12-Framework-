@@ -107,20 +107,43 @@ float4 PSMain(VSOutput input) : SV_TARGET
 {
 
 
-    float3 normaltext = normalize(blockbase[1].Sample(loopsample, input.uv) * 2.0 - 1.0);
+    float roughness =0.0f;
+    float metallic = 0.0f;
+
+
+    float3 albedo = float3(0.0f, 0.0f, 0.0f);
+    float3 normaltext = float3(0.0f, 0.0f, 0.0f);
+    if (input.position.x > 800)
+    {
+    
+        roughness = blockbase[3].Sample(loopsample, input.uv).r;
+        metallic = blockbase[1].Sample(loopsample, input.uv).r;
+
+
+        albedo = pow(blockbase[0].Sample(loopsample, input.uv), 2.2);
+        normaltext = normalize(blockbase[1].Sample(loopsample, input.uv) * 2.0 - 1.0);
+    }
+    else
+    {
+        roughness = blockbase[3].SampleLevel(loopsample, input.uv,0).r;
+        metallic = blockbase[1].SampleLevel(loopsample, input.uv,0).r;
+
+
+        albedo = pow(blockbase[0].SampleLevel(loopsample, input.uv,0), 2.2);
+        normaltext = normalize(blockbase[1].SampleLevel(loopsample, input.uv,0) * 2.0 - 1.0);
+    }
+
     float3 normalobject = normalize(input.normal);
     float3 tan = normalize(input.tangent);
     float3 bitan = cross(tan,normalobject);
 
-
+    //if(input.position.x>800)
+    //    return float4(1.0, 0.0, 0.0, 0.0);
+    //return float4(1.0, 1.0, 0.0, 0.0);
 
         float3 normal = normaltext.x * tan + normaltext.y * bitan + normaltext.z * normalobject;
 
-        float roughness = blockbase[3].Sample(loopsample, input.uv).r;
-    float metallic = blockbase[1].Sample(loopsample, input.uv).r;
 
-
-        float3 albedo = pow(blockbase[0].Sample(loopsample, input.uv), 2.2);
     //if (blockbase[0].Sample(loopsample, input.uv).w==0.0f)
     //    discard;
         float ao = 1.0f;

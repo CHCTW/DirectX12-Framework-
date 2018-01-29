@@ -198,7 +198,7 @@ void loadAsset()
 	render.executeCommands(&cmdlist);
 	const UINT64 fenval = fence.fenceValue;
 	render.insertSignalFence(fence);
-	render.waitFence(fence);
+	render.waitFenceIncreament(fence);
 	//	import.FreeScene();
 	for(int i = 0 ; i< 6 ; i++)
 		stbi_image_free(skyboxdata[i]);
@@ -254,7 +254,7 @@ void update()
 
 
 	render.insertSignalFence(fence);
-	render.waitFence(fence);
+	render.waitFenceIncreament(fence);
 }
 
 

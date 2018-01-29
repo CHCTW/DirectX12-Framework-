@@ -20,8 +20,8 @@
 #include <array>
 using namespace std;
 Render render;
-CommandAllocator cmdalloc;
-CommandList cmdlist;
+CommandAllocator cmdalloc[3];
+CommandList cmdlist[3];
 Window windows;
 UINT frameIndex;
 Buffer vertexBuffer;
@@ -35,7 +35,7 @@ DescriptorHeap srvheap;
 DescriptorHeap rtvheap;
 DescriptorHeap dsvheap;
 static uint32_t swapChainCount = 3;
-Fence fence;
+Fence fences[3];
 ShaderSet shaderset;
 Assimp::Importer import;
 SpecCamera camera;
@@ -166,10 +166,17 @@ void initializeRender()
 	render.initialize();
 	RenderTargetFormat retformat;
 	render.createSwapChain(windows, swapChainCount, retformat.mRenderTargetFormat[0]);
-	fence.initialize(render);
-	cmdalloc.initialize(render.mDevice);
-	cmdlist.initial(render.mDevice, cmdalloc);
+	fences[0].initialize(render);
+	fences[1].initialize(render);
+	fences[2].initialize(render);
+	cmdalloc[0].initialize(render.mDevice);
+	cmdlist[0].initial(render.mDevice, cmdalloc[0]);
 
+	cmdalloc[1].initialize(render.mDevice);
+	cmdlist[1].initial(render.mDevice, cmdalloc[1]);
+
+	cmdalloc[2].initialize(render.mDevice);
+	cmdlist[2].initial(render.mDevice, cmdalloc[2]);
 
 
 	srvheap.ininitialize(render.mDevice, 1);
@@ -744,7 +751,7 @@ void loadAsset()
 	matricesList[0] = trans.getMatrices();
 	for (int i = 0; i < sponzascene->mNumMeshes; ++i)
 	{
-		meshList[i].loadMesh(sponzascene->mMeshes[i], render, cmdalloc, cmdlist);
+		meshList[i].loadMesh(sponzascene->mMeshes[i], render, cmdalloc[0], cmdlist[0]);
 		indirectMeshList[i] = meshList[i].getIndirectData();
 		if (sponzascene->mMeshes[i]->mMaterialIndex == 0)
 			cout << "Default Material" << endl;
@@ -767,70 +774,70 @@ void loadAsset()
 	gaussianconst.updateBufferfromCpu(&gaussdata, sizeof(GaussionWeight));
 	gaussianconst.unMaptoCpu();
 
-	cmdalloc.reset();
-	cmdlist.reset(Pipeline());
-	cmdlist.resourceTransition(vertexBuffer , D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceTransition(normalBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceTransition(indexBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdalloc[0].reset();
+	cmdlist[0].reset(Pipeline());
+	cmdlist[0].resourceTransition(vertexBuffer , D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[0].resourceTransition(normalBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[0].resourceTransition(indexBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
 
-	cmdlist.resourceTransition(indirecrtMeshBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceTransition(materialBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceTransition(matricesBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist.resourceTransition(objectBuffer, D3D12_RESOURCE_STATE_COPY_DEST,true);
-
-
-	cmdlist.updateBufferData(vertexBuffer, mesh->mVertices, mesh->mNumVertices * 3 * sizeof(float));
-	cmdlist.updateBufferData(indexBuffer, indexdata.data(), mesh->mNumFaces * 3 * sizeof(unsigned int));
-	cmdlist.updateBufferData(normalBuffer, mesh->mNormals, mesh->mNumVertices * 3 * sizeof(float));
+	cmdlist[0].resourceTransition(indirecrtMeshBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[0].resourceTransition(materialBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[0].resourceTransition(matricesBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[0].resourceTransition(objectBuffer, D3D12_RESOURCE_STATE_COPY_DEST,true);
 
 
-	cmdlist.updateBufferData(indirecrtMeshBuffer, indirectMeshList.data(), indirectMeshList.size() * sizeof(IndirectMeshData));
-	cmdlist.updateBufferData(materialBuffer, materialList.data(), materialList.size() * sizeof(Material));
-	cmdlist.updateBufferData(matricesBuffer, matricesList.data(), matricesList.size() * sizeof(Matrices));
-	cmdlist.updateBufferData(objectBuffer, objectList.data(), objectList.size() * sizeof(Object));
+	cmdlist[0].updateBufferData(vertexBuffer, mesh->mVertices, mesh->mNumVertices * 3 * sizeof(float));
+	cmdlist[0].updateBufferData(indexBuffer, indexdata.data(), mesh->mNumFaces * 3 * sizeof(unsigned int));
+	cmdlist[0].updateBufferData(normalBuffer, mesh->mNormals, mesh->mNumVertices * 3 * sizeof(float));
 
 
-	cmdlist.resourceTransition(indirecrtMeshBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-	cmdlist.resourceTransition(materialBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-	cmdlist.resourceTransition(objectBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-	cmdlist.resourceTransition(matricesBuffer, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	cmdlist[0].updateBufferData(indirecrtMeshBuffer, indirectMeshList.data(), indirectMeshList.size() * sizeof(IndirectMeshData));
+	cmdlist[0].updateBufferData(materialBuffer, materialList.data(), materialList.size() * sizeof(Material));
+	cmdlist[0].updateBufferData(matricesBuffer, matricesList.data(), matricesList.size() * sizeof(Matrices));
+	cmdlist[0].updateBufferData(objectBuffer, objectList.data(), objectList.size() * sizeof(Object));
+
+
+	cmdlist[0].resourceTransition(indirecrtMeshBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	cmdlist[0].resourceTransition(materialBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	cmdlist[0].resourceTransition(objectBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	cmdlist[0].resourceTransition(matricesBuffer, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	
 
-	cmdlist.resourceTransition(vertexBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceTransition(normalBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist.resourceTransition(indexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER);
-	cmdlist.resourceTransition(indirectGeoCmdBuffer, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
-	cmdlist.resourceTransition(shadowIndirectCmdBuffer, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT,true);
+	cmdlist[0].resourceTransition(vertexBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist[0].resourceTransition(normalBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist[0].resourceTransition(indexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+	cmdlist[0].resourceTransition(indirectGeoCmdBuffer, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+	cmdlist[0].resourceTransition(shadowIndirectCmdBuffer, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT,true);
 
 	
 
 	// start to load image data to texture
-	cmdlist.resourceTransition(DefualtTexture, D3D12_RESOURCE_STATE_COPY_DEST,true);
-	cmdlist.updateTextureData(DefualtTexture, &defaultnormal);
-	cmdlist.resourceTransition(DefualtTexture, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,true);
+	cmdlist[0].resourceTransition(DefualtTexture, D3D12_RESOURCE_STATE_COPY_DEST,true);
+	cmdlist[0].updateTextureData(DefualtTexture, &defaultnormal);
+	cmdlist[0].resourceTransition(DefualtTexture, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,true);
 
 
 
 	for (int i = 0; i < texturecount; ++i)
 	{
-		cmdlist.resourceTransition(textureList[i], D3D12_RESOURCE_STATE_COPY_DEST);
+		cmdlist[0].resourceTransition(textureList[i], D3D12_RESOURCE_STATE_COPY_DEST);
 	}
-	cmdlist.setBarrier();
+	cmdlist[0].setBarrier();
 
 	for (int i = 0; i < texturecount; ++i)
 	{
-		cmdlist.updateTextureData(textureList[i], imageList[i].mData,0,1);
+		cmdlist[0].updateTextureData(textureList[i], imageList[i].mData,0,1);
 	}
 	for (int i = 0; i < texturecount; ++i)
 	{
-		cmdlist.resourceTransition(textureList[i], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		cmdlist[0].resourceTransition(textureList[i], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	}
-	cmdlist.resourceTransition(GBuffer[0], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	cmdlist.resourceTransition(GBuffer[1], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	cmdlist.resourceTransition(GBuffer[2], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	cmdlist.resourceTransition(GBuffer[3], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	cmdlist[0].resourceTransition(GBuffer[0], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	cmdlist[0].resourceTransition(GBuffer[1], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	cmdlist[0].resourceTransition(GBuffer[2], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	cmdlist[0].resourceTransition(GBuffer[3], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-	cmdlist.setBarrier();
+	cmdlist[0].setBarrier();
 
 
 
@@ -842,10 +849,10 @@ void loadAsset()
 	//	cmdlist.resourceBarrier(BloomBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	//	cmdlist.resourceBarrier(BloomBuffer, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-	cmdlist.close();
-	render.executeCommands(&cmdlist);
-	render.insertSignalFence(fence);
-	render.waitFence(fence);
+	cmdlist[0].close();
+	render.executeCommands(&cmdlist[0]);
+	render.insertSignalFence(fences[0]);
+	render.waitFenceIncreament(fences[0]);
 
 	for (int i = 0; i < diffuseindex.size(); ++i)
 	{
@@ -866,7 +873,12 @@ void loadAsset()
 
 void releaseRender()
 {
-	fence.release();
+	render.waitFence(fences[0]);
+	render.waitFence(fences[1]);
+	render.waitFence(fences[2]);
+	fences[0].release();
+	fences[1].release();
+	fences[2].release();
 	depthDiscRootsig.realease();
 	disconMap.release();
 
@@ -927,8 +939,12 @@ void releaseRender()
 	rootsig.realease();
 	vertexBuffer.release();
 
-	cmdlist.release();
-	cmdalloc.release();
+	cmdlist[0].release();
+	cmdalloc[0].release();
+	cmdlist[1].release();
+	cmdalloc[1].release();
+	cmdlist[2].release();
+	cmdalloc[2].release();
 	render.releaseSwapChain();
 	render.release();
 
@@ -953,9 +969,10 @@ void update()
 	lightBuffer.updateBufferfromCpu(sunlight.getData(), sizeof(DirectionLightData));
 	cameraBuffer.updateBufferfromCpu(gamecamera.getMatrix(), sizeof(ViewProjection));
 	frameIndex = render.getCurrentSwapChainIndex();
-	cmdalloc.reset();
-	cmdlist.reset(GeoCmdGenPipeline);
-	cmdlist.bindDescriptorHeaps(&srvheap, &samplerheap);
+
+	cmdalloc[frameIndex].reset();
+	cmdlist[frameIndex].reset(GeoCmdGenPipeline);
+	cmdlist[frameIndex].bindDescriptorHeaps(&srvheap, &samplerheap);
 
 
 
@@ -967,74 +984,74 @@ void update()
 
 	
 
-	cmdlist.resourceTransition(indirectGeoCmdBuffer, D3D12_RESOURCE_STATE_COPY_DEST); //reset count
-	cmdlist.resourceTransition(shadowIndirectCmdBuffer, D3D12_RESOURCE_STATE_COPY_DEST,true);
-	cmdlist.setCounterforStructeredBuffer(indirectGeoCmdBuffer, 0);
-	cmdlist.setCounterforStructeredBuffer(shadowIndirectCmdBuffer, 0);
-	cmdlist.resourceTransition(indirectGeoCmdBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-	cmdlist.resourceTransition(shadowIndirectCmdBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,true);
+	cmdlist[frameIndex].resourceTransition(indirectGeoCmdBuffer, D3D12_RESOURCE_STATE_COPY_DEST); //reset count
+	cmdlist[frameIndex].resourceTransition(shadowIndirectCmdBuffer, D3D12_RESOURCE_STATE_COPY_DEST,true);
+	cmdlist[frameIndex].setCounterforStructeredBuffer(indirectGeoCmdBuffer, 0);
+	cmdlist[frameIndex].setCounterforStructeredBuffer(shadowIndirectCmdBuffer, 0);
+	cmdlist[frameIndex].resourceTransition(indirectGeoCmdBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	cmdlist[frameIndex].resourceTransition(shadowIndirectCmdBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,true);
 
-	cmdlist.bindComputeRootSigature(geoCmdGenRootSig);
-	cmdlist.dispatch(objectList.size(), 1, 1);
-	cmdlist.resourceTransition(indirectGeoCmdBuffer, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
-	cmdlist.resourceTransition(shadowIndirectCmdBuffer, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+	cmdlist[frameIndex].bindComputeRootSigature(geoCmdGenRootSig);
+	cmdlist[frameIndex].dispatch(objectList.size(), 1, 1);
+	cmdlist[frameIndex].resourceTransition(indirectGeoCmdBuffer, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+	cmdlist[frameIndex].resourceTransition(shadowIndirectCmdBuffer, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
 
 
 
-	cmdlist.resourceTransition(GBuffer[0], D3D12_RESOURCE_STATE_RENDER_TARGET);
-	cmdlist.resourceTransition(GBuffer[1], D3D12_RESOURCE_STATE_RENDER_TARGET);
-	cmdlist.resourceTransition(GBuffer[2], D3D12_RESOURCE_STATE_RENDER_TARGET);
-	cmdlist.resourceTransition(GBuffer[3], D3D12_RESOURCE_STATE_DEPTH_WRITE);
-	cmdlist.resourceTransition(cascadedShadowMap, D3D12_RESOURCE_STATE_DEPTH_WRITE,true);
+	cmdlist[frameIndex].resourceTransition(GBuffer[0], D3D12_RESOURCE_STATE_RENDER_TARGET);
+	cmdlist[frameIndex].resourceTransition(GBuffer[1], D3D12_RESOURCE_STATE_RENDER_TARGET);
+	cmdlist[frameIndex].resourceTransition(GBuffer[2], D3D12_RESOURCE_STATE_RENDER_TARGET);
+	cmdlist[frameIndex].resourceTransition(GBuffer[3], D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	cmdlist[frameIndex].resourceTransition(cascadedShadowMap, D3D12_RESOURCE_STATE_DEPTH_WRITE,true);
 
 	// shadowpass
-	cmdlist.setTopolgy(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	cmdlist.bindDepthStencilBufferOnly(cascadedShadowMap);
-	cmdlist.clearDepthStencil(cascadedShadowMap);
+	cmdlist[frameIndex].setTopolgy(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	cmdlist[frameIndex].bindDepthStencilBufferOnly(cascadedShadowMap);
+	cmdlist[frameIndex].clearDepthStencil(cascadedShadowMap);
 
-	cmdlist.clearRenderTarget(GBuffer[0]);
-	cmdlist.clearRenderTarget(GBuffer[1]);
-	cmdlist.clearRenderTarget(GBuffer[2]);
-	cmdlist.clearDepthStencil(GBuffer[3]);
+	cmdlist[frameIndex].clearRenderTarget(GBuffer[0]);
+	cmdlist[frameIndex].clearRenderTarget(GBuffer[1]);
+	cmdlist[frameIndex].clearRenderTarget(GBuffer[2]);
+	cmdlist[frameIndex].clearDepthStencil(GBuffer[3]);
 
-	cmdlist.setViewPort(shadowviewport);
-	cmdlist.setScissor(shadowscissor);
-	cmdlist.bindPipeline(shadowPipeline);
-	cmdlist.bindGraphicsRootSigature(shadowRootsig);
-	cmdlist.executeIndirect(shadowCmdSig, objectList.size(), shadowIndirectCmdBuffer, 0,shadowIndirectCmdBuffer,shadowIndirectCmdBuffer.mBufferSize - sizeof(UINT));
+	cmdlist[frameIndex].setViewPort(shadowviewport);
+	cmdlist[frameIndex].setScissor(shadowscissor);
+	cmdlist[frameIndex].bindPipeline(shadowPipeline);
+	cmdlist[frameIndex].bindGraphicsRootSigature(shadowRootsig);
+	cmdlist[frameIndex].executeIndirect(shadowCmdSig, objectList.size(), shadowIndirectCmdBuffer, 0,shadowIndirectCmdBuffer,shadowIndirectCmdBuffer.mBufferSize - sizeof(UINT));
 
 
 	
 
 	// G Pass
-	cmdlist.bindGraphicsRootSigature(rootsig);
-	cmdlist.setViewPort(viewport);
-	cmdlist.setScissor(scissor);
+	cmdlist[frameIndex].bindGraphicsRootSigature(rootsig);
+	cmdlist[frameIndex].setViewPort(viewport);
+	cmdlist[frameIndex].setScissor(scissor);
 	
-	cmdlist.bindRenderTargetsDepthStencil(GBuffer[0],GBuffer[1], GBuffer[2], GBuffer[3]);
+	cmdlist[frameIndex].bindRenderTargetsDepthStencil(GBuffer[0],GBuffer[1], GBuffer[2], GBuffer[3]);
 
 
 
 
 
-	cmdlist.bindPipeline(GeoDrawPipeline);
-	cmdlist.bindGraphicsRootSigature(geoDrawSig);
-	cmdlist.executeIndirect(geomCmdSig, objectList.size(), indirectGeoCmdBuffer, 0, indirectGeoCmdBuffer, indirectGeoCmdBuffer.mBufferSize - sizeof(UINT));
+	cmdlist[frameIndex].bindPipeline(GeoDrawPipeline);
+	cmdlist[frameIndex].bindGraphicsRootSigature(geoDrawSig);
+	cmdlist[frameIndex].executeIndirect(geomCmdSig, objectList.size(), indirectGeoCmdBuffer, 0, indirectGeoCmdBuffer, indirectGeoCmdBuffer.mBufferSize - sizeof(UINT));
 
-	cmdlist.resourceTransition(cascadedShadowMap, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-	cmdlist.resourceTransition(GBuffer[0], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE| D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-	cmdlist.resourceTransition(GBuffer[1], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-	cmdlist.resourceTransition(GBuffer[2], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-	cmdlist.resourceTransition(GBuffer[3], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE| D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	cmdlist[frameIndex].resourceTransition(cascadedShadowMap, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	cmdlist[frameIndex].resourceTransition(GBuffer[0], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE| D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	cmdlist[frameIndex].resourceTransition(GBuffer[1], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	cmdlist[frameIndex].resourceTransition(GBuffer[2], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	cmdlist[frameIndex].resourceTransition(GBuffer[3], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE| D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
 
 	//depht disc pass
 
-	cmdlist.resourceTransition(disconMap, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,true);
-	cmdlist.bindComputeRootSigature(depthDiscRootsig);
-	cmdlist.bindPipeline(depthDiscPipeline);
-	cmdlist.dispatch((disconMap.textureDesc.Width / 16) + 1, (disconMap.textureDesc.Height / 16) + 1, 1);
-	cmdlist.resourceTransition(disconMap, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	cmdlist[frameIndex].resourceTransition(disconMap, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,true);
+	cmdlist[frameIndex].bindComputeRootSigature(depthDiscRootsig);
+	cmdlist[frameIndex].bindPipeline(depthDiscPipeline);
+	cmdlist[frameIndex].dispatch((disconMap.textureDesc.Width / 16) + 1, (disconMap.textureDesc.Height / 16) + 1, 1);
+	cmdlist[frameIndex].resourceTransition(disconMap, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 
 
@@ -1043,70 +1060,70 @@ void update()
 
 	// LightPass
 
-	cmdlist.resourceTransition(HDRBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,true);
-	cmdlist.bindComputeRootSigature(lightRootsig);
-	cmdlist.bindPipeline(lightPipeline);
-	cmdlist.dispatch((HDRBuffer.textureDesc.Width / 16) + 1, (HDRBuffer.textureDesc.Height / 16) + 1, 1);
-	cmdlist.resourceTransition(HDRBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	cmdlist[frameIndex].resourceTransition(HDRBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,true);
+	cmdlist[frameIndex].bindComputeRootSigature(lightRootsig);
+	cmdlist[frameIndex].bindPipeline(lightPipeline);
+	cmdlist[frameIndex].dispatch((HDRBuffer.textureDesc.Width / 16) + 1, (HDRBuffer.textureDesc.Height / 16) + 1, 1);
+	cmdlist[frameIndex].resourceTransition(HDRBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 
 
 	//Post processing pass
 
-	cmdlist.resourceTransition(BloomBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-	cmdlist.resourceTransition(TempBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,true);
-	cmdlist.bindComputeRootSigature(brightextsig);
-	cmdlist.bindPipeline(brightExtractPipeline);
-	cmdlist.bindComputeConstant(0, &bloomthreash);
-	cmdlist.dispatch((BloomBuffer.textureDesc.Width / 256) + 1, BloomBuffer.textureDesc.Height, 1);
+	cmdlist[frameIndex].resourceTransition(BloomBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	cmdlist[frameIndex].resourceTransition(TempBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,true);
+	cmdlist[frameIndex].bindComputeRootSigature(brightextsig);
+	cmdlist[frameIndex].bindPipeline(brightExtractPipeline);
+	cmdlist[frameIndex].bindComputeConstant(0, &bloomthreash);
+	cmdlist[frameIndex].dispatch((BloomBuffer.textureDesc.Width / 256) + 1, BloomBuffer.textureDesc.Height, 1);
 
-	cmdlist.resourceTransition(BloomBuffer, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,true);
+	cmdlist[frameIndex].resourceTransition(BloomBuffer, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,true);
 	// gaussian blur use temp to store hor res
 
 	//TempBuffer
 	unsigned int direc = 0;
 	unsigned int direc2 = 1;
-	cmdlist.bindComputeRootSigature(gaussiansig);
-	cmdlist.bindPipeline(gaussianPipeline);
-	cmdlist.bindComputeConstant(1, &direc);
-	cmdlist.bindComputeResource(2, BloomBuffer);
-	cmdlist.bindComputeResource(3, TempBuffer);
-	cmdlist.dispatch((BloomBuffer.textureDesc.Width / 256) + 1, BloomBuffer.textureDesc.Height, 1);
+	cmdlist[frameIndex].bindComputeRootSigature(gaussiansig);
+	cmdlist[frameIndex].bindPipeline(gaussianPipeline);
+	cmdlist[frameIndex].bindComputeConstant(1, &direc);
+	cmdlist[frameIndex].bindComputeResource(2, BloomBuffer);
+	cmdlist[frameIndex].bindComputeResource(3, TempBuffer);
+	cmdlist[frameIndex].dispatch((BloomBuffer.textureDesc.Width / 256) + 1, BloomBuffer.textureDesc.Height, 1);
 
 	//	cmdlist.dispatch(BloomBuffer.textureDesc.Width, (BloomBuffer.textureDesc.Height / 256) + 1, 1);
 
-	cmdlist.resourceTransition(TempBuffer, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-	cmdlist.resourceTransition(BloomBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,true);
+	cmdlist[frameIndex].resourceTransition(TempBuffer, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	cmdlist[frameIndex].resourceTransition(BloomBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,true);
 	//	direc = 1;
-	cmdlist.bindComputeRootSigature(gaussiansig);
-	cmdlist.bindPipeline(gaussianPipeline);
-	cmdlist.bindComputeConstant(1, &direc2);
-	cmdlist.bindComputeResource(2, TempBuffer);
-	cmdlist.bindComputeResource(3, BloomBuffer);
-	cmdlist.dispatch((BloomBuffer.textureDesc.Height / 256) + 1, BloomBuffer.textureDesc.Width, 1);
+	cmdlist[frameIndex].bindComputeRootSigature(gaussiansig);
+	cmdlist[frameIndex].bindPipeline(gaussianPipeline);
+	cmdlist[frameIndex].bindComputeConstant(1, &direc2);
+	cmdlist[frameIndex].bindComputeResource(2, TempBuffer);
+	cmdlist[frameIndex].bindComputeResource(3, BloomBuffer);
+	cmdlist[frameIndex].dispatch((BloomBuffer.textureDesc.Height / 256) + 1, BloomBuffer.textureDesc.Width, 1);
 
 
 
 
-	cmdlist.resourceTransition(BloomBuffer, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	cmdlist[frameIndex].resourceTransition(BloomBuffer, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
-	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET,true);
-	cmdlist.bindRenderTarget(render.mSwapChainRenderTarget[frameIndex]);
-	cmdlist.setTopolgy(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	cmdlist[frameIndex].swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET,true);
+	cmdlist[frameIndex].bindRenderTarget(render.mSwapChainRenderTarget[frameIndex]);
+	cmdlist[frameIndex].setTopolgy(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	cmdlist.bindPipeline(combinePipe);
-	cmdlist.bindGraphicsRootSigature(combinesig);
-	cmdlist.drawInstance(3, 1, 0, 0);
-
-
-	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT,true);
+	cmdlist[frameIndex].bindPipeline(combinePipe);
+	cmdlist[frameIndex].bindGraphicsRootSigature(combinesig);
+	cmdlist[frameIndex].drawInstance(3, 1, 0, 0);
 
 
-	cmdlist.close();
-	render.executeCommands(&cmdlist);
+	cmdlist[frameIndex].swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT,true);
+
+
+	cmdlist[frameIndex].close();
+	render.executeCommands(&cmdlist[frameIndex]);
 	render.present();
-	render.insertSignalFence(fence);
-	render.waitFence(fence);
+	render.insertSignalFence(fences[frameIndex]);
+	render.waitFenceIncreament(fences[frameIndex]);
 }
 
 

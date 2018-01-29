@@ -148,7 +148,35 @@ bool Buffer::createConstantBuffer(ID3D12Device* device, UINT buffersize)
 
 	return true;
 }
+bool Buffer::createConstanBufferNew(Render &render, DescriptorHeap &heap, UINT buffersize)
+{
+	if (mResource)
+	{
+		cout << "Already Create Buffer" << endl;
+		return false;
+	}
 
+	HRESULT hr = render.mDevice->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+		D3D12_HEAP_FLAG_NONE,
+		&CD3DX12_RESOURCE_DESC::Buffer((buffersize + 255) & ~255),// alignment.... so, need to be don'e like this
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(&mResource));
+	if (FAILED(hr))
+		return false;
+	mType = CONSTANT;
+	mState.push_back(D3D12_RESOURCE_STATE_GENERIC_READ);
+	mHeapType = D3D12_HEAP_TYPE_UPLOAD;
+	GpuAddress = mResource->GetGPUVirtualAddress();
+
+	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
+	cbvDesc.BufferLocation = mResource->GetGPUVirtualAddress();
+	cbvDesc.SizeInBytes = (buffersize + 255) & ~255;
+	mCBV = heap.addResource(CBV, mResource, &cbvDesc);
+	mBufferSize = (buffersize + 255) & ~255;
+	return true;
+}
 
 bool Buffer::createStructeredBuffer(ID3D12Device* device, DescriptorHeap &heap, UINT strideSize, UINT elementcount, StructeredBufferType type, bool counter, bool raw, bool padding , D3D12_HEAP_TYPE heaptype)
 {

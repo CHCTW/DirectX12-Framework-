@@ -18,7 +18,7 @@ bool Fence::initialize(Render& render, D3D12_FENCE_FLAGS flag)
 	event = CreateEvent(NULL, FALSE, FALSE, NULL);
 	Flag = flag;
 	fenceValue = 1;
-	insert = false;
+	state = FENCE_STATE_UNUSED;
 	return true;
 }
 void Fence::release()

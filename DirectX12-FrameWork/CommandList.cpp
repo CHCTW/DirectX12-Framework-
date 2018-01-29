@@ -51,6 +51,30 @@ bool CommandList::reset()
 		return false;
 	return true;
 }
+// use with causion, doesn't provide any allocator check yet, this is a pre step for command list pool
+bool CommandList::resetwithAllocate(Pipeline& pipeline)
+{
+	HRESULT hr;
+	hr = mDx12Allocater->Reset();
+	if (FAILED(hr))
+		return false;
+	hr = mDx12CommandList->Reset(mDx12Allocater, pipeline.mPipeline);
+	if (FAILED(hr))
+		return false;
+	return true;
+}
+bool CommandList::resetwithAllocate()
+{
+	HRESULT hr;
+	hr = mDx12Allocater->Reset();
+	if (FAILED(hr))
+		return false;
+	hr = mDx12CommandList->Reset(mDx12Allocater, nullptr);
+	if (FAILED(hr))
+		return false;
+	return true;
+}
+
 void CommandList::bindPipeline(Pipeline& pipeline)
 {
 	mDx12CommandList->SetPipelineState(pipeline.mPipeline);
@@ -391,6 +415,25 @@ bool CommandList::updateBufferData(Buffer& buffer, void  const  * data, UINT dat
 	Data.RowPitch =  datasize;
 	Data.SlicePitch = Data.RowPitch;
 	//UpdateSubresources<1>(mDx12CommandList, buffer.mResource, buffer.mUploadBuffer, 0, 0, 1, &Data);
+	return true;
+}
+bool CommandList::updateBufferData(DynamicUploadBuffer& upload, Buffer& buffer, void  const  * data, UINT64 datasize, UINT64 bufferoffset)
+{
+	AllocateFormat format = upload.allocateforCurrentFrame(datasize); // get allocated buffer
+	char const* copysrc = (char const*)data; 
+	UINT64 srcoffset = 0;
+	for (int i = 0; i < format.inform.mapcount; ++i) // may be 1 or 2 times, since it's a ring buffer, may need to copy twice
+	{
+		char* copydest = (char *)format.cpubuffer;// change to char* to add the offset
+		copydest += format.inform.maplist[i].first; // +offset
+		copysrc += srcoffset;
+		memcpy(copydest, copysrc, format.inform.maplist[i].second);  // copy to upload buffer
+		
+		// record the command from ring buffer to dest buffer, since we already store the data in ring buffer, it is ok to update src data
+		mDx12CommandList->CopyBufferRegion(buffer.mResource, bufferoffset+srcoffset, format.gpubuffer, format.inform.maplist[i].first, format.inform.maplist[i].second);
+//		cout << format.inform.maplist[i].first << "    " << format.inform.maplist[i].second << endl;
+		srcoffset += format.inform.maplist[i].second; // next round, we start from the remain
+	}
 	return true;
 }
 bool CommandList::setCounterforStructeredBuffer(Buffer& buffer, UINT value)

@@ -463,7 +463,7 @@ void loadAsset()
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
 	render.insertSignalFence(fence);
-	render.waitFence(fence);
+	render.waitFenceIncreament(fence);
 	//	import.FreeScene();
 }
 
@@ -645,7 +645,7 @@ void onrender()
 
 
 	render.insertSignalFence(fence);
-	render.waitFence(fence);
+	render.waitFenceIncreament(fence);
 }
 
 

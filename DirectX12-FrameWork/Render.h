@@ -31,7 +31,10 @@ public:
 	void generateMipMapOffline(Texture& texture, Mip_Map_Generate_Type type,UINT genstartlevel = 1, UINT genendlevelnum = -1);
 	bool present();
 	void insertSignalFence(Fence& fence,CommandType cmdtype = COMMAND_TYPE_GRAPHICS);
+	void waitFenceIncreament(Fence& fence);
+	// only update
 	void waitFence(Fence& fence);
+	
 	UINT mSwapChainAccout;
 	ID3D12Device* mDevice;
 	

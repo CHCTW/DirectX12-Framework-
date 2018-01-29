@@ -176,7 +176,7 @@ void loadAsset()
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
 	render.insertSignalFence(fence);
-	render.waitFence(fence);
+	render.waitFenceIncreament(fence);
 }
 
 void releaseRender()
@@ -256,7 +256,7 @@ void rendscene()
 
 
 	render.insertSignalFence(fence);
-	render.waitFence(fence);
+	render.waitFenceIncreament(fence);
 }
 int main()
 {

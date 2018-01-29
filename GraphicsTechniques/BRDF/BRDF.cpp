@@ -330,15 +330,15 @@ void loadAsset()
 	cmdlist[0].close();
 	render.executeCommands(&cmdlist[0]);
 	render.insertSignalFence(fence[0]);
-	render.waitFence(fence[0]);
+	render.waitFenceIncreament(fence[0]);
 
 }
 
 void releaseRender()
 {
-	render.waitFence(fence[0]);
-	render.waitFence(fence[1]);
-	render.waitFence(fence[2]);
+	render.waitFenceIncreament(fence[0]);
+	render.waitFenceIncreament(fence[1]);
+	render.waitFenceIncreament(fence[2]);
 	depthBuffer[2].release();
 	depthBuffer[1].release();
 	depthBuffer[0].release();
@@ -400,7 +400,7 @@ void onrender()
 {
 	
 	frameIndex = render.getCurrentSwapChainIndex();
-	render.waitFence(fence[frameIndex]);
+	render.waitFenceIncreament(fence[frameIndex]);
 	cmdalloc[frameIndex].reset();
 	cmdlist[frameIndex].reset(pipeline);
 
@@ -457,7 +457,7 @@ void onrender()
 	render.present();
 
 	render.insertSignalFence(fence[frameIndex]);
-//	render.waitFence(fence[frameIndex]);
+//	render.waitFenceIncreament(fence[frameIndex]);
 }
 
 

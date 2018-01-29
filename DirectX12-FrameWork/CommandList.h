@@ -13,7 +13,7 @@ class Resource;
 class CommandSignature;
 class QueryHeap;
 class SwapChainBuffer;
-
+class DynamicUploadBuffer;
 class CommandList
 {
 public:
@@ -22,6 +22,9 @@ public:
 	void release();
 	bool reset(Pipeline& pipeline);
 	bool reset();
+	bool resetwithAllocate(Pipeline& pipeline);
+	bool resetwithAllocate();
+
 	bool close();
 	void bindGraphicsRootSigature(RootSignature& rootsig,bool bindresource = true);
 	void bindComputeRootSigature(RootSignature& rootsig, bool bindresource = true);
@@ -131,6 +134,8 @@ public:
 	bool copyResource(Resource &src, Resource &desc);
 	bool updateTextureData(Texture& texture, void  const * data,UINT startlevel = 0,UINT levelnum = -1 , UINT startslice = 0, UINT slicenum = -1);
 	bool updateBufferData(Buffer& buffer, void  const  * data, UINT datasize);
+	bool updateBufferData(DynamicUploadBuffer& upload,Buffer& buffer, void  const  * data, UINT64 datasize,UINT64 bufferoffset = 0);
+
 	bool setCounterforStructeredBuffer(Buffer& buffer, UINT value);
 	CommandType mType;
 	ID3D12GraphicsCommandList* mDx12CommandList;

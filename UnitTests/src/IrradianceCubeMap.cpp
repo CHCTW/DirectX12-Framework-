@@ -239,7 +239,7 @@ void loadAsset()
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
 	render.insertSignalFence(fence);
-	render.waitFence(fence);
+	render.waitFenceIncreament(fence);
 
 }
 void generateIrrMap()
@@ -325,7 +325,7 @@ void generateIrrMap()
 		cmdlist.close();
 		render.executeCommands(&cmdlist);
 		render.insertSignalFence(fence);
-		render.waitFence(fence);
+		render.waitFenceIncreament(fence);
 
 	
 	}
@@ -390,7 +390,7 @@ void update()
 
 
 	render.insertSignalFence(fence);
-	render.waitFence(fence);
+	render.waitFenceIncreament(fence);
 }
 
 

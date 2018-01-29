@@ -243,12 +243,12 @@ void Render::executeCommands(CommandList *cmds, UINT counts)
 void Render::insertSignalFence(Fence& fence, CommandType cmdtype)
 {
 	mCommandQueue[cmdtype]->Signal(fence.mDx12Fence, fence.fenceValue);
-	fence.insert = true;
+	fence.state = FENCE_STATE_INSERTED;
 }
-void Render::waitFence(Fence& fence)
+void Render::waitFenceIncreament(Fence& fence)
 {
 //	HANDLE handle;
-	if (fence.insert)
+	if (fence.state == FENCE_STATE_INSERTED)
 	{
 		if (fence.mDx12Fence->GetCompletedValue() < fence.fenceValue)
 		{
@@ -256,8 +256,20 @@ void Render::waitFence(Fence& fence)
 			WaitForSingleObject(fence.event, INFINITE);
 		}
 		++fence.fenceValue;
+		fence.state = FENCE_STATE_FINISHED;
 	}
-	fence.insert = false;
+}
+void Render::waitFence(Fence& fence)
+{
+	if (fence.state == FENCE_STATE_INSERTED)
+	{
+		if (fence.mDx12Fence->GetCompletedValue() < fence.fenceValue)
+		{
+			fence.mDx12Fence->SetEventOnCompletion(fence.fenceValue, fence.event);
+			WaitForSingleObject(fence.event, INFINITE);
+		}
+		fence.state = FENCE_STATE_FINISHED;
+	}
 }
 bool Render::present()
 {
@@ -333,7 +345,7 @@ void Render::generateMipMapOffline(Texture& texture, Mip_Map_Generate_Type type,
 		this->executeCommands(&cmdlist);
 	//	UINT64 getcurrent = mFence.mDx12Fence->GetCompletedValue();
 		this->insertSignalFence(tempfenses);
-		this->waitFence(tempfenses);
+		this->waitFenceIncreament(tempfenses);
 		
 	}
 	else

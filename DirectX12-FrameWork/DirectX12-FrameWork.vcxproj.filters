@@ -120,6 +120,9 @@
     <ClInclude Include="SwapChainBuffer.h">
       <Filter>Render\Structers\Resource</Filter>
     </ClInclude>
+    <ClInclude Include="DynamicUploadBuffer.h">
+      <Filter>Render\Structers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -196,6 +199,9 @@
     </ClCompile>
     <ClCompile Include="SwapChainBuffer.cpp">
       <Filter>Render\Structers\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="DynamicUploadBuffer.cpp">
+      <Filter>Render\Structers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

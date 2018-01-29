@@ -46,7 +46,7 @@ Pipeline wirepipeline;
 Fence fences[3];
 unsigned long long fencevalue = 1;
 HANDLE fenceEvet;
-UINT frameIndex;
+UINT swapchainIndex;
 Buffer cameraBuffer;
 Buffer lightBuffer;
 RootSignature rootsig;
@@ -102,6 +102,11 @@ DescriptorHeap samplerheap;
 Sampler loopsampler(D3D12_FILTER_MIN_MAG_MIP_LINEAR,  // due to pass too many parameters, should use inline to prevent a lot of copy
 	D3D12_TEXTURE_ADDRESS_MODE_WRAP,
 	D3D12_TEXTURE_ADDRESS_MODE_WRAP);
+
+DynamicUploadBuffer uploadbuffer;
+UINT64 framenumber = 1;
+Buffer cameraviewBuffers[3];
+Buffer lightdataBuffer[3];
 void initializeRender()
 {
 
@@ -121,6 +126,8 @@ void initializeRender()
 	fences[0].initialize(render);
 	fences[1].initialize(render);
 	fences[2].initialize(render);
+
+	uploadbuffer.initialize(render,2000);
 
 
 	srvheap.ininitialize(render.mDevice, 1);
@@ -193,23 +200,23 @@ void loadAsset()
 
 	Image blockbasecolor;
 	blockbasecolor.load("Assets/Textures/Sponza_Curtain_Red_diffuse.tga");
-	blockbase.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, blockbasecolor.mWidth, blockbasecolor.mHeight,1,8);
+	blockbase.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, blockbasecolor.mWidth, blockbasecolor.mHeight, 1, 8);
 	//blockbase.addSahderResorceView(srvheap);
 
 	Image blockn;
 	blockn.load("Assets/Textures/Sponza_Curtain_Red_normal.tga");
-	blocknormal.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, blockn.mWidth, blockn.mHeight,1,8);
+	blocknormal.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, blockn.mWidth, blockn.mHeight, 1, 8);
 	//blocknormal.addSahderResorceView(srvheap);
 
 
 	Image blockh;
 	blockh.load("Assets/Textures/Sponza_Curtain_metallic.tga");
-	blockmetal.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, blockn.mWidth, blockn.mHeight,1,8);
+	blockmetal.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, blockn.mWidth, blockn.mHeight, 1, 8);
 	//	blockmetal.addSahderResorceView(srvheap);
 
 	Image blockr;
 	blockr.load("Assets/Textures/Sponza_Curtain_roughness.tga");
-	blockrough.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, blockn.mWidth, blockn.mHeight,1,8);
+	blockrough.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, blockn.mWidth, blockn.mHeight, 1, 8);
 	//	blockrough.addSahderResorceView(srvheap);
 
 
@@ -219,11 +226,18 @@ void loadAsset()
 
 	camera.mZoom = 20;
 
-	cameraBuffer.createConstantBuffer(render.mDevice, srvheap, sizeof(ViewProjection));
-	cameraBuffer.maptoCpu();
+	cameraBuffer.createConstanBufferNew(render, srvheap, sizeof(ViewProjection));
 
-	lightBuffer.createConstantBuffer(render.mDevice, srvheap, sizeof(SpotLightData));
-	lightBuffer.maptoCpu();
+	cameraviewBuffers[0].createConstanBufferNew(render, srvheap, sizeof(ViewProjection));
+	cameraviewBuffers[1].createConstanBufferNew(render, srvheap, sizeof(ViewProjection));
+	cameraviewBuffers[2].createConstanBufferNew(render, srvheap, sizeof(ViewProjection));
+
+
+	lightdataBuffer[0].createConstanBufferNew(render, srvheap, sizeof(SpotLightData));
+	lightdataBuffer[1].createConstanBufferNew(render, srvheap, sizeof(SpotLightData));
+	lightdataBuffer[2].createConstanBufferNew(render, srvheap, sizeof(SpotLightData));
+
+	lightBuffer.createConstanBufferNew(render, srvheap, sizeof(SpotLightData));
 
 	light.setRadius(1500);
 	light.setIntensity(15000);
@@ -235,7 +249,7 @@ void loadAsset()
 
 
 
-	patch.generatePatch(500, 500, 20, 20, Triangle, ZERO, 0, 3, 3, 5,10.0,10.0);
+	patch.generatePatch(500, 500, 20, 20, Triangle, ZERO, 0, 3, 3, 5, 10.0, 10.0);
 	Ground.mVertexBufferData.createVertexBuffer(render.mDevice, patch.mPosition.size() * sizeof(float), sizeof(float) * 3);
 	Ground.mNormalBuffer.createVertexBuffer(render.mDevice, patch.mNormal.size() * sizeof(float), sizeof(float) * 3);
 	Ground.mUVBuffer.createVertexBuffer(render.mDevice, patch.mUV.size() * sizeof(float), sizeof(float) * 2);
@@ -369,10 +383,10 @@ void loadAsset()
 
 
 
-	cmdlist[0].updateTextureData(blockbase, blockbasecolor.mData,0,1);
-	cmdlist[0].updateTextureData(blocknormal, blockn.mData,0,1);
-	cmdlist[0].updateTextureData(blockmetal, blockh.mData,0,1);
-	cmdlist[0].updateTextureData(blockrough, blockr.mData,0,1);
+	cmdlist[0].updateTextureData(blockbase, blockbasecolor.mData, 0, 1);
+	cmdlist[0].updateTextureData(blocknormal, blockn.mData, 0, 1);
+	cmdlist[0].updateTextureData(blockmetal, blockh.mData, 0, 1);
+	cmdlist[0].updateTextureData(blockrough, blockr.mData, 0, 1);
 
 
 	cmdlist[0].resourceTransition(blockbase, D3D12_RESOURCE_STATE_GENERIC_READ);
@@ -404,9 +418,12 @@ void loadAsset()
 	cmdlist[0].close();
 	render.executeCommands(&cmdlist[0]);
 	//render.waitCommandsDone();
-	render.insertSignalFence(fences[0]);
-	render.waitFenceIncreament(fences[0]);
 
+	Fence tempfence;
+	tempfence.initialize(render);
+	render.insertSignalFence(tempfence);
+	render.waitFence(tempfence);
+	tempfence.release();
 
 	render.generateMipMapOffline(blockbase, MIP_MAP_GEN_SRGB_ALPHA_MASK_LINEAR_GAUSSIAN_CLAMP, 1);
 	render.generateMipMapOffline(blockmetal, MIP_MAP_GEN_RGBA_LINEAR_GAUSSIAN_CLAMP, 1);
@@ -416,6 +433,18 @@ void loadAsset()
 
 void releaseRender()
 {
+	render.waitFence(fences[0]);
+	render.waitFence(fences[1]);
+	render.waitFence(fences[2]);
+
+	lightdataBuffer[0].release();
+	lightdataBuffer[1].release();
+	lightdataBuffer[2].release();
+
+	cameraviewBuffers[2].release();
+	cameraviewBuffers[1].release();
+	cameraviewBuffers[0].release();
+	uploadbuffer.release();
 	depthBuffer[2].release();
 	depthBuffer[1].release();
 	depthBuffer[0].release();
@@ -468,11 +497,11 @@ void update()
 
 
 	camera.updateViewProj();
-	cameraBuffer.updateBufferfromCpu(camera.getMatrix(), sizeof(ViewProjection));
+//	cameraBuffer.updateBufferfromCpu(camera.getMatrix(), sizeof(ViewProjection));
 
 
 	light.update();
-	lightBuffer.updateBufferfromCpu(light.getLightData(), sizeof(SpotLightData));
+//	lightBuffer.updateBufferfromCpu(light.getLightData(), sizeof(SpotLightData));
 	//radian = 2 * 3.14159f / Sphere.mNum;
 	//rotationoffset += rotationspeed;
 	//for (int i = 0; i < Sphere.mNum; ++i)
@@ -491,14 +520,18 @@ void update()
 void onrender()
 {
 
-	frameIndex = render.getCurrentSwapChainIndex();
-	
-	render.waitFenceIncreament(fences[frameIndex]);
-	//cmdalloc[frameIndex].reset();
+	swapchainIndex = render.getCurrentSwapChainIndex();
+
+	render.waitFence(fences[swapchainIndex]);
+	if (fences[swapchainIndex].finished())
+		uploadbuffer.freeAllocateUntilFrame(fences[swapchainIndex].fenceValue);
+	fences[swapchainIndex].updateValue(framenumber);
+	uploadbuffer.setCurrentFrameNumber(framenumber);
+	//cmdalloc[swapchainIndex].reset();
 	if (!wire)
-		cmdlist[frameIndex].resetwithAllocate(pipeline);
+		cmdlist[swapchainIndex].resetwithAllocate(pipeline);
 	else
-		cmdlist[frameIndex].resetwithAllocate(wirepipeline);
+		cmdlist[swapchainIndex].resetwithAllocate(wirepipeline);
 
 
 
@@ -516,36 +549,46 @@ void onrender()
 
 
 
-	cmdlist[frameIndex].bindDescriptorHeaps(&srvheap, &samplerheap);
-	cmdlist[frameIndex].bindGraphicsRootSigature(rootsig);
-	cmdlist[frameIndex].setViewPort(viewport);
-	cmdlist[frameIndex].setScissor(scissor);
-	cmdlist[frameIndex].swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, true);
-	cmdlist[frameIndex].bindRenderTarget(render.mSwapChainRenderTarget[frameIndex], depthBuffer[frameIndex]);
+	cmdlist[swapchainIndex].bindDescriptorHeaps(&srvheap, &samplerheap);
+	cmdlist[swapchainIndex].setViewPort(viewport);
+	cmdlist[swapchainIndex].setScissor(scissor);
+	cmdlist[swapchainIndex].resourceTransition(cameraBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[swapchainIndex].resourceTransition(lightBuffer, D3D12_RESOURCE_STATE_COPY_DEST,true);
+	cmdlist[swapchainIndex].updateBufferData(uploadbuffer, cameraBuffer, camera.getMatrix(), sizeof(ViewProjection));
+	cmdlist[swapchainIndex].updateBufferData(uploadbuffer, lightBuffer, light.getLightData(), sizeof(SpotLightData));
+
+	cmdlist[swapchainIndex].resourceTransition(cameraBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist[swapchainIndex].resourceTransition(lightBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	cmdlist[swapchainIndex].swapChainBufferTransition(render.mSwapChainRenderTarget[swapchainIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, true);
+	
+	cmdlist[swapchainIndex].bindRenderTarget(render.mSwapChainRenderTarget[swapchainIndex], depthBuffer[0]);
 	const float clearColor[] = { 0.0f, 0.1f, 0.3f, 1.0f };
-	cmdlist[frameIndex].clearRenderTarget(render.mSwapChainRenderTarget[frameIndex], clearColor);
-	cmdlist[frameIndex].clearDepthStencil(depthBuffer[frameIndex]);
-	cmdlist[frameIndex].setTopolgy(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	cmdlist[swapchainIndex].clearRenderTarget(render.mSwapChainRenderTarget[swapchainIndex], clearColor);
+	cmdlist[swapchainIndex].clearDepthStencil(depthBuffer[0]);
+	cmdlist[swapchainIndex].setTopolgy(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+
+//	cmdlist[swapchainIndex].bindGraphicsResource(0, cameraviewBuffers[0]);
+//	cmdlist[swapchainIndex].bindGraphicsResource(2, lightdataBuffer[swapchainIndex]);
+	//cmdlist[swapchainIndex].bindGraphicsResource(1, Sphere.mInstancedBuffer);
+	cmdlist[swapchainIndex].bindGraphicsRootSigature(rootsig);
+	cmdlist[swapchainIndex].bindGraphicsResource(1, Ground.mInstancedBuffer);
+	cmdlist[swapchainIndex].bindIndexBuffer(Ground.mIndexBuffer);
+	cmdlist[swapchainIndex].bindVertexBuffers(Ground.mVertexBufferData, Ground.mNormalBuffer, Ground.mUVBuffer, Ground.mTangentBuffer);
+	cmdlist[swapchainIndex].drawIndexedInstanced(Ground.indexCount, Ground.mNum, 0, 0);
 
 
 
-	cmdlist[frameIndex].bindGraphicsResource(1, Sphere.mInstancedBuffer);
-	cmdlist[frameIndex].bindGraphicsResource(1, Ground.mInstancedBuffer);
-	cmdlist[frameIndex].bindIndexBuffer(Ground.mIndexBuffer);
-	cmdlist[frameIndex].bindVertexBuffers(Ground.mVertexBufferData, Ground.mNormalBuffer, Ground.mUVBuffer, Ground.mTangentBuffer);
-	cmdlist[frameIndex].drawIndexedInstanced(Ground.indexCount, Ground.mNum, 0, 0);
 
 
-
-
-
-	cmdlist[frameIndex].swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT, true);
-	cmdlist[frameIndex].close();
-	render.executeCommands(&cmdlist[frameIndex]);
+	cmdlist[swapchainIndex].swapChainBufferTransition(render.mSwapChainRenderTarget[swapchainIndex], D3D12_RESOURCE_STATE_PRESENT, true);
+	cmdlist[swapchainIndex].close();
+	render.executeCommands(&cmdlist[swapchainIndex]);
 	render.present();
 	//render.waitCommandsDone();
-	render.insertSignalFence(fences[frameIndex]); 
-	//render.waitFenceIncreament(fences[frameIndex]);
+	render.insertSignalFence(fences[swapchainIndex]);
+	//render.waitFenceIncreament(fences[swapchainIndex]);
+	++framenumber;
 
 
 }
