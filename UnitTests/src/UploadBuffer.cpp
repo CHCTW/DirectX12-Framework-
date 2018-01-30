@@ -157,7 +157,7 @@ void initializeRender()
 	rootsig.mParameters[3].mResCounts = 4;
 	rootsig.mParameters[3].mBindSlot = 1;
 	rootsig.mParameters[3].mResource = &blockbase;
-	rootsig.mParameters[3].mVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	rootsig.mParameters[3].mVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	rootsig.mParameters[4].mType = PARAMETERTYPE_SAMPLER;
 	rootsig.mParameters[4].mResCounts = 1;
 	rootsig.mParameters[4].mBindSlot = 0;
@@ -201,24 +201,28 @@ void loadAsset()
 	Image blockbasecolor;
 	blockbasecolor.load("Assets/Textures/Sponza_Curtain_Red_diffuse.tga");
 	blockbase.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, blockbasecolor.mWidth, blockbasecolor.mHeight, 1, 8);
-	//blockbase.addSahderResorceView(srvheap);
+	render.updateTextureOffline(blockbase, blockbasecolor.mData, 0, 1);
+
 
 	Image blockn;
 	blockn.load("Assets/Textures/Sponza_Curtain_Red_normal.tga");
 	blocknormal.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, blockn.mWidth, blockn.mHeight, 1, 8);
 	//blocknormal.addSahderResorceView(srvheap);
 
+	render.updateTextureOffline(blocknormal, blockn.mData, 0, 1);
+
 
 	Image blockh;
 	blockh.load("Assets/Textures/Sponza_Curtain_metallic.tga");
 	blockmetal.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, blockn.mWidth, blockn.mHeight, 1, 8);
 	//	blockmetal.addSahderResorceView(srvheap);
+	render.updateTextureOffline(blockmetal, blockh.mData, 0, 1);
 
 	Image blockr;
 	blockr.load("Assets/Textures/Sponza_Curtain_roughness.tga");
 	blockrough.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, blockn.mWidth, blockn.mHeight, 1, 8);
 	//	blockrough.addSahderResorceView(srvheap);
-
+	render.updateTextureOffline(blockrough, blockr.mData, 0, 1);
 
 	/*************************************************************/
 
@@ -251,7 +255,14 @@ void loadAsset()
 
 	patch.generatePatch(500, 500, 20, 20, Triangle, ZERO, 0, 3, 3, 5, 10.0, 10.0);
 	Ground.mVertexBufferData.createVertexBuffer(render.mDevice, patch.mPosition.size() * sizeof(float), sizeof(float) * 3);
+
+	render.updateBufferOffline(Ground.mVertexBufferData, patch.mPosition.data(), patch.mPosition.size() * sizeof(float));
+
 	Ground.mNormalBuffer.createVertexBuffer(render.mDevice, patch.mNormal.size() * sizeof(float), sizeof(float) * 3);
+
+
+	render.updateBufferOffline(Ground.mNormalBuffer, patch.mNormal.data(), patch.mNormal.size() * sizeof(float));
+
 	Ground.mUVBuffer.createVertexBuffer(render.mDevice, patch.mUV.size() * sizeof(float), sizeof(float) * 2);
 	Ground.mTangentBuffer.createVertexBuffer(render.mDevice, patch.mTangent.size() * sizeof(float), sizeof(float) * 3);
 	Ground.mIndexBuffer.createIndexBuffer(render.mDevice, sizeof(unsigned int)*patch.mIndex.size());
@@ -335,39 +346,16 @@ void loadAsset()
 	cmdlist[0].resourceTransition(depthBuffer[0], D3D12_RESOURCE_STATE_DEPTH_WRITE);
 	cmdlist[0].resourceTransition(depthBuffer[1], D3D12_RESOURCE_STATE_DEPTH_WRITE);
 	cmdlist[0].resourceTransition(depthBuffer[2], D3D12_RESOURCE_STATE_DEPTH_WRITE);
-	cmdlist[0].resourceTransition(Sphere.mVertexBufferData, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist[0].resourceTransition(Sphere.mNormalBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist[0].resourceTransition(Sphere.mUVBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist[0].resourceTransition(Sphere.mTangentBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist[0].resourceTransition(Sphere.mIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist[0].resourceTransition(Sphere.mInstancedBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
 
 
 
 
-	cmdlist[0].resourceTransition(Ground.mVertexBufferData, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist[0].resourceTransition(Ground.mNormalBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
 	cmdlist[0].resourceTransition(Ground.mUVBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
 	cmdlist[0].resourceTransition(Ground.mTangentBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
 	cmdlist[0].resourceTransition(Ground.mIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist[0].resourceTransition(Ground.mInstancedBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	cmdlist[0].resourceTransition(Ground.mInstancedBuffer, D3D12_RESOURCE_STATE_COPY_DEST,true);
 
 
-
-
-	cmdlist[0].resourceTransition(blockbase, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist[0].resourceTransition(blocknormal, D3D12_RESOURCE_STATE_COPY_DEST);
-
-	cmdlist[0].resourceTransition(blockmetal, D3D12_RESOURCE_STATE_COPY_DEST);
-	cmdlist[0].resourceTransition(blockrough, D3D12_RESOURCE_STATE_COPY_DEST, true);
-
-	cmdlist[0].updateBufferData(Sphere.mVertexBufferData, mesh->mVertices, mesh->mNumVertices * 3 * sizeof(float));
-	cmdlist[0].updateBufferData(Sphere.mIndexBuffer, indexdata.data(), mesh->mNumFaces * 3 * sizeof(unsigned int));
-	cmdlist[0].updateBufferData(Sphere.mNormalBuffer, mesh->mNormals, mesh->mNumVertices * 3 * sizeof(float));
-	cmdlist[0].updateBufferData(Sphere.mUVBuffer, mesh->mTextureCoords[0], mesh->mNumVertices * 3 * sizeof(float));
-	cmdlist[0].updateBufferData(Sphere.mTangentBuffer, mesh->mTangents, mesh->mNumVertices * 3 * sizeof(float));
-
-	cmdlist[0].updateBufferData(Sphere.mInstancedBuffer, Sphere.mBufferData.data(), Sphere.mNum * sizeof(InstancedInformation));
 
 
 
@@ -379,30 +367,6 @@ void loadAsset()
 
 
 	cmdlist[0].updateBufferData(Ground.mInstancedBuffer, Ground.mBufferData.data(), Ground.mNum * sizeof(InstancedInformation));
-
-
-
-
-	cmdlist[0].updateTextureData(blockbase, blockbasecolor.mData, 0, 1);
-	cmdlist[0].updateTextureData(blocknormal, blockn.mData, 0, 1);
-	cmdlist[0].updateTextureData(blockmetal, blockh.mData, 0, 1);
-	cmdlist[0].updateTextureData(blockrough, blockr.mData, 0, 1);
-
-
-	cmdlist[0].resourceTransition(blockbase, D3D12_RESOURCE_STATE_GENERIC_READ);
-	cmdlist[0].resourceTransition(blocknormal, D3D12_RESOURCE_STATE_GENERIC_READ);
-	cmdlist[0].resourceTransition(blockmetal, D3D12_RESOURCE_STATE_GENERIC_READ);
-	cmdlist[0].resourceTransition(blockrough, D3D12_RESOURCE_STATE_GENERIC_READ);
-
-
-	cmdlist[0].resourceTransition(Sphere.mVertexBufferData, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist[0].resourceTransition(Sphere.mNormalBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist[0].resourceTransition(Sphere.mUVBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	cmdlist[0].resourceTransition(Sphere.mTangentBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-
-	cmdlist[0].resourceTransition(Sphere.mIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER);
-	cmdlist[0].resourceTransition(Sphere.mInstancedBuffer, D3D12_RESOURCE_STATE_GENERIC_READ);
-
 
 
 	cmdlist[0].resourceTransition(Ground.mVertexBufferData, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);

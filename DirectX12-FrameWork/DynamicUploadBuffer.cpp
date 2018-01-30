@@ -33,40 +33,59 @@ void RingBuffer::release()
 
 	records.clear();
 }
-// won't check unused size is large enough
-AllocateInformation RingBuffer::allocte(UINT64 requestsize, UINT64 frame)
+bool RingBuffer::enoughcontspace(UINT64 s)
 {
-	AllocateInformation allocata;
+	if (s > unusedsize)
+		return false;
+	if (tail >= head)
+	{
+		if (tail + s > size) // reach the end of the buffer
+		{
+			return (head >= s); // from start to head, check have enough space
+		}
+		return true;
+	}
+	else
+	{
+		return ((head - tail) >= s);
+	}
+}
+// won't check unused size is large enough
+UINT64 RingBuffer::allocte(UINT64 requestsize, UINT64 frame)
+{
+	UINT64 offset = 0;
 	// normal case, just need to check whether it touch the end
 	if (tail >= head)
 	{
-		if (tail + requestsize > size) // reach the end of the buffer, need to split to two parts
+		if (tail + requestsize > size) // reach the end of the buffer, need to split to two parts, only going to use the second part
 		{
-			unsigned int remain = size - tail;
-			allocata.mapcount = 2;
-			allocata.maplist[0].first = tail;
-			allocata.maplist[0].second = remain;
-			allocata.maplist[1].first = 0;
-			allocata.maplist[1].second = requestsize - remain;
-			tail = (requestsize - remain)%size;;
+			unsigned int remain = size - tail; // still need to allocate it to prevent fragment
+		/*	allocata.mapcount = 1;
+			allocata.maplist[0].first = 0;
+			allocata.maplist[0].second = requestsize;
+		*/
+			offset = 0; // allocate from start
+			tail = requestsize;
+			requestsize += remain; // add up 
+			
 		}
 		else  // have enough space
 		{
-			allocata.mapcount = 1;
-			allocata.maplist[0].first = tail;
-			allocata.maplist[0].second = requestsize;
+			offset = tail;
 			tail = (tail + requestsize)%size;
 		}
 
 	}
 	else // teail is before head, since not going to check large enough, just allocate an area
 	{
-		allocata.mapcount = 1;
+		/*allocata.mapcount = 1;
 		allocata.maplist[0].first = tail;
-		allocata.maplist[0].second = requestsize;
+		allocata.maplist[0].second = requestsize;*/
+		offset = tail;
 		tail = (tail + requestsize) % size;
 	}
 	unusedsize -= requestsize;
+//	cout << requestsize << endl;
 	if (records.size()==0 || records.back().second != frame) // current allocate the first allocate in his frame
 	{
 		pair<UINT64, UINT64> allorec;
@@ -80,7 +99,7 @@ AllocateInformation RingBuffer::allocte(UINT64 requestsize, UINT64 frame)
 	}
 
 
-	return allocata;
+	return offset;
 }
 void RingBuffer::free(UINT64 frame)
 {
@@ -134,12 +153,12 @@ AllocateFormat DynamicUploadBuffer::allocateforCurrentFrame(UINT64 reqsize)
 
 	cslock.lock();// protect for multi threading cmd list
 	accallocsize += reqsize;
-	if (ringbuffers.back().unusedsize < reqsize) // don't have enough size
+	if (!ringbuffers.back().enoughcontspace(reqsize)) // don't have enough con't size
 	{
 		ringbuffers.push_back(RingBuffer());
 		ringbuffers.back().initialize((prevacccallocsize+reqsize) * 3, mDevice);// assume swap chain count is three, if it's stable no new ring buffer will be allocate
 	}
-	format.inform = ringbuffers.back().allocte(reqsize, currentframe);
+	format.offset = ringbuffers.back().allocte(reqsize, currentframe);
 	cslock.unlock();
 
 	format.gpubuffer = ringbuffers.back().gpubuffer;

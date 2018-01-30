@@ -421,19 +421,13 @@ bool CommandList::updateBufferData(DynamicUploadBuffer& upload, Buffer& buffer, 
 {
 	AllocateFormat format = upload.allocateforCurrentFrame(datasize); // get allocated buffer
 	char const* copysrc = (char const*)data; 
-	UINT64 srcoffset = 0;
-	for (int i = 0; i < format.inform.mapcount; ++i) // may be 1 or 2 times, since it's a ring buffer, may need to copy twice
-	{
-		char* copydest = (char *)format.cpubuffer;// change to char* to add the offset
-		copydest += format.inform.maplist[i].first; // +offset
-		copysrc += srcoffset;
-		memcpy(copydest, copysrc, format.inform.maplist[i].second);  // copy to upload buffer
+
+	char* copydest = (char *)format.cpubuffer;// change to char* to add the offset
+	copydest += format.offset; // +offset
+	memcpy(copydest, copysrc,datasize);  // copy to upload buffer
 		
-		// record the command from ring buffer to dest buffer, since we already store the data in ring buffer, it is ok to update src data
-		mDx12CommandList->CopyBufferRegion(buffer.mResource, bufferoffset+srcoffset, format.gpubuffer, format.inform.maplist[i].first, format.inform.maplist[i].second);
-//		cout << format.inform.maplist[i].first << "    " << format.inform.maplist[i].second << endl;
-		srcoffset += format.inform.maplist[i].second; // next round, we start from the remain
-	}
+	// record the command from ring buffer to dest buffer, since we already store the data in ring buffer, it is ok to update src data
+	mDx12CommandList->CopyBufferRegion(buffer.mResource, bufferoffset, format.gpubuffer, format.offset, datasize);
 	return true;
 }
 bool CommandList::setCounterforStructeredBuffer(Buffer& buffer, UINT value)
@@ -496,6 +490,54 @@ bool CommandList::updateTextureData(Texture& texture, void const * data, UINT st
 
 
 	return true;
+
+}
+bool CommandList::updateTextureData(DynamicUploadBuffer& upload, Texture& texture, void  const * data, UINT startlevel, UINT levelnum, UINT startslice, UINT slicenum)
+{
+	UINT64 totalneedsize = 0;
+	if (!texture.mResource || !texture.mUploadBuffer)
+		return false;
+	UINT levels = min((texture.textureDesc.MipLevels - startlevel), levelnum);
+	UINT slices = min((texture.textureDesc.DepthOrArraySize - startslice), slicenum);
+	unsigned int totalsub = slices*levels;
+	char const * copysrc = (char const *)data;
+	//UINT64 uploadbufferoffset = 0;
+
+	D3D12_TEXTURE_COPY_LOCATION destresource;
+	destresource.pResource = texture.mResource;
+	destresource.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+
+	D3D12_TEXTURE_COPY_LOCATION srcresource;
+	srcresource.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+
+	for (unsigned int i = startslice; i < slices + startslice; ++i)
+	{
+		for (unsigned int j = startlevel; j < startlevel + levels; ++j)
+		{
+			unsigned int subnum = i*texture.textureDesc.MipLevels + j;
+			unsigned int cpumiplevel = j - startlevel;
+			UINT64 cpurowsize = texture.mRowSize[subnum]; // get total size in cpu side, no alighemnt
+			UINT64 gpurowsize = texture.mLayouts[subnum].Footprint.RowPitch; // get total sizse in gpu side with alighment
+			UINT64 gputotalsize = texture.mLayouts[subnum].Footprint.RowPitch*texture.mNumRows[subnum]; // get total needed size for upload buffer
+		//	destresource.PlacedFootprint = texture.mLayouts[subnum];
+			destresource.SubresourceIndex = subnum;
+			AllocateFormat format = upload.allocateforCurrentFrame(gputotalsize); // allocate enough space for this sub resrouce
+			srcresource.pResource = format.gpubuffer;
+			srcresource.PlacedFootprint = texture.mLayouts[subnum]; // has the same foramt
+			srcresource.PlacedFootprint.Offset = format.offset; // but in differnt loaction in the buffer
+			char * copydest = (char*)format.cpubuffer + format.offset; // get start copy point
+			
+			for (int k = 0; k < texture.mNumRows[subnum]; ++k) // for each row we start to copy data;
+			{
+				memcpy(copydest, copysrc, texture.mRowSize[subnum]);// only copy cpu row size, the data we really care
+				copydest += gpurowsize;  // move to next row, aligment added
+				copysrc += cpurowsize; // simply offset to next row
+			}
+			mDx12CommandList->CopyTextureRegion(&destresource, 0, 0, 0, &srcresource,nullptr); // copy from upload buffer to texture
+
+		}
+	}
+	
 
 }
 void CommandList::setViewPort(ViewPort& viewport)

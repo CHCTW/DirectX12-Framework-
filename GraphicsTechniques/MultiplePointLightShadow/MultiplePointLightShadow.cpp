@@ -162,8 +162,8 @@ distributionX(xintervals.begin(), xintervals.end(), xweights.begin());
 
 //std::uniform_real_distribution<float> distributionlightcolor(0.3, 1.5);
 std::uniform_real_distribution<float> distributionmove(-10, 10);
-
-
+DynamicUploadBuffer uploadbuffer;
+UINT64 framenumber = 1;
 // Thought: each objects is one basic draw call, each object don't have any information about material, matrics, mesh
 // it only know the index in the list, 
 //
@@ -208,7 +208,7 @@ void initializeRender()
 		fences[i].initialize(render);
 	}
 	
-
+	uploadbuffer.initialize(render);
 
 	srvheap.ininitialize(render.mDevice, 1);
 	rtvheap.ininitialize(render.mDevice, 1, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
@@ -578,11 +578,11 @@ void loadAsset()
 
 
 
-	cameraBuffer.createConstantBuffer(render.mDevice, srvheap, sizeof(ViewProjection));
-	cameraBuffer.maptoCpu();
+	//cameraBuffer.createConstantBuffer(render.mDevice, srvheap, sizeof(ViewProjection));
+	//cameraBuffer.maptoCpu();
 
 
-
+	cameraBuffer.createConstanBufferNew(render, srvheap, sizeof(ViewProjection));
 
 
 
@@ -942,8 +942,11 @@ void loadAsset()
 
 	cmdlist[0].close();
 	render.executeCommands(&cmdlist[0]);
-	render.insertSignalFence(fences[0]);
-	render.waitFenceIncreament(fences[0]);
+	Fence tempfence;
+	tempfence.initialize(render);
+	render.insertSignalFence(tempfence);
+	render.waitFenceIncreament(tempfence);
+	tempfence.release();
 
 	for (int i = 0; i < diffuseindex.size(); ++i)
 	{
@@ -968,6 +971,7 @@ void releaseRender()
 	render.waitFenceIncreament(fences[0]);
 	render.waitFenceIncreament(fences[1]);
 	render.waitFenceIncreament(fences[2]);
+	uploadbuffer.release();
 
 	combinePipe.release();
 	combinesig.realease();
@@ -1063,8 +1067,14 @@ void update()
 //	cout << delta.count() << endl;
 
 	gamecamera.updateViewProj();
-	cameraBuffer.updateBufferfromCpu(gamecamera.getMatrix(), sizeof(ViewProjection));
+//	cameraBuffer.updateBufferfromCpu(gamecamera.getMatrix(), sizeof(ViewProjection));
 	frameIndex = render.getCurrentSwapChainIndex();
+
+	render.waitFence(fences[frameIndex]);
+	if (fences[frameIndex].finished())
+		uploadbuffer.freeAllocateUntilFrame(fences[frameIndex].getValue());
+	fences[frameIndex].updateValue(framenumber);
+	uploadbuffer.setCurrentFrameNumber(framenumber);
 
 	
 	cmdalloc[frameIndex].reset();
@@ -1083,12 +1093,16 @@ void update()
 
 	cmdlist[frameIndex].resourceTransition(pointLightBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
 	cmdlist[frameIndex].resourceTransition(indirectGeoCmdBuffer, D3D12_RESOURCE_STATE_COPY_DEST); //reset count
+	cmdlist[frameIndex].resourceTransition(cameraBuffer, D3D12_RESOURCE_STATE_COPY_DEST); //reset count
 	cmdlist[frameIndex].resourceTransition(shadowIndirectCmdBuffer, D3D12_RESOURCE_STATE_COPY_DEST,true);
 	cmdlist[frameIndex].setCounterforStructeredBuffer(indirectGeoCmdBuffer, 0);
 	cmdlist[frameIndex].setCounterforStructeredBuffer(shadowIndirectCmdBuffer, 0);
-	cmdlist[frameIndex].updateBufferData(pointLightBuffer, pointLightList.data(), pointLightList.size() * sizeof(PointLightData));
+//	cmdlist[frameIndex].updateBufferData(pointLightBuffer, pointLightList.data(), pointLightList.size() * sizeof(PointLightData));
+	cmdlist[frameIndex].updateBufferData(uploadbuffer,pointLightBuffer, pointLightList.data(), pointLightList.size() * sizeof(PointLightData));
+	cmdlist[frameIndex].updateBufferData(uploadbuffer, cameraBuffer, gamecamera.getMatrix(), sizeof(ViewProjection));
 	cmdlist[frameIndex].resourceTransition(indirectGeoCmdBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 	cmdlist[frameIndex].resourceTransition(shadowIndirectCmdBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	cmdlist[frameIndex].resourceTransition(cameraBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER); //reset count
 	cmdlist[frameIndex].resourceTransition(pointLightBuffer, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 	cmdlist[frameIndex].resourceTransition(shadowlightlistBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, true);
 
@@ -1234,7 +1248,7 @@ void update()
 	render.present();
 
 	render.insertSignalFence(fences[frameIndex]);
-	render.waitFenceIncreament(fences[frameIndex]);
+	++framenumber;
 }
 
 

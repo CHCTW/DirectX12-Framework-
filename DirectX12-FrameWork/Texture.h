@@ -63,6 +63,8 @@ public:
 	TEXTURE_SRV_TYPE mSRVType;
 	DXGI_FORMAT mFormat;
 	D3D12_PLACED_SUBRESOURCE_FOOTPRINT* mLayouts;
+	UINT* mNumRows;
+	UINT64* mRowSize;
 	//Handles mSRV;
 	//Handles mUAV;
 private:

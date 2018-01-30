@@ -132,6 +132,8 @@ public:
 
 	// this metod can only use when these 2 resource are exactly the same, or their format is comptable
 	bool copyResource(Resource &src, Resource &desc);
+
+	bool updateTextureData(DynamicUploadBuffer& upload,Texture& texture, void  const * data, UINT startlevel = 0, UINT levelnum = -1, UINT startslice = 0, UINT slicenum = -1);
 	bool updateTextureData(Texture& texture, void  const * data,UINT startlevel = 0,UINT levelnum = -1 , UINT startslice = 0, UINT slicenum = -1);
 	bool updateBufferData(Buffer& buffer, void  const  * data, UINT datasize);
 	bool updateBufferData(DynamicUploadBuffer& upload,Buffer& buffer, void  const  * data, UINT64 datasize,UINT64 bufferoffset = 0);

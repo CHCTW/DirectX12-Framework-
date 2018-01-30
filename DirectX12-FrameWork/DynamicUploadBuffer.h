@@ -8,19 +8,16 @@ class Render;
 class CommandList;
 // what I need, a fix size ring buffer structure
 // a event to record.. total use of space
-struct AllocateInformation
-{
-	AllocateInformation() :mapcount(0)
-	{}
-	// offset + sizse
-	pair<UINT64, UINT64>  maplist[2];
-	unsigned int mapcount;
-};
+//struct AllocateInformation
+//{
+//	// offset + sizse
+//	UINT64 mapoffset;
+//};
 struct AllocateFormat
 {
 	ID3D12Resource* gpubuffer;
 	void* cpubuffer;
-	AllocateInformation inform;
+	UINT64 offset;
 };
 
 struct RingBuffer
@@ -36,8 +33,9 @@ struct RingBuffer
 	bool valid;
 	void initialize(UINT64 s, ID3D12Device* device);
 	void release();
+	bool enoughcontspace(UINT64 s);
 	// offset + size
-	AllocateInformation allocte(UINT64 requestsize,UINT64 frame);
+	UINT64 allocte(UINT64 requestsize,UINT64 frame);
 	void free(UINT64 frame);
 };
 class DynamicUploadBuffer

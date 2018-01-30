@@ -27,14 +27,21 @@ public:
 	UINT getCurrentSwapChainIndex();
 	void executeCommands(CommandList *cmds, UINT counts = 1);
 	//void waitCommandsDone();
-	// when genlevels = -1, means generate to the end of the level in texture, this should only use for offline
-	void generateMipMapOffline(Texture& texture, Mip_Map_Generate_Type type,UINT genstartlevel = 1, UINT genendlevelnum = -1);
+	
 	bool present();
 	void insertSignalFence(Fence& fence,CommandType cmdtype = COMMAND_TYPE_GRAPHICS);
 	void waitFenceIncreament(Fence& fence);
 	// only update
 	void waitFence(Fence& fence);
 	
+	/******Offline methods, it's easy to use, but don't ever use them in fly. it's ok to use it as preload stuff****************/
+	// when genlevels = -1, means generate to the end of the level in texture, this should only use for offline
+	void generateMipMapOffline(Texture& texture, Mip_Map_Generate_Type type, UINT genstartlevel = 1, UINT genendlevelnum = -1);
+	void updateBufferOffline(Buffer& destbuffer, void const * data, UINT64 datasize, UINT64 bufferoffset = 0);
+	void updateTextureOffline(Texture& texture, void  const * data, UINT startlevel = 0, UINT levelnum = -1, UINT startslice = 0, UINT slicenum = -1);
+	/****************************************************************************************/
+
+
 	UINT mSwapChainAccout;
 	ID3D12Device* mDevice;
 	

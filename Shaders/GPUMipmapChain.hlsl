@@ -113,25 +113,15 @@ float4 PSMain(VSOutput input) : SV_TARGET
 
     float3 albedo = float3(0.0f, 0.0f, 0.0f);
     float3 normaltext = float3(0.0f, 0.0f, 0.0f);
-    if (input.position.x > 800)
-    {
+
     
-        roughness = blockbase[3].Sample(loopsample, input.uv).r;
-        metallic = blockbase[1].Sample(loopsample, input.uv).r;
+    roughness = blockbase[3].Sample(loopsample, input.uv).r;
+    metallic = blockbase[1].Sample(loopsample, input.uv).r;
 
 
-        albedo = pow(blockbase[0].Sample(loopsample, input.uv), 2.2);
-        normaltext = normalize(blockbase[1].Sample(loopsample, input.uv) * 2.0 - 1.0);
-    }
-    else
-    {
-        roughness = blockbase[3].SampleLevel(loopsample, input.uv,0).r;
-        metallic = blockbase[1].SampleLevel(loopsample, input.uv,0).r;
-
-
-        albedo = pow(blockbase[0].SampleLevel(loopsample, input.uv,0), 2.2);
-        normaltext = normalize(blockbase[1].SampleLevel(loopsample, input.uv,0) * 2.0 - 1.0);
-    }
+    albedo = pow(blockbase[0].Sample(loopsample, input.uv), 2.2);
+    normaltext = normalize(blockbase[1].Sample(loopsample, input.uv) * 2.0 - 1.0);
+    
 
     float3 normalobject = normalize(input.normal);
     float3 tan = normalize(input.tangent);

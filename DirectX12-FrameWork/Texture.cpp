@@ -566,12 +566,15 @@ void Texture::CreateTexture(Render& render, DescriptorHeap& srvuavheap, DXGI_FOR
 	mState.resize(totalsub, state);
 
 	mLayouts = new D3D12_PLACED_SUBRESOURCE_FOOTPRINT[mState.size()];
+	mNumRows = new UINT[mState.size()];
+	mRowSize = new UINT64[mState.size()];
+
 
 	//GpuAddress = mResource->GetGPUVirtualAddress();  because only buffer can read with out descriptor, so texture can't use gpuvirtualadress. Intereseting stuff
 	UINT64 uploadBufferSize;
 
 
-	render.mDevice->GetCopyableFootprints(&textureDesc, 0, textureDesc.DepthOrArraySize*textureDesc.MipLevels, 0, mLayouts, nullptr, nullptr, &uploadBufferSize);
+	render.mDevice->GetCopyableFootprints(&textureDesc, 0, textureDesc.DepthOrArraySize*textureDesc.MipLevels, 0, mLayouts, mNumRows, mRowSize, &uploadBufferSize);
 	//for (int i = 0; i < totalsub; ++i)
 	//{
 	//	cout << mLayouts[i].Offset << "   " << mLayouts[i].Footprint.Width << "   " << mLayouts[i].Footprint.Height << "   " << mLayouts[i].Footprint.RowPitch << endl;
@@ -601,6 +604,9 @@ void Texture::CreateTexture(Render& render, DescriptorHeap& srvuavheap, DXGI_FOR
 
 void Texture::release()
 {
+
+	delete[] mNumRows;
+	delete[] mRowSize;
 	delete[] mLayouts;
 	mRTV.clear();
 	mDSV.clear();

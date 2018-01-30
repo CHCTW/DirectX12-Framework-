@@ -359,3 +359,78 @@ void Render::generateMipMapOffline(Texture& texture, Mip_Map_Generate_Type type,
 	
 
 }
+void Render::updateBufferOffline(Buffer& destbuffer, void const * data, UINT64 datasize, UINT64 bufferoffset)
+{
+	CommandAllocator cmdalloc;
+	CommandList cmdlist;
+	cmdalloc.initialize(this->mDevice);
+	cmdlist.initial(this->mDevice, cmdalloc);
+	Fence tempfenses;
+	tempfenses.initialize(*this);
+	vector<D3D12_RESOURCE_STATES> bufferstate = destbuffer.mState;
+	DynamicUploadBuffer uploadbuffer;
+	uploadbuffer.initialize(*this, datasize);
+
+	cmdalloc.reset();
+	cmdlist.reset();
+	cmdlist.resourceTransition(destbuffer, D3D12_RESOURCE_STATE_COPY_DEST, true);
+	cmdlist.updateBufferData(uploadbuffer, destbuffer, data, datasize, bufferoffset);
+
+	for (int i = 0; i < bufferstate.size(); ++i)
+	{
+		cmdlist.resourceTransition(destbuffer, bufferstate[i],false,i);
+	}
+	cmdlist.setBarrier();
+	cmdlist.close();
+
+	
+	this->executeCommands(&cmdlist);
+	//	UINT64 getcurrent = mFence.mDx12Fence->GetCompletedValue();
+	this->insertSignalFence(tempfenses);
+	this->waitFenceIncreament(tempfenses);
+
+
+	uploadbuffer.release();
+	cmdalloc.release();
+	cmdlist.release();
+	tempfenses.release();
+
+}
+void Render::updateTextureOffline(Texture& texture, void  const * data, UINT startlevel, UINT levelnum, UINT startslice, UINT slicenum)
+{
+	CommandAllocator cmdalloc;
+	CommandList cmdlist;
+	cmdalloc.initialize(this->mDevice);
+	cmdlist.initial(this->mDevice, cmdalloc);
+	Fence tempfenses;
+	tempfenses.initialize(*this);
+	vector<D3D12_RESOURCE_STATES> 	texturestate = texture.mState;
+	DynamicUploadBuffer uploadbuffer;
+	uploadbuffer.initialize(*this);
+
+
+	cmdalloc.reset();
+	cmdlist.reset();
+	cmdlist.resourceTransition(texture, D3D12_RESOURCE_STATE_COPY_DEST, true);
+	cmdlist.updateTextureData(uploadbuffer, texture, data, startlevel, levelnum, startslice, slicenum);
+
+	for (int i = 0; i < texturestate.size(); ++i)
+	{
+		cmdlist.resourceTransition(texture, texturestate[i], false, i);
+	}
+
+	cmdlist.setBarrier();
+	cmdlist.close();
+
+
+	this->executeCommands(&cmdlist);
+	//	UINT64 getcurrent = mFence.mDx12Fence->GetCompletedValue();
+	this->insertSignalFence(tempfenses);
+	this->waitFenceIncreament(tempfenses);
+
+
+	uploadbuffer.release();
+	cmdalloc.release();
+	cmdlist.release();
+	tempfenses.release();
+}
