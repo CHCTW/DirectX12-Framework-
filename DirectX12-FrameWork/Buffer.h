@@ -8,7 +8,7 @@ class Buffer :public Resource
 {
 public:
 	Buffer();
-	BufferType mType;
+	BufferType mBufferType;
 	D3D12_HEAP_TYPE mHeapType;
 	UINT mBufferSize;
 	bool mCounter;

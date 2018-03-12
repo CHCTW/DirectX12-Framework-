@@ -22,7 +22,7 @@ class Pipeline
 public:
 	Pipeline();
 	bool createGraphicsPipeline(ID3D12Device* device, RootSignature& rootsig, ShaderSet & shaders, RenderTargetFormat &format, 
-		DepthStencilState& depthstenstate,BlendState &blendstate,RasterizerState &raster, VertexInputLayOutType layout = VERTEX_LAYOUT_TYPE_NONE_SPLIT, D3D12_PRIMITIVE_TOPOLOGY_TYPE topype = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
+		DepthStencilState&& depthstenstate,BlendState && blendstate,RasterizerState && raster, VertexInputLayOutType layout = VERTEX_LAYOUT_TYPE_NONE_SPLIT, D3D12_PRIMITIVE_TOPOLOGY_TYPE topype = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
 	bool createComputePipeline(ID3D12Device* device, RootSignature& rootsig, ShaderSet & shaders);
 
 	void release();

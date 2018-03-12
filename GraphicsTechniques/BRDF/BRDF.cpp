@@ -153,8 +153,8 @@ void loadAsset()
 	lightBuffer.createConstantBuffer(render.mDevice, srvheap, sizeof(SpotLightData));
 	lightBuffer.maptoCpu();
 
-	light.setIntensity(50);
-	light.setRadius(50);
+	light.setIntensity(500);
+	light.setRadius(1500);
 	light.setConeAngle(60.0);
 	light.setColor(1, 1, 1);
 
@@ -206,7 +206,7 @@ void loadAsset()
 	Ground.mPosition.resize(Ground.mNum);
 	Ground.mStructeredBuffer.createStructeredBuffer(render.mDevice, srvheap, sizeof(InstancedInformation), Ground.mNum, STRUCTERED_BUFFER_TYPE_READ);
 	//Ground.mPosition[0].setAngle(-90, 0, 0);
-	Ground.mPosition[0].setScale(10, 10, 10);
+	Ground.mPosition[0].setScale(20, 20, 20);
 	Ground.mPosition[0].setPosition(0, 0, 0);
 	Ground.mPosition[0].CacNewTransform();
 	Ground.mBufferData[0].mMatrices = Ground.mPosition[0].getMatrices();

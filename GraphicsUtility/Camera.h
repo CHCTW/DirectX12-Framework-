@@ -35,7 +35,7 @@ struct ViewProjection
 class Camera
 {
 public:
-	Camera::Camera(): mFOV (45.0f),mPosition(0.0f, 0.0f, 0.0f), mUp(0.0f, 1.0f, 0.0f), mTarget(0.0f,0.0f,3.0f), mFront(0.1f), mBack(1000.0f), mRatio(16.0f/9.0f)
+	Camera(): mFOV (45.0f),mPosition(0.0f, 0.0f, 0.0f), mUp(0.0f, 1.0f, 0.0f), mTarget(0.0f,0.0f,3.0f), mFront(0.1f), mBack(1000.0f), mRatio(16.0f/9.0f)
 	{
 		mViewProjection.mView = glm::lookAt(mPosition,mTarget, mUp);
 		mViewProjection.mProjection = glm::perspective(mFOV*(3.14159f) / 180.0f, mRatio, mFront, mBack);

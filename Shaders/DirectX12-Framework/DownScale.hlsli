@@ -131,23 +131,32 @@ void boxfilterandwrite(float4 data[4],uint2 pos) // we decide how to dealing wit
 
 
 #if defined(GAUSSIAN_FILTER)
-static float gaussweight[5][5] =
+//static float gaussweight[5][5] =
+//{
+//    1.0,4.0,7.0,4.0,1.0,
+//    4.0,16.0,26.0,16.0,4.0,
+//    7.0,26.0,41.0,26.0,7.0,
+//    4.0, 16.0, 26.0, 16.0, 4.0,
+//    1.0, 4.0, 7.0, 4.0, 1.0,
+//};
+//static float totalinv = 1.0f/273.0f;
+
+static float gaussweight[3][3] =
 {
-    1.0,4.0,7.0,4.0,1.0,
-    4.0,16.0,26.0,16.0,4.0,
-    7.0,26.0,41.0,26.0,7.0,
-    4.0, 16.0, 26.0, 16.0, 4.0,
-    1.0, 4.0, 7.0, 4.0, 1.0,
+    0.0625f,0.125f,0.0625f,
+    0.125f,0.25f,0.125f,
+    0.0625f, 0.125f, 0.0625f
 };
-static float totalinv = 1.0f/273.0f;
-void gaussianfilterandwrite(float4 data[5][5], uint2 pos)
+static float totalinv = 1.0f;
+static const int gausswidth = 3;
+void gaussianfilterandwrite(float4 data[3][3], uint2 pos)
 {
     float4 result = float4(0.0f, 0.0f, 0.0f, 0.0f);
 #if defined(SRGB_A)
    
-    for (int u = 0; u < 5; ++u)
+    for (int u = 0; u < gausswidth; ++u)
     {
-        for (int v = 0; v < 5; ++v)
+        for (int v = 0; v < gausswidth; ++v)
         {
             data[u][v].xyz = pow(data[u][v].xyz, 2.2f);
             result += data[u][v] * gaussweight[u][v];
@@ -161,9 +170,9 @@ void gaussianfilterandwrite(float4 data[5][5], uint2 pos)
 #if defined(SRGB_ALPHA_MASK)
   
     float totalweight = 0.0f;
-    for (int u = 0; u < 5; ++u)
+    for (int u = 0; u < gausswidth; ++u)
     {
-        for (int v = 0; v < 5; ++v)
+        for (int v = 0; v < gausswidth; ++v)
         {
             data[u][v].xyz = pow(data[u][v].xyz, 2.2f);
             result += data[u][v] * gaussweight[u][v]*data[u][v].w;
@@ -178,9 +187,9 @@ void gaussianfilterandwrite(float4 data[5][5], uint2 pos)
     DesTexture[uint3(pos, SrcSliceNum)] = result;
 #endif
 #if defined(RGBA_LINEAR)
-    for (int u = 0; u < 5; ++u)
+    for (int u = 0; u < gausswidth; ++u)
     {
-        for (int v = 0; v < 5; ++v)
+        for (int v = 0; v < gausswidth; ++v)
         {
             result += data[u][v] * gaussweight[u][v];
             
@@ -191,9 +200,9 @@ void gaussianfilterandwrite(float4 data[5][5], uint2 pos)
 #endif
 
 #if defined(RGBA_NORMAL)
-    for (int u = 0; u < 5; ++u)
+    for (int u = 0; u < gausswidth; ++u)
     {
-        for (int v = 0; v < 5; ++v)
+        for (int v = 0; v < gausswidth; ++v)
         {
             result += (data[u][v] * 2.0 - 1.0) * gaussweight[u][v];
             
@@ -268,14 +277,14 @@ void CSMain(uint gid : SV_GroupIndex, uint3 tid : SV_DispatchThreadID) // tid is
 
 #ifdef GAUSSIAN_FILTER
 #if defined(SRGB_ALPHA_MASK)||defined(SRGB_A)||defined(RGBA_LINEAR)||defined(SRGB_ALPHA_TRANSPARENCY)||defined(RGBA_NORMAL)// all 4 channel data
-    float4 data[5][5];
+    float4 data[gausswidth][gausswidth];
     SrcTexture.GetDimensions(dim.x, dim.y, dim.z);
 #endif
-    for (int u = -2; u <= 2; ++u)
+    for (int u = -gausswidth / 2; u <= gausswidth/2; ++u)
     {
-        for (int v = -2; v <= 2; ++v)
+        for (int v = -gausswidth / 2; v <= gausswidth/2; ++v)
         {
-            data[u+2][v+2] = SrcTexture[uint3(addressPos(pos.xy * 2 + int2(u, v), dim.xy), SrcSliceNum)];
+            data[u + gausswidth / 2][v + gausswidth/2] = SrcTexture[uint3(addressPos(pos.xy * 2 + int2(u, v), dim.xy), SrcSliceNum)];
         }
 
     }

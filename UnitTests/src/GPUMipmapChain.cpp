@@ -416,6 +416,9 @@ void loadAsset()
 
 void releaseRender()
 {
+	render.waitFence(fences[0]);
+	render.waitFence(fences[1]);
+	render.waitFence(fences[2]);
 	depthBuffer[2].release();
 	depthBuffer[1].release();
 	depthBuffer[0].release();

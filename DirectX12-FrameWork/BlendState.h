@@ -3,11 +3,11 @@
 class BlendState
 {
 public:
-	BlendState::BlendState()
+	BlendState()
 	{
 		mBlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 	}
-	BlendState::BlendState(bool colorblend)
+	BlendState(bool colorblend)
 	{
 		mBlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 		mBlendState.RenderTarget[0].BlendEnable = true;

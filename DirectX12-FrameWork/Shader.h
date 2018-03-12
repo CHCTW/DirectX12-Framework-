@@ -9,7 +9,7 @@
 class Shader
 {
 public:
-	bool load(char const* filepath, char* entryPoint,ShaderType type);
+	bool load(char const* filepath, char const * entryPoint,ShaderType type);
 	Shader();
 	std::vector<D3D12_INPUT_ELEMENT_DESC> getInputElements(VertexInputLayOutType layout);
 	ID3DBlob* mShader;

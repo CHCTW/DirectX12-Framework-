@@ -53,13 +53,29 @@ void QuadPatch::generatePatch(float width, float height, unsigned int widthres, 
 			glm::vec4 pos(widthstart + i*widthstep, 0.0, heightstart + j*heightstep, 1.0);
 			if (mode == PerlinGenerate)
 			{
+				//float xseed = fmod(pos.x+0.5*width, width);
 				float xseed = pos.x;
 				float zseed = pos.z;
 			/*	if (floor(xseed) == pos.x)
 					xseed += 0.01;
 				if (floor(pos.z) == pos.z)
 					zseed += 0.01;*/
-				pos.y = (float)noise.noise0_1(xseed*xfreqency, zseed*yfreqency,0.5)*scale;
+				float temp = scale;
+				pos.y = ((float)noise.noise0_1(xseed*xfreqency, zseed*yfreqency,0.5)-0.5)*2.0*temp;
+				//temp = sqrt(temp);
+
+				temp *= 0.5;
+
+				pos.y += ((float)noise.octaveNoise0_1(xseed*xfreqency*2+temp, zseed*yfreqency*2 + temp, 1)-0.5)*2.0*temp;
+				//temp = sqrt(temp);
+				temp *= 0.5;
+				pos.y += ((float)noise.octaveNoise0_1(xseed*xfreqency*4 + temp, zseed*yfreqency*4 + temp, 1) - 0.5)*2.0*temp;
+				//temp = sqrt(temp);
+				temp *= 0.5;
+				pos.y += ((float)noise.octaveNoise0_1(xseed*xfreqency * 8 + temp, zseed*yfreqency * 8 + temp,  1) - 0.5)*2.0*temp;
+				//temp = sqrt(temp);
+				temp *= 0.5;
+				pos.y += ((float)noise.octaveNoise0_1(xseed*xfreqency * 16 + temp, zseed*yfreqency * 16 + temp, 1) - 0.5)*2.0*temp;
 				//cout << (float)noise.noise(uv.x, uv.y) << endl;
 			}
 	//		cout << pos.y << endl;

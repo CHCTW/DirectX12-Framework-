@@ -8,7 +8,7 @@
 class SpecCamera : public Camera
 {
 public:
-	SpecCamera::SpecCamera();
+	SpecCamera();
 	glm::vec2 mAngle;
 	glm::vec2 mOffset;
 	float mZoom;

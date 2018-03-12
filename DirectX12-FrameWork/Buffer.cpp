@@ -2,7 +2,7 @@
 #include "CommandList.h"
 #include "stdafx.h"
 #include "StructureHeaders.h"
-Buffer::Buffer():mType(NONE), mBufferSize(0), mCounter(false)
+Buffer::Buffer():mBufferType(NONE), mBufferSize(0), mCounter(false)
 {
 
 }
@@ -28,7 +28,7 @@ bool Buffer::createVertexBuffer(ID3D12Device* device,UINT buffersize, UINT strid
 	mVertexBuffer.BufferLocation = mResource->GetGPUVirtualAddress();
 	mVertexBuffer.StrideInBytes = strideSize;
 	mVertexBuffer.SizeInBytes = buffersize;
-	mType = VERTEX;
+	mBufferType = VERTEX;
 	mState.push_back(D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 	mHeapType = heaptype;
 	mBufferSize = buffersize;
@@ -73,7 +73,7 @@ bool Buffer::createIndexBuffer(ID3D12Device* device, UINT buffersize, IndexBuffe
 	else
 		mIndexBuffer.Format = DXGI_FORMAT_R16_UINT;
 	mIndexBuffer.SizeInBytes = buffersize;
-	mType = INDEX;
+	mBufferType = INDEX;
 	mState.push_back(D3D12_RESOURCE_STATE_INDEX_BUFFER);
 	mHeapType = heaptype;
 	mBufferSize = buffersize;
@@ -112,7 +112,7 @@ bool Buffer::createConstantBuffer(ID3D12Device* device, DescriptorHeap &heap, UI
 		IID_PPV_ARGS(&mResource));
 	if (FAILED(hr))
 		return false;
-	mType = CONSTANT;
+	mBufferType = CONSTANT;
 	mState.push_back(D3D12_RESOURCE_STATE_GENERIC_READ);
 	mHeapType = D3D12_HEAP_TYPE_UPLOAD;
 	GpuAddress = mResource->GetGPUVirtualAddress();
@@ -141,7 +141,7 @@ bool Buffer::createConstantBuffer(ID3D12Device* device, UINT buffersize)
 		IID_PPV_ARGS(&mResource));
 	if (FAILED(hr))
 		return false;
-	mType = CONSTANT;
+	mBufferType = CONSTANT;
 	mState.push_back(D3D12_RESOURCE_STATE_GENERIC_READ);
 	mHeapType = D3D12_HEAP_TYPE_UPLOAD;
 	GpuAddress = mResource->GetGPUVirtualAddress();
@@ -165,9 +165,9 @@ bool Buffer::createConstanBufferNew(Render &render, DescriptorHeap &heap, UINT b
 		IID_PPV_ARGS(&mResource));
 	if (FAILED(hr))
 		return false;
-	mType = CONSTANT;
+	mBufferType = CONSTANT;
 	mState.push_back(D3D12_RESOURCE_STATE_GENERIC_READ);
-	mHeapType = D3D12_HEAP_TYPE_UPLOAD;
+	mHeapType = D3D12_HEAP_TYPE_DEFAULT;
 	GpuAddress = mResource->GetGPUVirtualAddress();
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
@@ -229,9 +229,9 @@ bool Buffer::createStructeredBuffer(ID3D12Device* device, DescriptorHeap &heap, 
 		return false;
 	
 
-	mType = STRUCTERED;
+	mBufferType = STRUCTERED;
 	if (counter)
-		mType = STRUCTERED_COUNTER;
+		mBufferType = STRUCTERED_COUNTER;
 	mHeapType = heaptype;
 	mBufferSize = buffersize;
 	GpuAddress = mResource->GetGPUVirtualAddress();

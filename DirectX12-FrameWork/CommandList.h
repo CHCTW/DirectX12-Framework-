@@ -14,6 +14,7 @@ class CommandSignature;
 class QueryHeap;
 class SwapChainBuffer;
 class DynamicUploadBuffer;
+class VolatileConstantBuffer;
 class CommandList
 {
 public:
@@ -32,6 +33,14 @@ public:
 	void bindComputeResource(UINT rootindex, Resource& res, UINT uavmiplevel);
 	void bindGraphicsResource(UINT rootindex, Resource& res);
 	void bindComputeResource(UINT rootindex, Resource& res);
+
+	
+	
+	void bindGraphicsResource(UINT rootindex, const VolatileConstantBuffer res);
+	void bindComputeResource(UINT rootindex, const VolatileConstantBuffer res);
+	
+
+
 	void bindGraphicsConstant(UINT rootindex, void const * ConstData);
 	void bindComputeConstant(UINT rootindex, void const * ConstData);
 
@@ -118,17 +127,6 @@ public:
 
 	void setBarrier();
 
-	// This one should not be used after finish frame buffering, or could change this to use via swapchain's render target
- /*   void resourceBarrier(ID3D12Resource* res, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-		D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);*/
-	//void renderTargetBarrier(RenderTarget &rt, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-	//	D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
-	//void depthBufferBarrier(RenderTarget &rt, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-	//	D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
-	//void cubeRenderTargetBarrier(CubeRenderTarget &crt, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-	//	D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
-	//void cubeDepthBufferBarrier(CubeRenderTarget &crt, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-	//	D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
 
 	// this metod can only use when these 2 resource are exactly the same, or their format is comptable
 	bool copyResource(Resource &src, Resource &desc);

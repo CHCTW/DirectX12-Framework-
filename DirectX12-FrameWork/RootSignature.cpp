@@ -29,13 +29,14 @@ bool RootSignature::initialize(ID3D12Device* device)
 	{
 		if (mParameters[i].mType == PARAMETERTYPE_UNDEFINE)
 			return false;
+		//bool usetable  = !((mParameters[i].mResCounts==1)&&
 		switch (mParameters[i].mType)
 		{
 		case PARAMETERTYPE_ROOTCONSTANT:
 			dx12param.InitAsConstants(mParameters[i].mResCounts, mParameters[i].mBindSlot, mParameters[i].mShaderSpace, mParameters[i].mVisibility);
 			break;
 		case PARAMETERTYPE_CBV:
-			if (mParameters[i].mTable)
+			if (!mParameters[i].mTable&&mParameters[i].mResCounts!=1) // if there is only one cb, for the sake of using violate const buffer, don't use table
 			{
 				ranges[i].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, mParameters[i].mResCounts, mParameters[i].mBindSlot, mParameters[i].mShaderSpace, mParameters[i].rangeflag);
 				dx12param.InitAsDescriptorTable(1, &ranges[i], mParameters[i].mVisibility);

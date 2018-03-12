@@ -298,6 +298,7 @@ UINT getSize(DXGI_FORMAT format)
 
 Texture::Texture(): mByteSize(0), mCubeMap(false)
 {
+	mType = RESOURCE_TYPE_TEXTURE;
 }
 
 

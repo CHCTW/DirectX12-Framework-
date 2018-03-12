@@ -432,7 +432,7 @@ bool CommandList::updateBufferData(DynamicUploadBuffer& upload, Buffer& buffer, 
 }
 bool CommandList::setCounterforStructeredBuffer(Buffer& buffer, UINT value)
 {
-	if (buffer.mType != STRUCTERED_COUNTER)
+	if (buffer.mBufferType != STRUCTERED_COUNTER)
 	{
 		cout << "Only Counter Sturctered Buffer can set counter Value";
 	}
@@ -569,7 +569,7 @@ void CommandList::bindGraphicsRootSigature(RootSignature& rootsig,bool bindresou
 				mDx12CommandList->SetGraphicsRoot32BitConstants(i, rootsig.mParameters[i].mResCounts, rootsig.mParameters[i].mConstantData, 0);
 				break;
 			case PARAMETERTYPE_CBV:
-				if (rootsig.mParameters[i].mTable)
+				if (rootsig.mParameters[i].mTable&&rootsig.mParameters[i].mResCounts!=1)
 				{
 					mDx12CommandList->SetGraphicsRootDescriptorTable(i, rootsig.mParameters[i].mResource->mCBV.Gpu);
 				}
@@ -603,13 +603,13 @@ void CommandList::bindGraphicsRootSigature(RootSignature& rootsig,bool bindresou
 	}
 
 }
-void CommandList::bindGraphicsResource(UINT rootindex, Resource& res)
+void CommandList::bindGraphicsResource(UINT rootindex, Resource & res)
 {
 	if (mCurrentBindGraphicsRootSig == nullptr)
 	{
 		cout << "Need to bind Graphics Root Signature First" << endl;
 	}
-	bindGraphicsResource(rootindex,res, mCurrentBindGraphicsRootSig->mParameters[rootindex].mUAVMipLevel);
+	bindGraphicsResource(rootindex, res, mCurrentBindGraphicsRootSig->mParameters[rootindex].mUAVMipLevel);
 }
 void CommandList::bindGraphicsResource(UINT rootindex, Resource& res, UINT uavmiplevel)
 {
@@ -627,7 +627,7 @@ void CommandList::bindGraphicsResource(UINT rootindex, Resource& res, UINT uavmi
 
 		break;
 	case PARAMETERTYPE_CBV:
-		if (rootsig.mParameters[rootindex].mTable)
+		if (rootsig.mParameters[rootindex].mTable&&rootsig.mParameters[rootindex].mResCounts != 1)
 		{
 			mDx12CommandList->SetGraphicsRootDescriptorTable(rootindex, res.mCBV.Gpu);
 		}
@@ -659,6 +659,22 @@ void CommandList::bindGraphicsResource(UINT rootindex, Resource& res, UINT uavmi
 
 }
 
+void CommandList::bindGraphicsResource(UINT rootindex, const VolatileConstantBuffer res)
+{
+
+	if (mCurrentBindGraphicsRootSig == nullptr)
+	{
+		cout << "Need to bind Graphics Root Signature First" << endl;
+	}
+
+	RootSignature& rootsig = *mCurrentBindGraphicsRootSig;
+	if (rootsig.mParameters[rootindex].mTable&&rootsig.mParameters[rootindex].mResCounts != 1)
+	{
+		cout << "Wrong useage of VpolatileConstantBuffer, can only use when the slot with one resource or not using table" << endl;
+	}
+	else
+		mDx12CommandList->SetGraphicsRootConstantBufferView(rootindex, res.GpuAddress);
+}
 void CommandList::bindGraphicsConstant(UINT rootindex, void const * ConstData)
 {
 	if (mCurrentBindGraphicsRootSig == nullptr)
@@ -701,7 +717,7 @@ void CommandList::bindComputeRootSigature(RootSignature& rootsig, bool bindresou
 				mDx12CommandList->SetComputeRoot32BitConstants(i, rootsig.mParameters[i].mResCounts, rootsig.mParameters[i].mConstantData, 0);
 				break;
 			case PARAMETERTYPE_CBV:
-				if (rootsig.mParameters[i].mTable)
+				if (rootsig.mParameters[i].mTable&&rootsig.mParameters[i].mResCounts != 1)
 				{
 					mDx12CommandList->SetComputeRootDescriptorTable(i, rootsig.mParameters[i].mResource->mCBV.Gpu);
 				}
@@ -740,9 +756,9 @@ void CommandList::bindComputeResource(UINT rootindex, Resource& res)
 	{
 		cout << "Need to bind Compute Root Signature First" << endl;
 	}
-	bindComputeResource(rootindex,res, mCurrentBindComputeRootSig->mParameters[rootindex].mUAVMipLevel);
+	bindComputeResource(rootindex, res, mCurrentBindComputeRootSig->mParameters[rootindex].mUAVMipLevel);
 }
-void CommandList::bindComputeResource(UINT rootindex, Resource& res,UINT uavmiplevel)
+void CommandList::bindComputeResource(UINT rootindex,Resource& res,UINT uavmiplevel)
 {
 	if(mCurrentBindComputeRootSig==nullptr)
 	{
@@ -755,7 +771,7 @@ void CommandList::bindComputeResource(UINT rootindex, Resource& res,UINT uavmipl
 	case PARAMETERTYPE_ROOTCONSTANT:
 		break;
 	case PARAMETERTYPE_CBV:
-		if (rootsig.mParameters[rootindex].mTable)
+		if (rootsig.mParameters[rootindex].mTable&&rootsig.mParameters[rootindex].mResCounts != 1)
 		{
 			mDx12CommandList->SetComputeRootDescriptorTable(rootindex, res.mCBV.Gpu);
 		}
@@ -784,6 +800,22 @@ void CommandList::bindComputeResource(UINT rootindex, Resource& res,UINT uavmipl
 	}
 }
 
+void CommandList::bindComputeResource(UINT rootindex, const VolatileConstantBuffer res)
+{
+
+	if (mCurrentBindComputeRootSig == nullptr)
+	{
+		cout << "Need to bind Compute Root Signature First" << endl;
+	}
+
+	RootSignature& rootsig = *mCurrentBindComputeRootSig;
+	if (rootsig.mParameters[rootindex].mTable&&rootsig.mParameters[rootindex].mResCounts != 1)
+	{
+		cout << "Wrong useage of VpolatileConstantBuffer, can only use when the slot with one resource or not using table" << endl;
+	}
+	else
+		mDx12CommandList->SetComputeRootConstantBufferView(rootindex, res.GpuAddress);
+}
 void CommandList::bindVertexBuffer(Buffer& buffer)
 {
 	mDx12CommandList->IASetVertexBuffers(0, 1, &buffer.mVertexBuffer);

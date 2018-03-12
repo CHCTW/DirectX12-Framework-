@@ -21,6 +21,7 @@ struct PSInput
     float3 tangent : TANGENT;
     float3 bitangent : BITANGENT;
     float2 uv : TEXTCOORD;
+    float viewz : VIEWDEPTH;
     nointerpolation Material mat : MATERIAL;
 };
 PSInput VSMain(float3 position : POSITION, float3 normal : NORMAL,float2 uv : TEXTURECOORD, float3 tangent: TANGENT,float3 bitangent : BITANGENT)
@@ -29,7 +30,7 @@ PSInput VSMain(float3 position : POSITION, float3 normal : NORMAL,float2 uv : TE
     uint mid = ObjectList[ojectindex].matricesid;
     result.position = mul(MatricesList[mid].model, float4(position, 1.0f));
     result.position = mul(camera.view, result.position);
-
+    result.viewz = -result.position.z;
     result.position = mul(camera.proj, result.position);
     result.normal = mul(MatricesList[mid].normal, float4(normal, 0.0)).xyz;
     result.normal =  mul(camera.viewinverseyranspose, float4(result.normal, 0.0)).xyz;
@@ -60,6 +61,7 @@ PSInput VSMain(float3 position : POSITION, float3 normal : NORMAL,float2 uv : TE
 //    }
 
 //}
+
     GBufferFormat PSMain(PSInput input)
 {
     GBufferFormat res;
@@ -70,6 +72,7 @@ PSInput VSMain(float3 position : POSITION, float3 normal : NORMAL,float2 uv : TE
     if(mask==0)
         discard;
     float3 diffuse = difftext.xyz * (1.0 - rate) + input.mat.albedo * rate;
+
 
 
     float3 normaltext = (MaterialTextures[input.mat.texutres.y].Sample(mat_text_sampler, input.uv) * 2.0 - 1.0).xyz;

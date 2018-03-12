@@ -25,13 +25,20 @@ cbuffer SpotLightData : register(b1)
     float lightconeangle;
     float padding;
 };
-StructuredBuffer<InstancedInformation> instances: register(t0);
+cbuffer SceneConstantBuffer : register(b2)
+{
+    float offset;
+};
 
+StructuredBuffer<InstancedInformation> instances: register(t0);
+Texture2D perlinTexture : register(t1);
+SamplerState loopsample : register(s0);
 struct VSOutput
 {
 	float4 position : SV_POSITION;
 	float3 normal : NORMAL;
 	float3 wposition : WPOSITION;
+    float2 uv : TEXTCOOR;
 	uint id : ID;
 };
 
@@ -48,7 +55,7 @@ struct DSOutput
 
 
 
-VSOutput VSMain(float3 position : POSITION, float3 normal : NORMAL, uint instanceid : SV_InstanceID)
+VSOutput VSMain(float3 position : POSITION, float3 normal : NORMAL,float2 uv : TEXTCOORD, uint instanceid : SV_InstanceID)
 {
 	VSOutput result;
 
@@ -56,7 +63,7 @@ VSOutput VSMain(float3 position : POSITION, float3 normal : NORMAL, uint instanc
 	result.wposition = result.position.xyz;
 	result.position = mul(view, result.position);
 	result.position = mul(proj,result.position);
-	
+    result.uv = uv;
 	result.normal = mul(instances[instanceid].matrices.normal, float4(normal, 0.0f)).xyz;
 	result.id = instanceid;
 	return result;
@@ -188,9 +195,17 @@ DSOutput DSMain(PatchTess fac, float2 uv : SV_DomainLocation, const OutputPatch<
     float3 pos1 = lerp(patch[5].wposition, patch[6].wposition, uv.x); // caculate position
     float3 pos2 = lerp(patch[9].wposition, patch[10].wposition,uv.x);
     outpoint.wposition = lerp(pos1, pos2, uv.y);
+    
+    //perlinTexture.SampleLevel(loopsample, patch[0].uv, 0).g
+    
 
     float4 basis = BernsteinBasis(uv.x);
     float curve1 = contiBezier(patch[0].wposition.y, patch[1].wposition.y, patch[2].wposition.y, patch[3].wposition.y, basis);
+
+    //float curve1 = contiBezier(perlinTexture.SampleLevel(loopsample, patch[0].uv + float2(0, offset), 0).g, perlinTexture.SampleLevel(loopsample, patch[1].uv + float2(0, offset), 0).g, perlinTexture.SampleLevel(loopsample, patch[2].uv + float2(0, offset), 0).g, perlinTexture.SampleLevel(loopsample, patch[3].uv + float2(0, offset), 0).g, basis);
+    //float curve2 = contiBezier(perlinTexture.SampleLevel(loopsample, patch[4].uv + float2(0, offset), 0).g, perlinTexture.SampleLevel(loopsample, patch[5].uv + float2(0, offset), 0).g, perlinTexture.SampleLevel(loopsample, patch[6].uv + float2(0, offset), 0).g, perlinTexture.SampleLevel(loopsample, patch[7].uv + float2(0, offset), 0).g, basis);
+    //float curve3 = contiBezier(perlinTexture.SampleLevel(loopsample, patch[8].uv + float2(0, offset), 0).g, perlinTexture.SampleLevel(loopsample, patch[9].uv + float2(0, offset), 0).g, perlinTexture.SampleLevel(loopsample, patch[10].uv + float2(0, offset), 0).g, perlinTexture.SampleLevel(loopsample, patch[11].uv + float2(0, offset), 0).g, basis);
+    //float curve4 = contiBezier(perlinTexture.SampleLevel(loopsample, patch[12].uv + float2(0, offset), 0).g, perlinTexture.SampleLevel(loopsample, patch[13].uv + float2(0, offset), 0).g, perlinTexture.SampleLevel(loopsample, patch[14].uv + float2(0, offset), 0).g, perlinTexture.SampleLevel(loopsample, patch[15].uv + float2(0, offset), 0).g, basis);
     float curve2 = contiBezier(patch[4].wposition.y, patch[5].wposition.y, patch[6].wposition.y, patch[7].wposition.y, basis);
     float curve3 = contiBezier(patch[8].wposition.y, patch[9].wposition.y, patch[10].wposition.y, patch[11].wposition.y, basis);
     float curve4 = contiBezier(patch[12].wposition.y, patch[13].wposition.y, patch[14].wposition.y, patch[15].wposition.y, basis);
@@ -303,7 +318,7 @@ float GeometrySmith(float NV, float NL, float roughness)
 
 float4 PSMain(DSOutput input) : SV_TARGET
 {
- //   return float4(1.0,1.0,0.0, 1.0);
+    return float4(0.0, 1.0, 0.0, 1.0) * (input.wposition.y + 8) + float4(0.0, 0.0, 1.0, 1.0) *  - (input.wposition.y + 8);
 
     float3 normal = normalize(input.normal);
 

@@ -27,6 +27,7 @@ struct ObjectData
 	Buffer mNormalBuffer;
 	Buffer mStructeredBuffer;
 	Buffer mIndexBuffer;
+	Buffer mUVBuffer;
 	UINT indexCount;
 	UINT mNum;
 };
@@ -54,6 +55,7 @@ aiScene const * scene = nullptr;
 aiMesh* mesh = nullptr;
 
 
+float offset = 0.0f;
 Assimp::Importer groundimport;
 
 SpecCamera camera;
@@ -82,7 +84,11 @@ ObjectData Ground;
 SpotLight light;
 
 QuadPatch patch;
-
+Texture perlinTexture;
+DescriptorHeap samplerheap;
+Sampler loopsampler(D3D12_FILTER_MIN_MAG_MIP_LINEAR,  // due to pass too many parameters, should use inline to prevent a lot of copy
+	D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+	D3D12_TEXTURE_ADDRESS_MODE_WRAP);
 void initializeRender()
 {
 
@@ -100,6 +106,9 @@ void initializeRender()
 	fence.initialize(render);
 
 
+	samplerheap.ininitialize(render.mDevice, 1, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+	loopsampler.createSampler(samplerheap);
+
 	srvheap.ininitialize(render.mDevice, 1);
 	depthBuffer.resize(swapChainCount);
 	depthBuffer[0].CreateTexture(render, srvheap, retformat.mDepthStencilFormat, windows.mWidth, windows.mHeight, 1, 1, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_DSV);
@@ -107,7 +116,7 @@ void initializeRender()
 	depthBuffer[2].CreateTexture(render, srvheap, retformat.mDepthStencilFormat, windows.mWidth, windows.mHeight, 1, 1, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_DSV);
 
 
-	rootsig.mParameters.resize(3);
+	rootsig.mParameters.resize(6);
 	rootsig.mParameters[0].mType = PARAMETERTYPE_CBV;
 	rootsig.mParameters[0].mResCounts = 1;
 	rootsig.mParameters[0].mBindSlot = 0;
@@ -122,6 +131,20 @@ void initializeRender()
 	rootsig.mParameters[2].mBindSlot = 1;
 	rootsig.mParameters[2].mResource = &lightBuffer;
 	rootsig.mParameters[2].mVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	rootsig.mParameters[3].mType = PARAMETERTYPE_SRV;
+	rootsig.mParameters[3].mResCounts = 1;
+	rootsig.mParameters[3].mBindSlot = 1;
+	rootsig.mParameters[3].mResource = &perlinTexture;
+	rootsig.mParameters[3].mVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	rootsig.mParameters[4].mType = PARAMETERTYPE_SAMPLER;
+	rootsig.mParameters[4].mResCounts = 1;
+	rootsig.mParameters[4].mBindSlot = 0;
+	rootsig.mParameters[4].mSampler = &loopsampler;
+	rootsig.mParameters[5].mType = PARAMETERTYPE_ROOTCONSTANT;
+	rootsig.mParameters[5].mResCounts = 1;
+	rootsig.mParameters[5].mBindSlot = 2;
+	rootsig.mParameters[5].mConstantData = &offset;
+
 
 	rootsig.initialize(render.mDevice);
 
@@ -135,7 +158,7 @@ void initializeRender()
 	ShaderSet test;
 	
 
-	pipeline.createGraphicsPipeline(render.mDevice, rootsig, shaderset, retformat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(D3D12_CULL_MODE_NONE, D3D12_FILL_MODE_SOLID), VERTEX_LAYOUT_TYPE_SPLIT_ALL, D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH);
+	pipeline.createGraphicsPipeline(render.mDevice, rootsig, shaderset, retformat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(D3D12_CULL_MODE_NONE, D3D12_FILL_MODE_WIREFRAME), VERTEX_LAYOUT_TYPE_SPLIT_ALL, D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH);
 
 	viewport.setup(0.0f, 0.0f, (float)windows.mWidth, (float)windows.mHeight);
 	scissor.setup(0, windows.mWidth, 0, windows.mHeight);
@@ -174,11 +197,15 @@ void loadAsset()
 	light.addAngle(0, 90);
 
 
-	
-	patch.generatePatch(30, 30, 30, 30, SmoothBezier, PerlinGenerate, 0, 3, 3, 5);
+	unsigned int res = 200;
+	patch.generatePatch(400, 400, res, res, SmoothBezier, PerlinGenerate, 0, 0.01,0.01, 60,1.0,1.0);
+	perlinTexture.CreateTexture(render, srvheap, DXGI_FORMAT_R32G32B32_FLOAT, res + 1, res + 1);
+	render.updateTextureOffline(perlinTexture, patch.mPosition.data());
+
 	Ground.mVertexBufferData.createVertexBuffer(render.mDevice, patch.mPosition.size() * sizeof(float), sizeof(float) * 3);
 	Ground.mNormalBuffer.createVertexBuffer(render.mDevice, patch.mNormal.size() * sizeof(float), sizeof(float) * 3);
 	Ground.mIndexBuffer.createIndexBuffer(render.mDevice, sizeof(unsigned int)*patch.mIndex.size());
+	Ground.mUVBuffer.createVertexBuffer(render.mDevice, sizeof(float)*patch.mUV.size(),sizeof(float)*2);
 	Ground.indexCount = patch.mIndex.size();
 	Ground.mNum = 1;
 	Ground.mBufferData.resize(Ground.mNum);
@@ -206,19 +233,24 @@ void loadAsset()
 	cmdlist.resourceTransition(Ground.mVertexBufferData, D3D12_RESOURCE_STATE_COPY_DEST);
 	cmdlist.resourceTransition(Ground.mNormalBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
 	cmdlist.resourceTransition(Ground.mIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+
+	cmdlist.resourceTransition(Ground.mUVBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
 	cmdlist.resourceTransition(Ground.mStructeredBuffer, D3D12_RESOURCE_STATE_COPY_DEST,true);
 
 	cmdlist.updateBufferData(Ground.mVertexBufferData, patch.mPosition.data(), patch.mPosition.size() * sizeof(float));
 	cmdlist.updateBufferData(Ground.mIndexBuffer, patch.mIndex.data(), patch.mIndex.size() * sizeof(unsigned int));
+	cmdlist.updateBufferData(Ground.mUVBuffer, patch.mUV.data(), patch.mUV.size() * sizeof(float));
+
 	cmdlist.updateBufferData(Ground.mNormalBuffer, patch.mNormal.data(), patch.mNormal.size() * sizeof(float));
 	cmdlist.updateBufferData(Ground.mStructeredBuffer, Ground.mBufferData.data(), Ground.mNum * sizeof(InstancedInformation));
-
+	
 
 	cmdlist.resourceTransition(Ground.mVertexBufferData, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 	cmdlist.resourceTransition(Ground.mNormalBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 	cmdlist.resourceTransition(Ground.mIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER);
-	cmdlist.resourceTransition(Ground.mStructeredBuffer, D3D12_RESOURCE_STATE_GENERIC_READ,true);
-
+	cmdlist.resourceTransition(Ground.mStructeredBuffer, D3D12_RESOURCE_STATE_GENERIC_READ);
+	cmdlist.resourceTransition(Ground.mUVBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+	cmdlist.resourceTransition(perlinTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,true);
 
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
@@ -232,12 +264,14 @@ void releaseRender()
 	depthBuffer[2].release();
 	depthBuffer[1].release();
 	depthBuffer[0].release();
+	perlinTexture.release();
+	Ground.mUVBuffer.release();
 	Ground.mNormalBuffer.release();
 	Ground.mVertexBufferData.release();
 	Ground.mStructeredBuffer.release();
 	Ground.mIndexBuffer.release();
 	lightBuffer.release();
-	
+	samplerheap.release();
 	
 	cameraBuffer.release();
 	
@@ -260,6 +294,7 @@ void update()
 	cameraBuffer.updateBufferfromCpu(camera.getMatrix(), sizeof(ViewProjection));
 
 
+	offset += 0.0001;
 	light.update();
 
 	lightBuffer.updateBufferfromCpu(light.getLightData(), sizeof(SpotLightData));
@@ -273,7 +308,7 @@ void onrender()
 	cmdalloc.reset();
 	cmdlist.reset(pipeline);
 
-	cmdlist.bindDescriptorHeaps(&srvheap);
+	cmdlist.bindDescriptorHeaps(&srvheap,&samplerheap);
 	cmdlist.bindGraphicsRootSigature(rootsig);
 	cmdlist.setViewPort(viewport);
 	cmdlist.setScissor(scissor);
@@ -289,7 +324,7 @@ void onrender()
 
 
 	cmdlist.bindIndexBuffer(Ground.mIndexBuffer);
-	cmdlist.bindVertexBuffers(Ground.mVertexBufferData, Ground.mNormalBuffer);
+	cmdlist.bindVertexBuffers(Ground.mVertexBufferData, Ground.mNormalBuffer, Ground.mUVBuffer);
 	cmdlist.drawIndexedInstanced(Ground.indexCount, 1, 0, 0);
 
 

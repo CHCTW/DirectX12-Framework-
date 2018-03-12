@@ -82,6 +82,18 @@ float GeometrySmith(float NV, float NL, float roughness)
 	float ggx1 = GeometrySchlickGGX(NL, roughness);
 	return ggx1 * ggx2;
 }
+float nrand(float2 n)
+{
+    return frac(sin(dot(n.xy, float2(12.9898, 78.233))) * 43758.5453);
+}
+float n2rand(float2 n,float c)
+{
+    float t = frac(c*255);
+    float nrnd0 = nrand(n + 0.07 * t);
+    float nrnd1 = nrand(n + 0.11 * t);
+    return (nrnd0 + nrnd1)-1.0f;
+}
+
 float4 PSMain(PSInput input) : SV_TARGET
 {
 
@@ -143,5 +155,9 @@ float4 PSMain(PSInput input) : SV_TARGET
     float3 final = ambient + (diff + spec) * NL * lightcolor.xyz * att* lightintensity;
 	final = final / (1 + final); // tone mapping
 	final = pow(final, 1.0f / 2.2f);
+    float2 seed = input.position.xy / float2(1600.0f,900.0f);
+    float3 noise = float3(n2rand(seed, final.r), n2rand(seed, final.g), n2rand(seed, final.b))/255.0f;
+    final += noise;
+
 	return float4(final,1.0f);
 }

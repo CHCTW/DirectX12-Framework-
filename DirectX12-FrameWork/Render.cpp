@@ -320,6 +320,7 @@ void Render::generateMipMapOffline(Texture& texture, Mip_Map_Generate_Type type,
 		{
 		
 			cmdlist.setBarrier();
+			//const Resource && t = gentexture;
 			cmdlist.bindComputeResource(1, gentexture, srcslice.miplevel-1);// bind miplevel-1 and miplevel, miplevel-1 is src texture, miplevel is desttexture
 			unsigned int width = gentexture.mLayouts[srcslice.miplevel].Footprint.Width; // since each slice should have the same format, can always take the first slice
 			unsigned int height = gentexture.mLayouts[srcslice.miplevel].Footprint.Height;

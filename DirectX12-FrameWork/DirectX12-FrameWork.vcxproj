@@ -149,6 +149,7 @@
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="DepthStencilState.h" />
     <ClInclude Include="DescriptorHeap.h" />
+    <ClInclude Include="DynamicConstantBuffer.h" />
     <ClInclude Include="DynamicUploadBuffer.h" />
     <ClInclude Include="Fence.h" />
     <ClInclude Include="Image.h" />
@@ -168,6 +169,7 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="ViewPort.h" />
+    <ClInclude Include="VolatileConstantBuffer.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
@@ -179,6 +181,7 @@
     <ClCompile Include="CubeRenderTarget.cpp" />
     <ClCompile Include="DepthStencilState.cpp" />
     <ClCompile Include="DescriptorHeap.cpp" />
+    <ClCompile Include="DynamicConstantBuffer.cpp" />
     <ClCompile Include="DynamicUploadBuffer.cpp" />
     <ClCompile Include="Fence.cpp" />
     <ClCompile Include="Image.cpp" />
@@ -201,6 +204,7 @@
     <ClCompile Include="SwapChainBuffer.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="ViewPort.cpp" />
+    <ClCompile Include="VolatileConstantBuffer.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>

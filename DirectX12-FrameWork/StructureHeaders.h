@@ -20,6 +20,7 @@
 #include "QueryHeap.h"
 #include "SwapChainBuffer.h"
 #include "DynamicUploadBuffer.h"
+#include "DynamicConstantBuffer.h"
 // Assign a name to the object to aid with debugging.
 #if defined(_DEBUG)
 inline void SetName(ID3D12Object* pObject, LPCWSTR name)

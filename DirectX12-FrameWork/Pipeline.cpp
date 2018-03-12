@@ -8,7 +8,7 @@ Pipeline::Pipeline():mPipeline(NULL)
 
 }
 
-bool Pipeline::createGraphicsPipeline(ID3D12Device* device, RootSignature& rootsig, ShaderSet & shaderset, RenderTargetFormat &format, DepthStencilState& depthstenstate, BlendState &blendstate, RasterizerState &raster, VertexInputLayOutType layout, D3D12_PRIMITIVE_TOPOLOGY_TYPE topype)
+bool Pipeline::createGraphicsPipeline(ID3D12Device* device, RootSignature& rootsig, ShaderSet & shaderset, RenderTargetFormat &format, DepthStencilState&& depthstenstate, BlendState &&blendstate, RasterizerState &&raster, VertexInputLayOutType layout, D3D12_PRIMITIVE_TOPOLOGY_TYPE topype)
 {
 	mType = Graphics;
 	//psoDesc = {};

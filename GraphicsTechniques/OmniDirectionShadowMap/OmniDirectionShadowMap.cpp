@@ -229,7 +229,7 @@ void loadAsset()
 
 	light.setColor(1, 1, 1);
 	light.setIntensity(50);
-	light.setRadius(40);
+	light.setRadius(400);
 	light.mZoom = 0;
 
 	buddhaimport.ReadFile("Assets/buddha.obj", aiProcessPreset_TargetRealtime_Quality);
