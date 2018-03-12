@@ -38,7 +38,7 @@ https://www.youtube.com/watch?v=dcNFsgGAZaM
 ![image](https://user-images.githubusercontent.com/30221942/35561278-a006fd1c-0564-11e8-8e8d-2ca6fa09d8ae.png)
 22. DynamicUploadBuffer: Based on idea from Diligent Engine 2.0. via Egor Yusov. The article about it can be found :   
 https://www.gamasutra.com/blogs/EGORYUSOV/20160421/270974/Efficient_Implementation_of_Dynamic_Resources_in_Direct3D12.php
-23. VolatileConstantBuffer: An alter version of unit test 22, but with 256byte alighment allocate. This is especially for constant buffer.
+23. VolatileConstantBuffer: An alter version of unit test 22, but with 256byte alignment allocate. This is especially for constant buffer.
 ### 2. Graphics Techniques: Projects in this part is for demostaring some graphcis techniques(lighting, deffered shading...)
 
 BRDF : Use Physics Basic Rendering to lit the scene and demostrate how different material looks like
