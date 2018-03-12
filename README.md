@@ -34,7 +34,10 @@ https://www.youtube.com/watch?v=dcNFsgGAZaM
 19. Execute Indirect : Using execute indirect drawing 8000 spheres(1984 triangles for each sphere). Also using frustum culling to cull out the spheres that will not  show in the camera frustum. https://www.youtube.com/watch?v=9GI294MPXeA&t=2s&index=10&list=PLvLvpclrF-V2Mdev5MhF7zl5RDFbaqnBF
 ![image](https://user-images.githubusercontent.com/30221942/32411080-10b9a7e0-c18f-11e7-8d76-2a855768f004.png)
 20. OcculusionQuery : An add up from unitest-19. Should be using query heap to query occulusion. But setPrediction works terriblly with execute indirect. Change to pixel shader approach to finish it. There will be disorder effect when camera moving to fast. This probally can be sovled by using bigger box? or other method. Can use more low resolution depth-buffer to gain more performance.
-
+21. GPUMipmapChain : Use compute shader to generate mipmaps offline
+![image](https://user-images.githubusercontent.com/30221942/35561278-a006fd1c-0564-11e8-8e8d-2ca6fa09d8ae.png)
+22. DynamicUploadBuffer: Based on idea from Diligent Engine 2.0. via Egor Yusov. The article about it can be found :   
+https://www.gamasutra.com/blogs/EGORYUSOV/20160421/270974/Efficient_Implementation_of_Dynamic_Resources_in_Direct3D12.php
 ### 2. Graphics Techniques: Projects in this part is for demostaring some graphcis techniques(lighting, deffered shading...)
 
 BRDF : Use Physics Basic Rendering to lit the scene and demostrate how different material looks like
