@@ -50,8 +50,7 @@ public:
 	//should only call once per frame
 	void setCurrentFrameNumber(UINT64 frame);
 	void freeAllocateUntilFrame(UINT64 frame);
-	// can allocate constant buffer , but don't have ability to change the content after allocate
-	VolatileConstantBuffer const allocateVolatileConstantBuffer(void const * data, UINT64 datasize);
+	
 private:
 	ID3D12Device* mDevice;
 	deque<RingBuffer> ringbuffers; // store for ring buffers, the last one is the largest ring buffer

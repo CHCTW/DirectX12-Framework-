@@ -166,19 +166,6 @@ AllocateFormat  DynamicUploadBuffer::allocateforCurrentFrame(UINT64 reqsize)
 	return format;
 }
 
-VolatileConstantBuffer const DynamicUploadBuffer::allocateVolatileConstantBuffer(void const * data, UINT64 datasize)
-{
-	VolatileConstantBuffer vcb;
-	AllocateFormat f = allocateforCurrentFrame((datasize + 255) & ~255); // cbv aligment
-	
-	vcb.GpuAddress = f.gpubuffer->GetGPUVirtualAddress() + f.offset;
-
-	char * cpuaddress = (char *)f.cpubuffer + f.offset;
-	memcpy(cpuaddress, data, datasize);// copy data to buffer
-	vcb.mSize = datasize;
-	vcb.mFrame = currentframe;
-	return vcb;
-}
 void DynamicUploadBuffer::setCurrentFrameNumber(UINT64 frame)
 {
 	cslock.lock();
