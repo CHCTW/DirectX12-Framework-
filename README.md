@@ -39,6 +39,10 @@ https://www.youtube.com/watch?v=dcNFsgGAZaM
 22. DynamicUploadBuffer: Based on idea from Diligent Engine 2.0. via Egor Yusov. The article about it can be found :   
 https://www.gamasutra.com/blogs/EGORYUSOV/20160421/270974/Efficient_Implementation_of_Dynamic_Resources_in_Direct3D12.php
 23. VolatileConstantBuffer: An alter version of unit test 22, but with 256byte alignment allocate. This is especially for constant buffer.
+24. TriplanarProjection : A preparation for Terrain rendering. This projection fix the most stretch problem with simple uv mapping.
+https://www.youtube.com/watch?v=5jGMriB03Xs&feature=youtu.be
+![image](https://user-images.githubusercontent.com/30221942/37317423-02e62ccc-2622-11e8-913c-44a54792628f.png)
+
 ### 2. Graphics Techniques: Projects in this part is for demostaring some graphcis techniques(lighting, deffered shading...)
 
 BRDF : Use Physics Basic Rendering to lit the scene and demostrate how different material looks like
