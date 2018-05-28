@@ -55,7 +55,10 @@ struct Camera
     float4x4 viewinverse;
     float4x4 projinverse;
     float4 mFrustumPlane[6];
+    float4x4 viewtranspose;
     float4x4 viewinverseyranspose;
+    float4x4 projview;
+    float4x4 projviewinverse;
     float front;
     float back;
     float ratio;

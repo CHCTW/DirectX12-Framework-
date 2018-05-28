@@ -30,7 +30,10 @@ void GameCamera::updateViewProj()
 	mViewProjection.mView = glm::translate(mViewProjection.mView, temp);
 	mViewProjection.mProjection = glm::perspective(mFOV*(PI) / 180.0f, mRatio, mFront, mBack);
 	mViewProjection.mPosition = mPosition;
+	mViewProjection.mProjectionView = mViewProjection.mProjection*mViewProjection.mView;
+	mViewProjection.mProjectionViewInverse = glm::inverse(mViewProjection.mProjectionView);
 	mViewProjection.mViewInverse = glm::inverse(mViewProjection.mView);
+	mViewProjection.mViewTranspose = glm::transpose(mViewProjection.mView);
 	mViewProjection.mProjection = glm::perspective(mFOV*(3.14159f) / 180.0f, mRatio, mFront, mBack);
 	mViewProjection.mProjInverse = glm::inverse(mViewProjection.mProjection);
 	mViewProjection.mViewInverseTranspose = glm::transpose(mViewProjection.mViewInverse);

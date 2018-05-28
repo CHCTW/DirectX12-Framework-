@@ -294,7 +294,7 @@ void CommandList::bindRenderTargetsDepthStencil(Texture& t1, Texture& t2, Textur
 	rtvs[0] = t1.mRTV[retmip].Cpu;
 	rtvs[1] = t2.mRTV[retmip].Cpu;
 	rtvs[2] = t3.mRTV[retmip].Cpu;
-	mDx12CommandList->OMSetRenderTargets(3, rtvs, false, &ds.mDSV[dsmip].Cpu);
+	mDx12CommandList->OMSetRenderTargets(3, rtvs, false, &(ds.mDSV[dsmip].Cpu));
 }
 void CommandList::bindRenderTargetsDepthStencil(Texture& t1, Texture& t2, Texture& t3, Texture& t4, Texture& ds, UINT retmip, UINT dsmip)
 {
