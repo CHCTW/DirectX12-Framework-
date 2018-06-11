@@ -1,6 +1,7 @@
 # DirectX12-Framework-
 A framework for learning DirectX12 and demonstrate graphics techniques 
-![image](https://user-images.githubusercontent.com/30221942/40634204-b25cefb6-62a8-11e8-9fa2-3fb1ce99e0dd.png)
+
+![image](https://user-images.githubusercontent.com/30221942/41207912-0460ed48-6cd2-11e8-9a49-69f5b8cd9ba9.png)
 
 
 ## The framework sperate into sveral parts:
@@ -67,7 +68,7 @@ This is directional light version. Each shadow maps resolution is 1024*1024
 https://www.youtube.com/watch?v=plOWDfTVvpE&t=16s&list=PLvLvpclrF-V2Mdev5MhF7zl5RDFbaqnBF&index=12
 ![image](https://user-images.githubusercontent.com/30221942/34930601-1682d296-f97f-11e7-9211-8c52055a1d42.png)
 Screen Space Refelction (Working in Progress): Lern from the website : http://roar11.com/2015/07/screen-space-glossy-reflections/ . Currently finish the first part, screen space ray traced. The method used from "Efficient GPU Screen-Space Ray Tracing" via Morgan McGuire and Michael Mara. Still have some performance issue. Also, a good website to for Screen Space Hi-Z tracing http://bitsquid.blogspot.com/2017/08/notes-on-screen-space-hiz-tracing.html 
-![image](https://user-images.githubusercontent.com/30221942/40634204-b25cefb6-62a8-11e8-9fa2-3fb1ce99e0dd.png)
+![image](https://user-images.githubusercontent.com/30221942/41207912-0460ed48-6cd2-11e8-9a49-69f5b8cd9ba9.png)
 
 ### 3. Direcx12 Framework : This project is included by all the Unitests and Graphics Techniques. It is the core of this framework. It only generate lib file.
 ### 4. Graphics Utility : This project is included by part Unitests and Graphics Techniques. It contains some helper structer like spot light, Transform, Camera.... It only generate lib file.
