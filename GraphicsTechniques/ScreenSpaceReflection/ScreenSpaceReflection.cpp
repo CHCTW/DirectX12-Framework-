@@ -131,8 +131,8 @@ Pipeline lightPipeline;
 
 
 
-
-Texture HDRBuffer;  // another positon why seperate textue and rendertarget is wrong, should use usage approach while creating resource
+unsigned int hdrmipnumber = 10;
+Texture HDRBuffer;  //1 another positon why seperate textue and rendertarget is wrong, should use usage approach while creating resource
 Texture BloomBuffer;
 Texture TempBuffer;
 
@@ -150,6 +150,7 @@ Pipeline combinePipe;
 RootSignature combinesig;
 
 Texture SkyTexture;
+
 
 // screen space raytrace
 struct TraceConstants
@@ -170,7 +171,20 @@ RootSignature raytraceRootsig;
 Texture hiZTexture;
 Pipeline hiZPipe;
 RootSignature hiZRootsig;
+Texture HDRTempBuffer;
+Pipeline GausToTempPipe;
+Pipeline GausToLowHDRPipe;
+RootSignature HDRGausRootsig;
+Texture ReflectionBuffer;
+Pipeline ConeTracePipe;
+RootSignature ConeTraceRootsig;
 
+Texture BRDFIntergrateMap;
+UINT BRDFIntWidth = 512;
+UINT BRDFIntHeight = 512;
+
+float roughnesscontrol = 0.05;
+float metaliccontrol = 0.05;
 
 std::chrono::high_resolution_clock::time_point pre;
 void initializeRender()
@@ -218,7 +232,12 @@ void initializeRender()
 	//RenderTargetFormat hdrFormat(DXGI_FORMAT_R32G32B32A32_FLOAT);
 	//	HDRBuffer.createRenderTargets(render.mDevice, windows.mWidth, windows.mHeight, hdrFormat, rtvheap, srvheap);
 
-	HDRBuffer.CreateTexture(render, srvheap, DXGI_FORMAT_R16G16B16A16_FLOAT, windows.mWidth, windows.mHeight, 1, 5, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_SRV_UAV,TEXTURE_ALL_MIPS_USE_UAV);
+	HDRBuffer.CreateTexture(render, srvheap, DXGI_FORMAT_R16G16B16A16_FLOAT, windows.mWidth, windows.mHeight, 1, hdrmipnumber, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_SRV_UAV,TEXTURE_ALL_MIPS_USE_UAV);
+	// since temp buffer will never write the most low level, thus we only need hdrmipnumber-1 level
+	HDRTempBuffer.CreateTexture(render, srvheap, DXGI_FORMAT_R16G16B16A16_FLOAT, windows.mWidth, windows.mHeight, 1, hdrmipnumber-1, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_SRV_UAV, TEXTURE_ALL_MIPS_USE_UAV);
+
+	// store the reflectoin result, might be used in brighrtness extract pass and combine pass, try to use less presion format
+	ReflectionBuffer.CreateTexture(render, srvheap, DXGI_FORMAT_R11G11B10_FLOAT, windows.mWidth, windows.mHeight, 1, 1, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_SRV_UAV, TEXTURE_ALL_MIPS_USE_UAV);
 
 	BloomBuffer.CreateTexture(render, srvheap, DXGI_FORMAT_R16G16B16A16_FLOAT, windows.mWidth / 2, windows.mHeight / 2, 1, 1, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_SRV_UAV);
 	//BloomBuffer.addUnorderedAccessView(srvheap);
@@ -280,7 +299,7 @@ void initializeRender()
 	GeoCmdGenPipeline.createComputePipeline(render.mDevice, geoCmdGenRootSig, geocmdgencs);
 
 
-	geoDrawSig.mParameters.resize(7);
+	geoDrawSig.mParameters.resize(9);
 	geoDrawSig.mParameters[0].mType = PARAMETERTYPE_ROOTCONSTANT; // object index
 	geoDrawSig.mParameters[0].mResCounts = 1;
 	geoDrawSig.mParameters[0].mBindSlot = 1;
@@ -316,6 +335,16 @@ void initializeRender()
 	geoDrawSig.mParameters[6].rangeflag = D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE;
 	geoDrawSig.mParameters[6].mResource = &DefualtTexture;
 	geoDrawSig.mParameters[6].mVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	geoDrawSig.mParameters[7].mType = PARAMETERTYPE_ROOTCONSTANT; // object index
+	geoDrawSig.mParameters[7].mResCounts = 1;
+	geoDrawSig.mParameters[7].mConstantData = &roughnesscontrol;
+	geoDrawSig.mParameters[7].mBindSlot = 2;
+	geoDrawSig.mParameters[7].mVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	geoDrawSig.mParameters[8].mType = PARAMETERTYPE_ROOTCONSTANT; // object index
+	geoDrawSig.mParameters[8].mResCounts = 1;
+	geoDrawSig.mParameters[8].mConstantData = &metaliccontrol;
+	geoDrawSig.mParameters[8].mBindSlot = 3;
+	geoDrawSig.mParameters[8].mVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
 	geoDrawSig.initialize(render.mDevice);
 
@@ -493,7 +522,7 @@ void initializeRender()
 
 	// final 
 
-	combinesig.mParameters.resize(5);
+	combinesig.mParameters.resize(6);
 	combinesig.mParameters[0].mType = PARAMETERTYPE_SRV;
 	combinesig.mParameters[0].mResCounts = 1;
 	combinesig.mParameters[0].mBindSlot = 0;
@@ -516,6 +545,10 @@ void initializeRender()
 	combinesig.mParameters[4].mResCounts = 1;
 	combinesig.mParameters[4].mBindSlot = 0;
 	combinesig.mParameters[4].mSampler = &gbuffersampler;
+	combinesig.mParameters[5].mType = PARAMETERTYPE_SRV;
+	combinesig.mParameters[5].mResCounts = 1;
+	combinesig.mParameters[5].mBindSlot = 3;
+	combinesig.mParameters[5].mResource = &ReflectionBuffer;
 	combinesig.initialize(render.mDevice);
 
 
@@ -589,31 +622,12 @@ void initializeRender()
 	hiZRootsig.mParameters[2].mBindSlot = 0;
 	hiZRootsig.mParameters[2].mUAVMipLevel = 0;
 	hiZRootsig.mParameters[2].mResource = &hiZTexture;//HiZ-0~5, uav desc is continuously create
-	//hiZRootsig.mParameters[3].mType = PARAMETERTYPE_UAV;
-	//hiZRootsig.mParameters[3].mResCounts = 1;
-	//hiZRootsig.mParameters[3].mBindSlot = 1;
-	//hiZRootsig.mParameters[3].mUAVMipLevel = 1;
-	//hiZRootsig.mParameters[3].mResource = &hiZTexture;//HiZ-0~4, uav desc is continuously create
-	//hiZRootsig.mParameters[4].mType = PARAMETERTYPE_UAV;
-	//hiZRootsig.mParameters[4].mResCounts = 1;
-	//hiZRootsig.mParameters[4].mBindSlot = 2;
-	//hiZRootsig.mParameters[4].mUAVMipLevel = 2;
-	//hiZRootsig.mParameters[4].mResource = &hiZTexture;//HiZ-0~4, uav desc is continuously create
-	//hiZRootsig.mParameters[5].mType = PARAMETERTYPE_UAV;
-	//hiZRootsig.mParameters[5].mResCounts =1;
-	//hiZRootsig.mParameters[5].mBindSlot = 3;
-	//hiZRootsig.mParameters[5].mUAVMipLevel = 3;
-	//hiZRootsig.mParameters[5].mResource = &hiZTexture;//HiZ-0~4, uav desc is continuously create
-	//hiZRootsig.mParameters[6].mType = PARAMETERTYPE_UAV;
-	//hiZRootsig.mParameters[6].mResCounts = 1;
-	//hiZRootsig.mParameters[6].mBindSlot = 4;
-	//hiZRootsig.mParameters[6].mUAVMipLevel = 4;
-	//hiZRootsig.mParameters[6].mResource = &hiZTexture;//HiZ-0~4, uav desc is continuously create
-
-
-
+	
 
 	hiZRootsig.initialize(render.mDevice);
+
+
+
 
 	ShaderSet hizshader;
 	hizshader.shaders[CS].load("Shaders/ScreenSpaceReflection/LinearHierarchicalZGenerate.hlsl", "CSMain", CS);
@@ -623,7 +637,77 @@ void initializeRender()
 
 
 
+	HDRGausRootsig.mParameters.resize(4);
+	HDRGausRootsig.mParameters[0].mType = PARAMETERTYPE_ROOTCONSTANT;  // mip level
+	HDRGausRootsig.mParameters[0].mResCounts = 1;
+	HDRGausRootsig.mParameters[0].mBindSlot = 0;
+	HDRGausRootsig.mParameters[1].mType = PARAMETERTYPE_SRV;  // input texture
+	HDRGausRootsig.mParameters[1].mResCounts = 1;
+	HDRGausRootsig.mParameters[1].mBindSlot = 0;
+	HDRGausRootsig.mParameters[2].mType = PARAMETERTYPE_UAV;  // output texture
+	HDRGausRootsig.mParameters[2].mResCounts = 1;
+	HDRGausRootsig.mParameters[2].mBindSlot = 0;
+	HDRGausRootsig.mParameters[3].mType = PARAMETERTYPE_SAMPLER;  // linear sampler
+	HDRGausRootsig.mParameters[3].mResCounts = 1;
+	HDRGausRootsig.mParameters[3].mBindSlot = 0;
+	HDRGausRootsig.mParameters[3].mSampler = &gbuffersampler;
+	HDRGausRootsig.initialize(render.mDevice);
 
+
+	//GausToTempPipe;
+	//GausToLowHDRPipe;
+
+	ShaderSet gausToTempShader;
+	gausToTempShader.shaders[CS].load("Shaders/ScreenSpaceReflection/GaussianToTemp.hlsl", "CSMain", CS);
+	ShaderSet gausToHDRShader;
+	gausToHDRShader.shaders[CS].load("Shaders/ScreenSpaceReflection/GaussianToLowHDR.hlsl", "CSMain", CS);
+
+	GausToTempPipe.createComputePipeline(render.mDevice, HDRGausRootsig, gausToTempShader);
+	GausToLowHDRPipe.createComputePipeline(render.mDevice, HDRGausRootsig, gausToHDRShader);
+
+
+	// cone trace 
+	ConeTraceRootsig.mParameters.resize(8);
+	ConeTraceRootsig.mParameters[0].mType = PARAMETERTYPE_CBV;
+	ConeTraceRootsig.mParameters[0].mResCounts = 1;
+	ConeTraceRootsig.mParameters[0].mBindSlot = 0;
+	ConeTraceRootsig.mParameters[0].mResource = &cameraBuffer;
+	ConeTraceRootsig.mParameters[1].mType = PARAMETERTYPE_SRV;
+	ConeTraceRootsig.mParameters[1].mResCounts = 4;
+	ConeTraceRootsig.mParameters[1].mBindSlot = 0;
+	ConeTraceRootsig.mParameters[1].mResource = &GBuffer[0];
+	ConeTraceRootsig.mParameters[2].mType = PARAMETERTYPE_SRV;
+	ConeTraceRootsig.mParameters[2].mResCounts = 1;
+	ConeTraceRootsig.mParameters[2].mBindSlot = 4;
+	ConeTraceRootsig.mParameters[2].mResource = &hiZTexture;
+	ConeTraceRootsig.mParameters[3].mType = PARAMETERTYPE_SRV;
+	ConeTraceRootsig.mParameters[3].mResCounts = 1;
+	ConeTraceRootsig.mParameters[3].mBindSlot = 5;
+	ConeTraceRootsig.mParameters[3].mResource = &HDRBuffer;
+	ConeTraceRootsig.mParameters[4].mType = PARAMETERTYPE_SRV;
+	ConeTraceRootsig.mParameters[4].mResCounts = 1;
+	ConeTraceRootsig.mParameters[4].mBindSlot = 6;
+	ConeTraceRootsig.mParameters[4].mResource = &reflectUVTexture;
+	ConeTraceRootsig.mParameters[5].mType = PARAMETERTYPE_UAV;
+	ConeTraceRootsig.mParameters[5].mResCounts = 1;
+	ConeTraceRootsig.mParameters[5].mBindSlot = 0;
+	ConeTraceRootsig.mParameters[5].mResource = &ReflectionBuffer;
+	ConeTraceRootsig.mParameters[6].mType = PARAMETERTYPE_SAMPLER;
+	ConeTraceRootsig.mParameters[6].mResCounts = 1;
+	ConeTraceRootsig.mParameters[6].mBindSlot = 0;
+	ConeTraceRootsig.mParameters[6].mSampler = &gbuffersampler;
+	ConeTraceRootsig.mParameters[7].mType = PARAMETERTYPE_SRV;
+	ConeTraceRootsig.mParameters[7].mResCounts = 1;
+	ConeTraceRootsig.mParameters[7].mBindSlot = 7;
+	ConeTraceRootsig.mParameters[7].mResource = &BRDFIntergrateMap;
+	ConeTraceRootsig.initialize(render.mDevice);
+
+	ShaderSet contraceshader;
+	contraceshader.shaders[CS].load("Shaders/ScreenSpaceReflection/ConeTrace.hlsl", "CSMain", CS);
+	ConeTracePipe.createComputePipeline(render.mDevice, ConeTraceRootsig, contraceshader);
+
+
+	BRDFIntergrateMap.CreateTexture(render, srvheap, DXGI_FORMAT_R32G32_FLOAT, BRDFIntWidth, BRDFIntWidth, 1, 1, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_SRV_RTV);
 
 
 	viewport.setup(0.0f, 0.0f, (float)windows.mWidth, (float)windows.mHeight);
@@ -992,6 +1076,46 @@ void loadAsset()
 
 	pre = std::chrono::high_resolution_clock::now();
 }
+void prepareTexture()
+{
+	ShaderSet brdfintshaders;
+	brdfintshaders.shaders[VS].load("Shaders/ScreenSpaceReflection/IntergrateBRDF.hlsl", "VSMain", VS);
+	brdfintshaders.shaders[PS].load("Shaders/ScreenSpaceReflection/IntergrateBRDF.hlsl", "PSMain", PS);
+	Pipeline BRDFIntPipeline;
+	RootSignature emptyroot;
+	emptyroot.initialize(render.mDevice);
+	RenderTargetFormat brdfintformat(DXGI_FORMAT_R32G32_FLOAT);
+	BRDFIntPipeline.createGraphicsPipeline(render.mDevice, emptyroot, brdfintshaders, brdfintformat, DepthStencilState::DepthStencilState(), BlendState::BlendState(), RasterizerState::RasterizerState(), VERTEX_LAYOUT_TYPE_SPLIT_ALL);
+	ViewPort tempviewport;
+	Scissor tempscissor;
+	tempviewport.setup(0.0f, 0.0f, (float)BRDFIntWidth, (float)BRDFIntHeight);
+	tempscissor.setup(0, BRDFIntWidth, 0, BRDFIntHeight);
+	cmdalloc[frameIndex].reset();
+	cmdlist[frameIndex].reset(BRDFIntPipeline);
+	cmdlist[frameIndex].resourceTransition(BRDFIntergrateMap
+		, D3D12_RESOURCE_STATE_RENDER_TARGET, true);
+
+	cmdlist[frameIndex].setViewPort(tempviewport);
+	cmdlist[frameIndex].setScissor(tempscissor);
+	cmdlist[frameIndex].bindDescriptorHeaps(&srvheap, &samplerheap);
+	cmdlist[frameIndex].bindGraphicsRootSigature(emptyroot);
+	cmdlist[frameIndex].bindRenderTargetsOnly(BRDFIntergrateMap);
+	cmdlist[frameIndex].setTopolgy(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	cmdlist[frameIndex].drawInstance(3, 1, 0, 0);
+
+	cmdlist[frameIndex].resourceTransition(BRDFIntergrateMap, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, true);
+
+
+	cmdlist[frameIndex].close();
+	render.executeCommands(&cmdlist[frameIndex]);
+	render.insertSignalFence(fences[frameIndex]);
+	render.waitFenceIncreament(fences[frameIndex]);
+
+
+	emptyroot.realease();
+	BRDFIntPipeline.release();
+
+}
 
 void releaseRender()
 {
@@ -1003,6 +1127,19 @@ void releaseRender()
 	fences[2].release();
 
 
+	BRDFIntergrateMap.release();
+
+	ConeTracePipe.release();
+	ConeTraceRootsig.realease();
+	ReflectionBuffer.release();
+
+
+	HDRGausRootsig.realease();
+	GausToTempPipe.release();
+	GausToLowHDRPipe.release();
+
+
+	HDRTempBuffer.release();
 
 	hiZRootsig.realease();
 	hiZPipe.release();
@@ -1195,6 +1332,27 @@ void update()
 
 
 
+	// blur and down sample pass
+	unsigned int miplevel = 0;
+	cmdlist[frameIndex].bindComputeRootSigature(HDRGausRootsig);
+
+	for (unsigned int miplevel = 0; miplevel < hdrmipnumber - 1; ++miplevel)
+	{
+		cmdlist[frameIndex].resourceTransition(HDRTempBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, true);
+		cmdlist[frameIndex].bindComputeConstant(0, &miplevel);
+		cmdlist[frameIndex].bindComputeResource(1, HDRBuffer);
+		cmdlist[frameIndex].bindComputeResource(2, HDRTempBuffer, miplevel);
+		cmdlist[frameIndex].bindPipeline(GausToTempPipe);
+		cmdlist[frameIndex].dispatch(HDRBuffer.textureDesc.Width/(pow(2,miplevel)*128) + 1, HDRBuffer.textureDesc.Height / pow(2, miplevel), 1);
+		cmdlist[frameIndex].resourceTransition(HDRTempBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, false);
+		cmdlist[frameIndex].resourceTransition(HDRBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, true);
+		cmdlist[frameIndex].bindComputeConstant(0, &miplevel);
+		cmdlist[frameIndex].bindComputeResource(1, HDRTempBuffer);
+		cmdlist[frameIndex].bindComputeResource(2, HDRBuffer, miplevel + 1);
+		cmdlist[frameIndex].bindPipeline(GausToLowHDRPipe);
+		cmdlist[frameIndex].dispatch((HDRBuffer.textureDesc.Width / (128* pow(2, miplevel+1))) + 1, HDRBuffer.textureDesc.Height / pow(2, miplevel+1), 1);
+		cmdlist[frameIndex].resourceTransition(HDRBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, false);
+	}
 
 	// screen space ray trace pass
 
@@ -1206,6 +1364,12 @@ void update()
 
 
 
+	// cone trace pass
+	cmdlist[frameIndex].resourceTransition(ReflectionBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, true);
+	cmdlist[frameIndex].bindComputeRootSigature(ConeTraceRootsig);
+	cmdlist[frameIndex].bindPipeline(ConeTracePipe);
+	cmdlist[frameIndex].dispatch((ReflectionBuffer.textureDesc.Width / 16) + 1, (ReflectionBuffer.textureDesc.Height / 16) + 1, 1);
+	cmdlist[frameIndex].resourceTransition(ReflectionBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, true);
 
 
 	//Post processing pass
@@ -1325,19 +1489,35 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	if (key == GLFW_KEY_LEFT_SHIFT && action == GLFW_RELEASE)
 		shiftpress = false;
 
-	if (key == GLFW_KEY_UP && action == GLFW_RELEASE)
+	if (key == GLFW_KEY_UP)
 	{
-		++shadowcount;
-		shadowcount = std::min(shadowcount, 8u);
-		sunlight.setSliceNumber(shadowcount);
+		roughnesscontrol += 0.01f;
+		if (roughnesscontrol >= 1.0f)
+			roughnesscontrol = 1.0f;
 	}
 
-	if (key == GLFW_KEY_DOWN && action == GLFW_RELEASE)
+	if (key == GLFW_KEY_DOWN)
 	{
 
-		--shadowcount;
-		shadowcount = std::max(shadowcount, 1u);
-		sunlight.setSliceNumber(shadowcount);
+		roughnesscontrol -= 0.01f;
+		if (roughnesscontrol <= 0.05f)
+			roughnesscontrol = 0.05f;
+	}
+
+
+	if (key == GLFW_KEY_P)
+	{
+		metaliccontrol += 0.01f;
+		if (metaliccontrol >= 1.0f)
+			metaliccontrol = 1.0f;
+	}
+
+	if (key == GLFW_KEY_O)
+	{
+
+		metaliccontrol -= 0.01f;
+		if (metaliccontrol <= 0.05f)
+			metaliccontrol = 0.05f;
 	}
 
 
@@ -1383,6 +1563,7 @@ int main()
 	int count = 0;
 	initializeRender();
 	loadAsset();
+	prepareTexture();
 	while (windows.isRunning())
 	{
 

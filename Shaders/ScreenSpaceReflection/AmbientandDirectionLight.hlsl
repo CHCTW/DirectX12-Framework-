@@ -161,7 +161,7 @@ void CSMain(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID, uint3 
 
 
     
-    float3 final = (diff + spec) * NL * directionlight.lightColor.xyz * directionlight.lightIntensity * test + albedo*0.04+skycolor;
+    float3 final = (diff + spec) * NL * directionlight.lightColor.xyz * directionlight.lightIntensity * test + albedo*0.04;
   
   //  final = skycolor;
 

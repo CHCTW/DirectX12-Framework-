@@ -341,12 +341,12 @@ void CSMain(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID, uint3 
     
 
     float depth = DepthTexture[pos].r;
-    
+    [branch]
     if(all(pos<dim)) // really have data in this pixel
     {
        
         float2 uv = pos;
-        uv = uv / float2(dim);
+        uv = (uv) / float2(dim);
         float4 projcoord;
         projcoord.xy = uv;
         projcoord.y = 1.0 - projcoord.y;
@@ -371,14 +371,16 @@ void CSMain(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID, uint3 
 
         int maxlevel = 5;
         float inter = 0.0f;
+        [branch]
         if(depth<1.0f)
             inter = traceIntersection(maxlevel,dim, pos, vpos.xyz, reflectdir, 1.0f, hitpix, hitpos);
-        float hitdepth = DepthTexture.SampleLevel(pointsample, hitpix, 0).r;
+        // store view space depth
+        float hitdepth = HiZTexture.SampleLevel(pointsample, hitpix, 0).r * camera.back * (-1.0f);
         //if(inter)
         //    TraceUV[pos] = HDRTexture.SampleLevel(pointsample, hitpix, 0);
         //else
         //TraceUV[pos] = float4(reflectdir, 0.0);
-        TraceUV[pos] = float4(hitpix.xy, inter, RV)*inter;
+        TraceUV[pos] = float4(hitpix.xy, hitdepth, RV) * inter;
 
 
     }

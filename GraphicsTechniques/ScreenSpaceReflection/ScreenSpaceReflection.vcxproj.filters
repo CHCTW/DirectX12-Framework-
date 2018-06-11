@@ -53,5 +53,17 @@
     <FxCompile Include="..\..\Shaders\ScreenSpaceReflection\LinearHierarchicalZGenerate.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
+    <FxCompile Include="..\..\Shaders\ScreenSpaceReflection\GaussianToTemp.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Shaders\ScreenSpaceReflection\GaussianToLowHDR.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Shaders\ScreenSpaceReflection\ConeTrace.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Shaders\ScreenSpaceReflection\IntergrateBRDF.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

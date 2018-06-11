@@ -1,4 +1,5 @@
 #define PI 3.14159
+#define MAX_SPEC_POWER 2048.0f
 struct PointLightData
 {
     float4x4 lightview[6];
@@ -64,4 +65,19 @@ float GeometrySmith(float NV, float NL, float roughness)
     float ggx1 = GeometrySchlickGGX(NL, roughness);
     return ggx1 * ggx2;
 }
+//http://simonstechblog.blogspot.com/2011/12/microfacet-brdf.html
+// temporay use Beckmann Distribution to convert, this may change later 
+float RoughnessToSpecularPower(float roughness)
+{
+    return clamp(2.0f / (roughness * roughness) - 2.0f, 0.0f, MAX_SPEC_POWER);
 
+}
+// from 
+float RoughnessToConeAngle(float roughness)
+{
+    float specpow = RoughnessToSpecularPower(roughness);
+    if (specpow == MAX_SPEC_POWER)
+        return 0.0f;
+    return acos(pow(0.244, 1.0f / (specpow + 1.0f)));
+
+}

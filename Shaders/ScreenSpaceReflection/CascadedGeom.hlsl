@@ -8,7 +8,14 @@ cbuffer Objecetid : register(b1)
 {
     uint ojectindex;
 };
-
+cbuffer Rougness : register(b2)
+{
+   float rougnessvalue;
+};
+cbuffer Metalic : register(b3)
+{
+    float metalicvalue;
+};
 StructuredBuffer<Object> ObjectList : register(t0);
 StructuredBuffer<Matrices> MatricesList : register(t1);
 StructuredBuffer<Material> MaterialList : register(t2);
@@ -83,11 +90,12 @@ PSInput VSMain(float3 position : POSITION, float3 normal : NORMAL,float2 uv : TE
 
     float roughrate  = input.mat.chooses.z;
     float rough = MaterialTextures[input.mat.texutres.z].Sample(mat_text_sampler, input.uv).r * (1 - roughrate) + roughrate * input.mat.roughness;
-
+    rough = min(rougnessvalue, rough);
     float metalicrate = input.mat.chooses.w;
+
     float metalic = MaterialTextures[input.mat.texutres.w].Sample(mat_text_sampler, input.uv).r * (1 - roughrate) + roughrate * input.mat.metallic;
-
-
+    //metalic = max(metalicvalue, metalic);
+    //metalic = 0.8f;
 
     half2 en = encode(normal);
     res.normal = en;

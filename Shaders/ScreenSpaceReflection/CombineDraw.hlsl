@@ -11,6 +11,7 @@ cbuffer CameraBuffer : register(b0)
 Texture2D littexture : register(t0);
 Texture2D bloomtexure : register(t1);
 Texture2D reflectuv: register(t2);
+Texture2D reflection : register(t3);
 SamplerState g_sampler : register(s0);
 PSInput VSMain(uint id : SV_VertexID)
 {
@@ -38,13 +39,15 @@ float4 PSMain(PSInput input) : SV_TARGET
 	//return float4(input.uv,0.0f,0.0f);
     float3 refuvvalid = reflectuv.Sample(g_sampler, input.uv).xyz;
     
-    float3 final = littexture.Sample(g_sampler, input.uv).xyz + bloomtexure.Sample(g_sampler, input.uv).xyz + littexture.SampleLevel(g_sampler, refuvvalid.xy,0).xyz * refuvvalid.z;
+    float3 final = littexture.Sample(g_sampler, input.uv).xyz + bloomtexure.Sample(g_sampler, input.uv).xyz + reflection.Sample(g_sampler, input.uv).xyz;
     //float3 final = littexture.Sample(g_sampler, refuvvalid.xy).xyz * refuvvalid.z;
-
+    //final = reflection.Sample(g_sampler, input.uv).xyz;
 
    // final = final / (1.0f + final);
     final = ToneMapACES(final);
     final = pow(final, 1.0f / 2.2f);
+
+   // final = reflection.Sample(g_sampler, input.uv).xyz;
   //  final = pow(final, 2.2f);
 
    // if (refuvvalid.x >= 1.0f || refuvvalid.x <= 0.0f)
