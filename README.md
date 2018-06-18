@@ -67,7 +67,9 @@ Cascaded shadow map : Use stable cascaded shadow map to largely add shadow quali
 This is directional light version. Each shadow maps resolution is 1024*1024
 https://www.youtube.com/watch?v=plOWDfTVvpE&t=16s&list=PLvLvpclrF-V2Mdev5MhF7zl5RDFbaqnBF&index=12
 ![image](https://user-images.githubusercontent.com/30221942/34930601-1682d296-f97f-11e7-9211-8c52055a1d42.png)
-Screen Space Refelction (Working in Progress): Lern from the website : http://roar11.com/2015/07/screen-space-glossy-reflections/ . Currently finish the first part, screen space ray traced. The method used from "Efficient GPU Screen-Space Ray Tracing" via Morgan McGuire and Michael Mara. Still have some performance issue. Also, a good website to for Screen Space Hi-Z tracing http://bitsquid.blogspot.com/2017/08/notes-on-screen-space-hiz-tracing.html 
+Screen Space Refelction : Lern from the website : http://roar11.com/2015/07/screen-space-glossy-reflections/ . A good website to for Screen Space Hi-Z tracing http://bitsquid.blogspot.com/2017/08/notes-on-screen-space-hiz-tracing.html 
+https://www.youtube.com/watch?v=sTAnvPJCINs&list=PLvLvpclrF-V2Mdev5MhF7zl5RDFbaqnBF&index=15&t=0s
+
 ![image](https://user-images.githubusercontent.com/30221942/41207912-0460ed48-6cd2-11e8-9a49-69f5b8cd9ba9.png)
 
 ### 3. Direcx12 Framework : This project is included by all the Unitests and Graphics Techniques. It is the core of this framework. It only generate lib file.
