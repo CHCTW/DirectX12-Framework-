@@ -13,6 +13,10 @@ Texture2D bloomtexure : register(t1);
 Texture2D reflectuv: register(t2);
 Texture2D reflection : register(t3);
 SamplerState g_sampler : register(s0);
+
+static float offset[3] = { 0.0, 1.3846153846, 3.2307692308 };
+static float weight[3] = { 0.2270270270, 0.3162162162, 0.0702702703 };
+
 PSInput VSMain(uint id : SV_VertexID)
 {
 	PSInput result;
@@ -37,11 +41,14 @@ float4 PSMain(PSInput input) : SV_TARGET
 
 
 	//return float4(input.uv,0.0f,0.0f);
-    float3 refuvvalid = reflectuv.Sample(g_sampler, input.uv).xyz;
+    float3 refuvvalid = reflection.Sample(g_sampler, input.uv).xyz;
     
     float3 final = littexture.Sample(g_sampler, input.uv).xyz + bloomtexure.Sample(g_sampler, input.uv).xyz + reflection.Sample(g_sampler, input.uv).xyz;
     //float3 final = littexture.Sample(g_sampler, refuvvalid.xy).xyz * refuvvalid.z;
     //final = reflection.Sample(g_sampler, input.uv).xyz;
+
+    float3 reflect = float3(0.0, 0.0, 0.0);
+    
 
    // final = final / (1.0f + final);
     final = ToneMapACES(final);
@@ -52,7 +59,7 @@ float4 PSMain(PSInput input) : SV_TARGET
 
    // if (refuvvalid.x >= 1.0f || refuvvalid.x <= 0.0f)
    //     refuvvalid = float3(0.0f, 0.0f, 0.0f);
-  //  final = refuvvalid;
+    //final = refuvvalid;
     //final.z = 0;
 
     return float4(final, 1.0);

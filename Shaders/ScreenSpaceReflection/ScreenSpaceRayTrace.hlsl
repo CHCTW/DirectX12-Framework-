@@ -93,8 +93,9 @@ float traceIntersection(int maxlevel,float2 fdim, float2 startpix, float3 startp
 
     float raylength = ((startpos.z + dir.z * traceConstants.maxDistance) < -camera.front) ? (-camera.front - startpos.z) / abs(dir.z) : traceConstants.maxDistance;
 
+
     //raylength = 200;
-    float3 endpos = startpos + dir * raylength;
+        float3 endpos = startpos + dir * raylength;
     float4 endndc = mul(camera.proj, float4(endpos, 1.0f));
     float tracestate = endpos.z - startpos.z;
     // dir.z >=0 means trace toward to the carmear near plane, else trace toward far plane

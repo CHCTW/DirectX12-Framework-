@@ -65,5 +65,8 @@
     <FxCompile Include="..\..\Shaders\ScreenSpaceReflection\IntergrateBRDF.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
+    <FxCompile Include="..\..\Shaders\ScreenSpaceReflection\LinearHierarchicalZFinish.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

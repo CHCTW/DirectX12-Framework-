@@ -16,22 +16,24 @@ Texture2D<float2> HiZTexture : register(t4);
 Texture2D HDRTexture : register(t5);
 Texture2D TraceTexture : register(t6);
 Texture2D BRDFIntergrate : register(t7);
+Texture2D VIZTexture : register(t8);
 RWTexture2D<float3> Reflection : register(u0);
 sampler trisample : register(s0);
 
 
-float WeightCaculate(float center,float2 cyrclerange,float2 hizrange)
+float WeightCaculate(float center,float2 cyrclerange,float2 hizrange,float2 pos,int mip)
 {
 
     // x : min depth, y : max depth
     //return cyrclerange.y-hizrange.x;
-    float midofhiz = (hizrange.x + hizrange.y) / 2.0f;
-    if (cyrclerange.x > hizrange.y || cyrclerange.y < (hizrange.x - 2.0f))
+  /* float midofhiz = (hizrange.x + hizrange.y) / 2.0f;
+    if (cyrclerange.x > hizrange.y+2.0f || cyrclerange.y < (hizrange.x - 2.0f))
         return 0.0f;
-    if (center <= hizrange.y && center >= (hizrange.x - 2.0f))
-        return 0.6f;
+    
     else
-        return 0.15f;
+    {*/
+        return VIZTexture.SampleLevel(trisample, pos, mip).x;
+    //}
 
    
     //return 1.0f;
@@ -86,7 +88,7 @@ void CSMain(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID, uint3 
             float radius = 0.0f;
             float weight = 0.0f;
             // only trace one point now
-            for (int i = 0; i < 1; ++i)
+            for (int i = 0; i < 7; ++i)
             {
                 oppositeleng = 2.0f * tan(theta) * adjacentLength;
                 float a2 = oppositeleng * oppositeleng;
@@ -104,11 +106,11 @@ void CSMain(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID, uint3 
                     nearfardepth.xy = nearfardepth.yx;
                 //lindeardepth = 1.0 / lindeardepth;
                 //float range = 1.0f/K - lindeardepth;
-                    float mipChannel = clamp(log2(radius * maxsize)-1, 0.0f, 9);
+                    float mipChannel = clamp(log2(radius * maxsize), 0.0f, 9.0f);
                 float3 color = HDRTexture.SampleLevel(trisample, samplePos.xy, mipChannel).xyz;
                 float2 range = HiZTexture.SampleLevel(trisample, samplePos.xy, mipChannel).yx * camera.back;
-                weight = WeightCaculate(centerdepth,nearfardepth, range);
-                totalColor += float4(color, weight);
+                weight = WeightCaculate(centerdepth, nearfardepth, range, samplePos, mipChannel);
+                totalColor += float4(color*weight, weight);
                 if (totalColor.a>=1.0f)
                     break;
                 adjacentLength -= 2.0f * radius;
@@ -117,16 +119,14 @@ void CSMain(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID, uint3 
 
                // totalColor.xyz += float3(weight, weight, weight);
             }
-
+            if (totalColor.w==0.0f)
+                totalColor.w = 1.0f;
+            totalColor.xyz /= totalColor.w;
             theta = RoughnessToConeAngle(1.0f) * 0.5f;
             K = k1;
 
-            float3 diffColor = HDRTexture.SampleLevel(trisample, tracepoint.xy, 8).xyz;
+            float3 diffColor = HDRTexture.SampleLevel(trisample, tracepoint.xy, 9).xyz;
             //float4 diffColor = float4(0.0f, 0.0f, 0.0f, 0.0f);
-            remainingAlpha = 1.0f;
-            oppositeleng = 0.0f;
-            radius = 0.0f;
-            weight = 0.0f;
 
 
 
@@ -137,19 +137,29 @@ void CSMain(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID, uint3 
             float3 N = normal;
             float3 V = normalize(-vpos.xyz);
             float NV = max(dot(N, V), 0.0f);
-            float3 Ks = lerp(F0, albedo, float3(metallic, metallic, metallic)); // use metalic value to get F
+            F0 = lerp(F0, albedo, float3(metallic, metallic, metallic)); // use metalic value to get F
+            float3 FRefect = float3(0.5, 0.5, 0.5);
+            FRefect = lerp(FRefect, albedo, float3(sqrt(metallic), sqrt(metallic), sqrt(metallic)));
+
+
+            float3 F = F0 + (max(float3(1.0 - roughness, 1.0 - roughness, 1.0 - roughness), F0) - F0) * pow(1 - NV, 5.0f);
+            float3 Ks = F; // diffuse color 
+            float3 Kd = 1 - Ks;
+
+            Kd *= 1.0 - metallic;
+
             float2 BRDF = BRDFIntergrate.SampleLevel(trisample, float2(NV, roughness), 0).rg;
-            diffColor.xyz = (diffColor.xyz * (1.0f - Ks) * albedo) / PI;
+            diffColor.xyz = (diffColor.xyz * Kd * albedo) / PI;
             //totalColor.xyz *= Ks;
-            float3 specular = totalColor.xyz * (Ks * BRDF.x + BRDF.y);
+            float3 specular = FRefect * totalColor.rgb * (Ks * BRDF.x + BRDF.y);
             float2 ndc = tracepoint.xy * 2.0f - float2(1.0f, 1.0f);
             float distocenter = length(ndc);
             float fadeOnPerpendicular = saturate(lerp(0.0f, 1.0f, saturate(tracepoint.w * 4.0f)));
             float fadeOnRoughness = saturate(lerp(0.0f, 1.0f, (1.0f - roughness) *1.0));
             float fadepara = clamp(distocenter - 0.5, 0.0f, 0.5f);
             fadepara = (0.5 - fadepara)/0.5f;
-            Reflection[pos] = (specular.xyz + diffColor.xyz) * fadepara * fadeOnRoughness * fadeOnPerpendicular;
-            //Reflection[pos] = float3(weight, weight, weight);
+            Reflection[pos] = (specular.xyz) * fadepara * fadeOnRoughness;
+           // Reflection[pos] = float3(totalColor.a, totalColor.a, totalColor.a);
 
         }
         else

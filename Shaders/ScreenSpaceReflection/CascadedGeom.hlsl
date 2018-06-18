@@ -16,6 +16,10 @@ cbuffer Metalic : register(b3)
 {
     float metalicvalue;
 };
+cbuffer Metalic : register(b4)
+{
+    uint customcolor;
+};
 StructuredBuffer<Object> ObjectList : register(t0);
 StructuredBuffer<Matrices> MatricesList : register(t1);
 StructuredBuffer<Material> MaterialList : register(t2);
@@ -28,6 +32,7 @@ struct PSInput
     float3 tangent : TANGENT;
     float3 bitangent : BITANGENT;
     float2 uv : TEXTCOORD;
+    nointerpolation uint ojectindex : OBJID;
     nointerpolation Material mat : MATERIAL;
 };
 PSInput VSMain(float3 position : POSITION, float3 normal : NORMAL,float2 uv : TEXTURECOORD, float3 tangent: TANGENT,float3 bitangent : BITANGENT)
@@ -48,7 +53,7 @@ PSInput VSMain(float3 position : POSITION, float3 normal : NORMAL,float2 uv : TE
     result.bitangent = mul(MatricesList[mid].normal, float4(bitangent, 0.0)).xyz;
     result.bitangent = mul(camera.viewinverseyranspose, float4(result.bitangent, 0.0)).xyz;
 
-
+    result.ojectindex = ojectindex;
     result.uv = uv;
     result.mat = MaterialList[ObjectList[ojectindex].materialid];
    // result.normal = normal;
@@ -80,22 +85,34 @@ PSInput VSMain(float3 position : POSITION, float3 normal : NORMAL,float2 uv : TE
     if(mask==0)
         discard;
     float3 diffuse = difftext.xyz * (1.0 - rate) + input.mat.albedo * rate;
+  
 
 
-
-    float3 normaltext = (MaterialTextures[input.mat.texutres.y].Sample(mat_text_sampler, input.uv) * 2.0 - 1.0).xyz;
+        float3 normaltext = (MaterialTextures[input.mat.texutres.y].Sample(mat_text_sampler, input.uv) * 2.0 - 1.0).xyz;
     float normalrate = input.mat.chooses.y;
     float3 normal =normalMapCal(normalrate,input.normal,input.tangent, input.bitangent, normaltext);
     //normal = normalize(input.normal);
 
     float roughrate  = input.mat.chooses.z;
     float rough = MaterialTextures[input.mat.texutres.z].Sample(mat_text_sampler, input.uv).r * (1 - roughrate) + roughrate * input.mat.roughness;
-    rough = min(rougnessvalue, rough);
+   
     float metalicrate = input.mat.chooses.w;
 
     float metalic = MaterialTextures[input.mat.texutres.w].Sample(mat_text_sampler, input.uv).r * (1 - roughrate) + roughrate * input.mat.metallic;
-    //metalic = max(metalicvalue, metalic);
-    //metalic = 0.8f;
+   // metalic = max(metalicvalue, metalic);
+    if (input.ojectindex <= 120 && input.ojectindex >= 115)
+    {
+    
+        if (customcolor==1)
+            diffuse = float3(0.9, 0.1, 0.1);
+        if (customcolor == 2)
+            diffuse = float3(0.1, 0.9, 0.1);
+        if (customcolor == 3)
+            diffuse = float3(0.1, 0.1, 0.9);
+        metalic = metalicvalue;
+        rough = rougnessvalue;
+    }
+
 
     half2 en = encode(normal);
     res.normal = en;

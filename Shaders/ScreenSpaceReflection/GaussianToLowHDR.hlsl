@@ -10,6 +10,12 @@ SamplerState linearsampler : register(s0);
 // 9-tap weigh and offset, use blinear sameling can reduce almost half of the access
 static float offset[3] = { 0.0, 1.3846153846, 3.2307692308 };
 static float weight[3] = { 0.2270270270, 0.3162162162, 0.0702702703 };
+
+float3 ToneMapACES(float3 hdr)
+{
+    const float A = 2.51, B = 0.03, C = 2.43, D = 0.59, E = 0.14;
+    return saturate((hdr * (A * hdr + B)) / (hdr * (C * hdr + D) + E));
+}
 [numthreads(GROUPSIZE, 1, 1)]
 void CSMain(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID, uint3 gid : SV_GroupID)
 {
@@ -30,6 +36,11 @@ void CSMain(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID, uint3 
         {
             res += input.SampleLevel(linearsampler, uv + float2(0.0f,offset[i]) * diminv, miplevel) * weight[i];
             res += input.SampleLevel(linearsampler, uv - float2(0.0f,offset[i]) * diminv, miplevel) * weight[i];
+
+        }
+        if (miplevel==0)
+        {
+            res.xyz = ToneMapACES(res.xyz);
 
         }
         ouput[id.xy] = res;

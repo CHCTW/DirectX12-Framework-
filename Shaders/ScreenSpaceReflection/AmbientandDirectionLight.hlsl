@@ -13,7 +13,17 @@ static float4 debugcolor[8] =
     float4(1.0, 1.0, 1.0, 0.0),
     float4(0.0, 0.0, 0.0, 0.0)
 };
-
+float nrand(float2 n)
+{
+    return frac(sin(dot(n.xy, float2(12.9898, 78.233))) * 43758.5453);
+}
+float n2rand(float2 n, float c)
+{
+    float t = frac(c * 255);
+    float nrnd0 = nrand(n + 0.07 * t);
+    float nrnd1 = nrand(n + 0.11 * t);
+    return (nrnd0 + nrnd1) - 1.0f;
+}
 
 cbuffer CameraBuffer : register(b0)
 {
@@ -23,6 +33,7 @@ cbuffer DirectoinLightBuffer : register(b1)
 {
     DirectionLightData directionlight;
 };
+
 Texture2D GBufferTextures[4] : register(t2);
 // decode normal
 // albedo + rougbess
@@ -119,7 +130,7 @@ void CSMain(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID, uint3 
 
 
     float test = 0.0f;
-    int looksize = 2;
+    int looksize = 1;
 
     int2 shadowpos = int2(vShadowMapDims.x * shadowcoord.x, vShadowMapDims.y * shadowcoord.y);
 
@@ -130,13 +141,20 @@ void CSMain(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID, uint3 
   //      [unroll]
         for (int y = -looksize; y <= looksize; ++y)
         {
-            float lightdepth = ShadowMap.SampleLevel(pointsampler, shadowcoord.xyz + float3(texsize * float2(x, y), 0.0f), 0);
+
+            //float2 seed = input.position.xy / float2(1600.0f, 900.0f);
+            float2 noise = (float2(n2rand(shadowcoord.xy, shadowcoord.x + shadowcoord.y + x + y+test), n2rand(shadowcoord.xy, -shadowcoord.x + shadowcoord.y - x + y-test))) * 3.0f / (shadowcoord.z + 1);
+            float lightdepth = ShadowMap.SampleLevel(pointsampler, shadowcoord.xyz + float3(texsize * ( noise), 0.0f), 
+            0);
             if ((pixdepth) > lightdepth + 0.005f)
                 test += 1.0f;
         }
 
     }
-    test /= (looksize * 2 + 1) * (looksize * 2 + 1);
+
+ //   if (test != 0.0f && test != 9.0f)
+ //       test = 1.0;
+    test /= (looksize * 2.0f + 1.0f) * (looksize * 2.0f + 1.0f);
    // test /= total;
     test = clamp(1.0f - test, 0.0f, 1.0f);
 
@@ -144,13 +162,13 @@ void CSMain(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID, uint3 
         float2 vTexelUnits = 1.0f / vShadowMapDims;
 
 
-
+    
 
 
    
 
-    if ((pixdepth) > ShadowMap.SampleLevel(pointsampler, shadowcoord.xyz, 0).r + 0.003f)
-        test = 0.0f;
+    //if ((pixdepth) > ShadowMap.SampleLevel(pointsampler, shadowcoord.xyz, 0).r + 0.003f)
+    //    test = 0.0f;
 
 
 ////    test = exp(-120.0f * pixdepth) * exp(120.0f * ShadowMap.SampleLevel(pointsampler, shadowcoord.xyz, 0).r);
@@ -161,7 +179,7 @@ void CSMain(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID, uint3 
 
 
     
-    float3 final = (diff + spec) * NL * directionlight.lightColor.xyz * directionlight.lightIntensity * test + albedo*0.04;
+        float3 final = (diff + spec) * NL * directionlight.lightColor.xyz * directionlight.lightIntensity * test + albedo * 0.04;
   
   //  final = skycolor;
 

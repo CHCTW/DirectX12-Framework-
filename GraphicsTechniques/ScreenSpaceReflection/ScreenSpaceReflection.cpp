@@ -169,8 +169,11 @@ Pipeline raytracePipe;
 RootSignature raytraceRootsig;
 
 Texture hiZTexture;
+Texture visibilityTexture;
 Pipeline hiZPipe;
+Pipeline hiZFinishPipe;
 RootSignature hiZRootsig;
+RootSignature hiZFinishRootsig;
 Texture HDRTempBuffer;
 Pipeline GausToTempPipe;
 Pipeline GausToLowHDRPipe;
@@ -182,7 +185,7 @@ RootSignature ConeTraceRootsig;
 Texture BRDFIntergrateMap;
 UINT BRDFIntWidth = 512;
 UINT BRDFIntHeight = 512;
-
+UINT customColor = 0;
 float roughnesscontrol = 0.05;
 float metaliccontrol = 0.05;
 
@@ -237,7 +240,7 @@ void initializeRender()
 	HDRTempBuffer.CreateTexture(render, srvheap, DXGI_FORMAT_R16G16B16A16_FLOAT, windows.mWidth, windows.mHeight, 1, hdrmipnumber-1, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_SRV_UAV, TEXTURE_ALL_MIPS_USE_UAV);
 
 	// store the reflectoin result, might be used in brighrtness extract pass and combine pass, try to use less presion format
-	ReflectionBuffer.CreateTexture(render, srvheap, DXGI_FORMAT_R11G11B10_FLOAT, windows.mWidth, windows.mHeight, 1, 1, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_SRV_UAV, TEXTURE_ALL_MIPS_USE_UAV);
+	ReflectionBuffer.CreateTexture(render, srvheap, DXGI_FORMAT_R16G16B16A16_FLOAT, windows.mWidth, windows.mHeight, 1, 1, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_SRV_UAV, TEXTURE_ALL_MIPS_USE_UAV);
 
 	BloomBuffer.CreateTexture(render, srvheap, DXGI_FORMAT_R16G16B16A16_FLOAT, windows.mWidth / 2, windows.mHeight / 2, 1, 1, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_SRV_UAV);
 	//BloomBuffer.addUnorderedAccessView(srvheap);
@@ -299,7 +302,7 @@ void initializeRender()
 	GeoCmdGenPipeline.createComputePipeline(render.mDevice, geoCmdGenRootSig, geocmdgencs);
 
 
-	geoDrawSig.mParameters.resize(9);
+	geoDrawSig.mParameters.resize(10);
 	geoDrawSig.mParameters[0].mType = PARAMETERTYPE_ROOTCONSTANT; // object index
 	geoDrawSig.mParameters[0].mResCounts = 1;
 	geoDrawSig.mParameters[0].mBindSlot = 1;
@@ -345,6 +348,11 @@ void initializeRender()
 	geoDrawSig.mParameters[8].mConstantData = &metaliccontrol;
 	geoDrawSig.mParameters[8].mBindSlot = 3;
 	geoDrawSig.mParameters[8].mVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	geoDrawSig.mParameters[9].mType = PARAMETERTYPE_ROOTCONSTANT; // object index
+	geoDrawSig.mParameters[9].mResCounts = 1;
+	geoDrawSig.mParameters[9].mConstantData = &customColor;
+	geoDrawSig.mParameters[9].mBindSlot = 4;
+	geoDrawSig.mParameters[9].mVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
 	geoDrawSig.initialize(render.mDevice);
 
@@ -456,7 +464,7 @@ void initializeRender()
 	lightRootsig.mParameters[6].mType = PARAMETERTYPE_SAMPLER;
 	lightRootsig.mParameters[6].mResCounts = 1;
 	lightRootsig.mParameters[6].mBindSlot = 0;
-	lightRootsig.mParameters[6].mSampler = &pointsam;
+	lightRootsig.mParameters[6].mSampler = &matsampler;
 	lightRootsig.initialize(render.mDevice);
 
 	ShaderSet ambeintdirshader;
@@ -606,9 +614,11 @@ void initializeRender()
 
 
 
-	hiZTexture.CreateTexture(render, srvheap, DXGI_FORMAT_R16G16_FLOAT, windows.mWidth, windows.mHeight, 1, 6, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_SRV_UAV,TEXTURE_ALL_MIPS_USE_UAV);
+	hiZTexture.CreateTexture(render, srvheap, DXGI_FORMAT_R16G16_FLOAT, windows.mWidth, windows.mHeight, 1, 10, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_SRV_UAV,TEXTURE_ALL_MIPS_USE_UAV);
 
-	hiZRootsig.mParameters.resize(3);
+	visibilityTexture.CreateTexture(render, srvheap, DXGI_FORMAT_R8_UNORM, windows.mWidth, windows.mHeight, 1, 10, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_SRV_UAV, TEXTURE_ALL_MIPS_USE_UAV);
+
+	hiZRootsig.mParameters.resize(4);
 	hiZRootsig.mParameters[0].mType = PARAMETERTYPE_CBV;
 	hiZRootsig.mParameters[0].mResCounts = 1;
 	hiZRootsig.mParameters[0].mBindSlot = 0;
@@ -622,6 +632,11 @@ void initializeRender()
 	hiZRootsig.mParameters[2].mBindSlot = 0;
 	hiZRootsig.mParameters[2].mUAVMipLevel = 0;
 	hiZRootsig.mParameters[2].mResource = &hiZTexture;//HiZ-0~5, uav desc is continuously create
+	hiZRootsig.mParameters[3].mType = PARAMETERTYPE_UAV;
+	hiZRootsig.mParameters[3].mResCounts = 6;
+	hiZRootsig.mParameters[3].mBindSlot = 6;
+	hiZRootsig.mParameters[3].mUAVMipLevel = 0;
+	hiZRootsig.mParameters[3].mResource = &visibilityTexture;
 	
 
 	hiZRootsig.initialize(render.mDevice);
@@ -635,6 +650,26 @@ void initializeRender()
 	hiZPipe.createComputePipeline(render.mDevice, hiZRootsig, hizshader);
 
 
+
+	hiZFinishRootsig.mParameters.resize(2);
+	hiZFinishRootsig.mParameters[0].mType = PARAMETERTYPE_UAV;
+	hiZFinishRootsig.mParameters[0].mResCounts = 5;
+	hiZFinishRootsig.mParameters[0].mBindSlot = 0;
+	hiZFinishRootsig.mParameters[0].mUAVMipLevel = 5;
+	hiZFinishRootsig.mParameters[0].mResource = &hiZTexture;//HiZ-5~9, uav desc is continuously create
+	hiZFinishRootsig.mParameters[1].mType = PARAMETERTYPE_UAV;
+	hiZFinishRootsig.mParameters[1].mResCounts = 5;
+	hiZFinishRootsig.mParameters[1].mBindSlot = 5;
+	hiZFinishRootsig.mParameters[1].mUAVMipLevel = 5;
+	hiZFinishRootsig.mParameters[1].mResource = &visibilityTexture;
+
+
+	hiZFinishRootsig.initialize(render.mDevice);
+
+	ShaderSet hizfinishshader;
+	hizfinishshader.shaders[CS].load("Shaders/ScreenSpaceReflection/LinearHierarchicalZFinish.hlsl", "CSMain", CS);
+
+	hiZFinishPipe.createComputePipeline(render.mDevice, hiZFinishRootsig, hizfinishshader);
 
 
 	HDRGausRootsig.mParameters.resize(4);
@@ -667,7 +702,7 @@ void initializeRender()
 
 
 	// cone trace 
-	ConeTraceRootsig.mParameters.resize(8);
+	ConeTraceRootsig.mParameters.resize(9);
 	ConeTraceRootsig.mParameters[0].mType = PARAMETERTYPE_CBV;
 	ConeTraceRootsig.mParameters[0].mResCounts = 1;
 	ConeTraceRootsig.mParameters[0].mBindSlot = 0;
@@ -700,6 +735,10 @@ void initializeRender()
 	ConeTraceRootsig.mParameters[7].mResCounts = 1;
 	ConeTraceRootsig.mParameters[7].mBindSlot = 7;
 	ConeTraceRootsig.mParameters[7].mResource = &BRDFIntergrateMap;
+	ConeTraceRootsig.mParameters[8].mType = PARAMETERTYPE_SRV;
+	ConeTraceRootsig.mParameters[8].mResCounts = 1;
+	ConeTraceRootsig.mParameters[8].mBindSlot = 8;
+	ConeTraceRootsig.mParameters[8].mResource = &visibilityTexture;
 	ConeTraceRootsig.initialize(render.mDevice);
 
 	ShaderSet contraceshader;
@@ -734,7 +773,7 @@ void loadAsset()
 	float diry = sin(spint*PI / 180.0f)*sin(tilt*PI / 180.0f);
 	float dirz = cos(spint*PI / 180.0f);
 	sunlight.setDirection(dirx, diry, dirz);
-	sunlight.setColor(1.0, 0.8, 1.0);
+	sunlight.setColor(1.0, 1.0, 1.0);
 
 
 	cameraBuffer.createConstantBuffer(render.mDevice, srvheap, sizeof(ViewProjection));
@@ -1141,9 +1180,13 @@ void releaseRender()
 
 	HDRTempBuffer.release();
 
+
+	hiZFinishRootsig.realease();
 	hiZRootsig.realease();
+	hiZFinishPipe.release();
 	hiZPipe.release();
 	hiZTexture.release();
+	visibilityTexture.release();
 
 	raytracePipe.release();
 	raytraceRootsig.realease();
@@ -1315,11 +1358,19 @@ void update()
 
 
 	// hi-z pass
-	cmdlist[frameIndex].resourceTransition(hiZTexture, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, true);
+	cmdlist[frameIndex].resourceTransition(hiZTexture, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	cmdlist[frameIndex].resourceTransition(visibilityTexture, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, true);
 	cmdlist[frameIndex].bindComputeRootSigature(hiZRootsig);
 	cmdlist[frameIndex].bindPipeline(hiZPipe);
 	cmdlist[frameIndex].dispatch((hiZTexture.textureDesc.Width / 32) + 1, (hiZTexture.textureDesc.Height / 32) + 1, 1);
+	
+	cmdlist[frameIndex].UAVWait(hiZTexture,false);
+	cmdlist[frameIndex].UAVWait(visibilityTexture, true);
+	cmdlist[frameIndex].bindComputeRootSigature(hiZFinishRootsig);
+	cmdlist[frameIndex].bindPipeline(hiZFinishPipe);
+	cmdlist[frameIndex].dispatch((hiZTexture.textureDesc.Width / (32*32)) + 1, (hiZTexture.textureDesc.Height / (32 * 32)) + 1, 1);
 	cmdlist[frameIndex].resourceTransition(hiZTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	cmdlist[frameIndex].resourceTransition(visibilityTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
 
 	// LightPass
@@ -1505,14 +1556,14 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	}
 
 
-	if (key == GLFW_KEY_P)
+	if (key == GLFW_KEY_K)
 	{
 		metaliccontrol += 0.01f;
 		if (metaliccontrol >= 1.0f)
 			metaliccontrol = 1.0f;
 	}
 
-	if (key == GLFW_KEY_O)
+	if (key == GLFW_KEY_L)
 	{
 
 		metaliccontrol -= 0.01f;
@@ -1533,8 +1584,22 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		sunlight.usesmsr(usesmsr);
 	}
 
-
-
+	if (key == GLFW_KEY_T)
+	{
+		customColor = 0;
+	}
+	if (key == GLFW_KEY_R)
+	{
+		customColor = 1;
+	}
+	if (key == GLFW_KEY_G)
+	{
+		customColor = 2;
+	}
+	if (key == GLFW_KEY_B)
+	{
+		customColor = 3;
+	}
 
 	if (key == GLFW_KEY_RIGHT)
 	{
