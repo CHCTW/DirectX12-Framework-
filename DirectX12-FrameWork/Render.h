@@ -37,6 +37,7 @@ public:
 	/******Offline methods, it's easy to use, but don't ever use them in fly. it's ok to use it as preload stuff****************/
 	// when genlevels = -1, means generate to the end of the level in texture, this should only use for offline
 	void generateMipMapOffline(Texture& texture, Mip_Map_Generate_Type type, UINT genstartlevel = 1, UINT genendlevelnum = -1);
+	void generateCubeMipMapOffline(Texture& texture, Cube_Mip_Map_Generate_Type type, UINT genstartlevel = 1, UINT genendlevelnum = -1);
 	void updateBufferOffline(Buffer& destbuffer, void const * data, UINT64 datasize, UINT64 bufferoffset = 0);
 	void updateTextureOffline(Texture& texture, void  const * data, UINT startlevel = 0, UINT levelnum = -1, UINT startslice = 0, UINT slicenum = -1);
 	/****************************************************************************************/
@@ -75,4 +76,8 @@ private:
 	//Structure for mip-map generate block
 	RootSignature mMipmapsig;
 	Pipeline mMipmapPipelines[MIP_MAP_GEN_COUNT];
+
+
+	RootSignature mCubeMipmapsig;
+	Pipeline mCubeMipmapPipelines[CUBE_MIP_MAP_GEN_COUNT];
 };

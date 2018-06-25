@@ -210,7 +210,7 @@ void initializeRender()
 	shadowshaderset.shaders[PS].load("Shaders/CubeShadowMap.hlsl", "PSMain", PS);
 	shadowshaderset.shaders[GS].load("Shaders/CubeShadowMap.hlsl", "GSMain", GS);
 //	RenderTargetFormat shadowformat(0, nullptr, true,true, DXGI_FORMAT_R16_TYPELESS);
-	shadowPipeline.createGraphicsPipeline(render.mDevice, shadowRootsig, shadowshaderset, shadowformat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(D3D12_CULL_MODE_FRONT), VERTEX_LAYOUT_TYPE_SPLIT_ALL);
+	shadowPipeline.createGraphicsPipeline(render.mDevice, shadowRootsig, shadowshaderset, shadowformat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(D3D12_CULL_MODE_BACK), VERTEX_LAYOUT_TYPE_SPLIT_ALL);
 
 }
 

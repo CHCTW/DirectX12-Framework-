@@ -540,6 +540,36 @@ bool CommandList::updateTextureData(DynamicUploadBuffer& upload, Texture& textur
 	
 
 }
+bool CommandList::copyTextureData(Texture& dsttexture, Texture& srctexture, void  const * data, UINT startlevel, UINT levelnum, UINT startslice, UINT slicenum)
+{
+	if(!srctexture.mResource || !dsttexture.mResource)
+		return false;
+	UINT levels = min((srctexture.textureDesc.MipLevels - startlevel), levelnum);
+	UINT slices = min((srctexture.textureDesc.DepthOrArraySize - startslice), slicenum);
+	unsigned int totalsub = slices * levels;
+
+
+	D3D12_TEXTURE_COPY_LOCATION destresource;
+	destresource.pResource = dsttexture.mResource;
+	destresource.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+
+	D3D12_TEXTURE_COPY_LOCATION srcresource;
+	srcresource.pResource = srctexture.mResource;
+	srcresource.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+
+
+	for (unsigned int i = startslice; i < slices + startslice; ++i)
+	{
+		for (unsigned int j = startlevel; j < startlevel + levels; ++j)
+		{
+			unsigned int subnum = i * dsttexture.textureDesc.MipLevels + j;
+			destresource.SubresourceIndex = subnum;
+			srcresource.SubresourceIndex = subnum;
+			mDx12CommandList->CopyTextureRegion(&destresource, 0, 0, 0, &srcresource, nullptr);
+		}
+	}
+
+}
 void CommandList::setViewPort(ViewPort& viewport)
 {
 	mDx12CommandList->RSSetViewports(1,&viewport.mViewPort);
@@ -602,6 +632,22 @@ void CommandList::bindGraphicsRootSigature(RootSignature& rootsig,bool bindresou
 		}
 	}
 
+}
+void CommandList::bindGraphicsSampler(UINT rootindex, Sampler& sampler)
+{
+	if (mCurrentBindGraphicsRootSig == nullptr)
+	{
+		cout << "Need to bind Graphics Root Signature First" << endl;
+	}
+	mDx12CommandList->SetGraphicsRootDescriptorTable(rootindex, sampler.mSampler.Gpu);
+}
+void CommandList::bindComputeSampler(UINT rootindex, Sampler& sampler)
+{
+	if (mCurrentBindComputeRootSig == nullptr)
+	{
+		cout << "Need to bind Graphics Root Signature First" << endl;
+	}
+	mDx12CommandList->SetComputeRootDescriptorTable(rootindex, sampler.mSampler.Gpu);
 }
 void CommandList::bindGraphicsResource(UINT rootindex, Resource & res)
 {

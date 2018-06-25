@@ -15,6 +15,7 @@ class QueryHeap;
 class SwapChainBuffer;
 class DynamicUploadBuffer;
 class VolatileConstantBuffer;
+class Sampler;
 class CommandList
 {
 public:
@@ -33,6 +34,8 @@ public:
 	void bindComputeResource(UINT rootindex, Resource& res, UINT uavmiplevel);
 	void bindGraphicsResource(UINT rootindex, Resource& res);
 	void bindComputeResource(UINT rootindex, Resource& res);
+	void bindGraphicsSampler(UINT rootindex, Sampler& sampler);
+	void bindComputeSampler(UINT rootindex, Sampler& sampler);
 
 	
 	
@@ -133,6 +136,8 @@ public:
 
 	bool updateTextureData(DynamicUploadBuffer& upload,Texture& texture, void  const * data, UINT startlevel = 0, UINT levelnum = -1, UINT startslice = 0, UINT slicenum = -1);
 	bool updateTextureData(Texture& texture, void  const * data,UINT startlevel = 0,UINT levelnum = -1 , UINT startslice = 0, UINT slicenum = -1);
+	// same format and similar size copy style, probally will have different style copy
+	bool copyTextureData(Texture& dsttexture, Texture& srctexture, void  const * data, UINT startlevel = 0, UINT levelnum = -1, UINT startslice = 0, UINT slicenum = -1);
 	bool updateBufferData(Buffer& buffer, void  const  * data, UINT datasize);
 	bool updateBufferData(DynamicUploadBuffer& upload,Buffer& buffer, void  const  * data, UINT64 datasize,UINT64 bufferoffset = 0);
 

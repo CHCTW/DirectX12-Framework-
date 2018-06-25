@@ -220,6 +220,9 @@
     <None Include="..\Shaders\DirectX12-Framework\DownScale.hlsli">
       <Filter>Render\Shader</Filter>
     </None>
+    <None Include="..\Shaders\DirectX12-Framework\CubeDownScale.hlsli">
+      <Filter>Render\Shader</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\Shaders\DirectX12-Framework\DownScale_Srgb_A_Box_Clamp.hlsl">
@@ -244,6 +247,9 @@
       <Filter>Render\Shader</Filter>
     </FxCompile>
     <FxCompile Include="..\Shaders\DirectX12-Framework\DownScale_Rgba_Normal_Gaussian_Clamp.hlsl">
+      <Filter>Render\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Shaders\DirectX12-Framework\CubeDownScale_Srgb_A_Disc.hlsl">
       <Filter>Render\Shader</Filter>
     </FxCompile>
   </ItemGroup>

@@ -223,6 +223,7 @@ enum Mip_Map_Generate_Type
 };
 
 
+
 const static char *MipMapShadersName[MIP_MAP_GEN_COUNT]
 {
 	"DownScale_Srgb_A_Box_Clamp.hlsl",
@@ -233,4 +234,16 @@ const static char *MipMapShadersName[MIP_MAP_GEN_COUNT]
 	"DownScale_Rgba_Linear_Gaussian_Clamp.hlsl",
 	"DownScale_Srgb_Alpha_Mask_Gaussian_Clamp.hlsl",
 	"DownScale_Rgba_Normal_Gaussian_Clamp.hlsl",
+};
+
+enum Cube_Mip_Map_Generate_Type
+{
+	CUBE_MIP_MAP_GEN_SRGB_A_DISC = 0,
+	CUBE_MIP_MAP_GEN_COUNT
+};
+
+const static char *CubeMipMapShadersName[MIP_MAP_GEN_COUNT]
+{
+	"CubeDownScale_Srgb_A_Disc.hlsl",
+
 };

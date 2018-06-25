@@ -61,7 +61,19 @@ struct Camera
     float4x4 projviewinverse;
     float front;
     float back;
+    float fov;
     float ratio;
+};
+struct CubeCamera
+{
+    float4x4 view[6];
+    float4x4 projection;
+    float4x4 projectionview[6];
+    float4x4 projectionviewinverse[6];
+    float4 mPosition;
+    float front;
+    float back;
+    float2 padding;
 };
 float3 normalMapCal(in float rate,in float3 objnormal,in float3 tangent,in float3 bitangent,in float3 textnormal)
 {

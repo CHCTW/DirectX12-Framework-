@@ -93,7 +93,7 @@ static float3 pcfs[20] =
 };
 float ShadowTest(float3 pos)
 {
-	float3 shadowcood = lightpostion.xyz - pos;
+    float3 shadowcood = pos-lightpostion.xyz;
 	float lightdepth = ShadowMap.SampleLevel(Sampler, shadowcood,0).r;
 	float pixdepth = length(pos - lightpostion.xyz);
     float shadow = 0.0f;

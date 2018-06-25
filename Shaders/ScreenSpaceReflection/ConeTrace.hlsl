@@ -106,7 +106,7 @@ void CSMain(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID, uint3 
                     nearfardepth.xy = nearfardepth.yx;
                 //lindeardepth = 1.0 / lindeardepth;
                 //float range = 1.0f/K - lindeardepth;
-                    float mipChannel = clamp(log2(radius * maxsize), 0.0f, 9.0f);
+                    float mipChannel = clamp(log2(radius * maxsize)-1, 0.0f, 9.0f);
                 float3 color = HDRTexture.SampleLevel(trisample, samplePos.xy, mipChannel).xyz;
                 float2 range = HiZTexture.SampleLevel(trisample, samplePos.xy, mipChannel).yx * camera.back;
                 weight = WeightCaculate(centerdepth, nearfardepth, range, samplePos, mipChannel);

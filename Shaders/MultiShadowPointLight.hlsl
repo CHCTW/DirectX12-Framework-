@@ -133,7 +133,7 @@ static float3 pcfs[20] =
 
 
     //return pos;
-    float3 shadowcood =PointLightList[input.id].lightposition.xyz - wpos.xyz;
+    float3 shadowcood = wpos.xyz-PointLightList[input.id].lightposition.xyz;
     float lightdepth = shadowmaps.Sample(g_sampler, float4(shadowcood, input.id)).r * PointLightList[input.id].lightradius;
     float pixdepth = length(shadowcood);
     float shadow = 0.0f;

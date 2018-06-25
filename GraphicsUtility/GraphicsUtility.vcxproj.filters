@@ -72,11 +72,11 @@
     <ClInclude Include="GaussionCurve.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CubeCamera.h">
+      <Filter>Camera</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="stdafx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="SpecCamera.cpp">
       <Filter>Camera</Filter>
     </ClCompile>
@@ -112,6 +112,12 @@
     </ClCompile>
     <ClCompile Include="GaussionCurve.cpp">
       <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CubeCamera.cpp">
+      <Filter>Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

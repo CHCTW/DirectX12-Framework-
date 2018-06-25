@@ -3,6 +3,8 @@
 #include "stdafx.h"
 #include <string>
 #include <algorithm>
+#include "../GraphicsUtility/CubeCamera.h"
+
 //WCHAR* downSampleShader = "";
 #define MipMapChainBLockSize 16u
 
@@ -120,6 +122,34 @@ bool Render::initialize()
 		downsampleshaders[i].shaders[CS].load((shaderpath + MipMapShadersName[i]).c_str(), "CSMain", CS);
 		mMipmapPipelines[i].createComputePipeline(this->mDevice, mMipmapsig, downsampleshaders[i]);
 	}
+
+
+	mCubeMipmapsig.mParameters.resize(5);
+	mCubeMipmapsig.mParameters[0].mType = PARAMETERTYPE_CBV; // mips level
+	mCubeMipmapsig.mParameters[0].mBindSlot = 0;
+	mCubeMipmapsig.mParameters[0].mResCounts = 1;
+	mCubeMipmapsig.mParameters[1].mType = PARAMETERTYPE_ROOTCONSTANT; // mips level
+	mCubeMipmapsig.mParameters[1].mBindSlot = 1;
+	mCubeMipmapsig.mParameters[1].mResCounts = 1;
+	mCubeMipmapsig.mParameters[2].mType = PARAMETERTYPE_SRV; // input+ouput, both uav state
+	mCubeMipmapsig.mParameters[2].mBindSlot = 0;
+	mCubeMipmapsig.mParameters[2].mResCounts = 1;
+	mCubeMipmapsig.mParameters[3].mType = PARAMETERTYPE_UAV; // input+ouput, both uav state
+	mCubeMipmapsig.mParameters[3].mBindSlot = 0;
+	mCubeMipmapsig.mParameters[3].mResCounts = 1;
+	mCubeMipmapsig.mParameters[4].mType = PARAMETERTYPE_SAMPLER; // input+ouput, both uav state
+	mCubeMipmapsig.mParameters[4].mBindSlot = 0;
+	mCubeMipmapsig.mParameters[4].mResCounts = 1;
+
+	mCubeMipmapsig.initialize(this->mDevice);
+
+
+	ShaderSet cubedownsampleshaders[CUBE_MIP_MAP_GEN_COUNT];
+	for (int i = 0; i < CUBE_MIP_MAP_GEN_COUNT; ++i)
+	{
+		cubedownsampleshaders[i].shaders[CS].load((shaderpath + CubeMipMapShadersName[i]).c_str(), "CSMain", CS);
+		mCubeMipmapPipelines[i].createComputePipeline(this->mDevice, mCubeMipmapsig, cubedownsampleshaders[i]);
+	}
 	return true;
 }
 
@@ -198,6 +228,12 @@ void Render::release()
 	}
 	mMipmapsig.realease();
 
+
+	mCubeMipmapsig.realease();
+	for (int i = 0; i < CUBE_MIP_MAP_GEN_COUNT; ++i)
+	{
+		mCubeMipmapPipelines[i].release();
+	}
 	CloseHandle(mFenceEvent);
 	mFence.release();
 	mDSVDescriptorHeap.release();
@@ -286,7 +322,7 @@ void Render::generateMipMapOffline(Texture& texture, Mip_Map_Generate_Type type,
 {
 
 	
-	unsigned int levelto = min(genendlevel, texture.textureDesc.MipLevels-1);
+	unsigned int levelto = min(genendlevel, (UINT)texture.textureDesc.MipLevels-1);
 	DescriptorHeap tempHeaps;
 	tempHeaps.ininitialize(this->mDevice, 1); // a temp descriptor heap
 	CommandAllocator cmdalloc;
@@ -349,8 +385,10 @@ void Render::generateMipMapOffline(Texture& texture, Mip_Map_Generate_Type type,
 		this->waitFenceIncreament(tempfenses);
 		
 	}
-	else
-		cout << "Only Simple Texture 2D is supported now" << endl;
+	else 
+	{
+		std::cout << "Wrong Texture Type to generate Mip Map" << std::endl;
+	}
 
 	gentexture.release();
 	tempHeaps.release();
@@ -359,6 +397,74 @@ void Render::generateMipMapOffline(Texture& texture, Mip_Map_Generate_Type type,
 	tempfenses.release();
 	
 
+}
+void Render::generateCubeMipMapOffline(Texture& texture, Cube_Mip_Map_Generate_Type type, UINT genstartlevel, UINT genendlevel )
+{
+	unsigned int levelto = min(genendlevel, (UINT)texture.textureDesc.MipLevels - 1);
+	DescriptorHeap tempHeaps;
+	DescriptorHeap tempSamplerHeaps;
+	tempHeaps.ininitialize(this->mDevice, 1); // a temp descriptor heap
+	tempSamplerHeaps.ininitialize(this->mDevice, 1, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+
+	DynamicConstantBuffer constantbuffer;
+	constantbuffer.initialize(*this, sizeof(CubeViewProjection));
+	constantbuffer.setCurrentFrameNumber(1);
+	CubeCamera cubecamera;
+	VolatileConstantBuffer volconsbuf = constantbuffer.allocateVolatileConstantBuffer(cubecamera.getMatrix(), sizeof(CubeViewProjection));
+
+	Sampler sampler(D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT);
+	sampler.createSampler(tempSamplerHeaps);
+
+	CommandAllocator cmdalloc;
+	CommandList cmdlist;
+	cmdalloc.initialize(this->mDevice);
+	cmdlist.initial(this->mDevice, cmdalloc);
+	Fence tempfenses;
+	tempfenses.initialize(*this);
+	Texture gentexture;
+	vector<D3D12_RESOURCE_STATES> srcprevstate = texture.mState;
+	if (texture.mSRVType == TEXTURE_SRV_TYPE_CUBE)
+	{
+		cout << "Generate for texture Cube" << endl;
+		struct SRCSlice
+		{
+			unsigned int slicenum;
+			unsigned int miplevel;
+		} srcslice;
+		CubeCamera capture;
+		gentexture.CreateTexture(*this, tempHeaps, texture.mFormat, texture.textureDesc.Width, texture.textureDesc.Height, texture.textureDesc.DepthOrArraySize, texture.textureDesc.MipLevels, TEXTURE_SRV_TYPE_CUBE, TEXTURE_USAGE_SRV_UAV, TEXTURE_ALL_MIPS_USE_UAV);
+		cmdalloc.reset();
+		cmdlist.reset(mCubeMipmapPipelines[type]);
+		// copy data;
+		cmdlist.bindDescriptorHeaps(&tempHeaps,&tempSamplerHeaps);
+		cmdlist.resourceTransition(texture, D3D12_RESOURCE_STATE_COPY_SOURCE);
+		cmdlist.resourceTransition(gentexture, D3D12_RESOURCE_STATE_COPY_DEST, true);
+		cmdlist.copyResource(texture, gentexture);
+		cmdlist.resourceTransition(gentexture, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, true);
+
+		cmdlist.bindComputeRootSigature(mCubeMipmapsig, false);
+		cmdlist.bindComputeResource(0, volconsbuf);
+		cmdlist.bindComputeSampler(4, sampler);
+
+
+
+
+
+		cmdlist.close();
+		this->executeCommands(&cmdlist);
+		//	UINT64 getcurrent = mFence.mDx12Fence->GetCompletedValue();
+		this->insertSignalFence(tempfenses);
+		this->waitFenceIncreament(tempfenses);
+		//cmdlist
+	}
+
+	constantbuffer.release();
+	tempSamplerHeaps.release();
+	gentexture.release();
+	tempHeaps.release();
+	cmdalloc.release();
+	cmdlist.release();
+	tempfenses.release();
 }
 void Render::updateBufferOffline(Buffer& destbuffer, void const * data, UINT64 datasize, UINT64 bufferoffset)
 {

@@ -425,7 +425,7 @@ void initializeRender()
 
 	cubeShadowMaps.CreateTexture(render,srvheap, DXGI_FORMAT_R16_TYPELESS, shadowwidth, shadowheight, pointLightNum, 1,TEXTURE_SRV_TYPE_CUBE,TEXTURE_USAGE_SRV_DSV);
 	RenderTargetFormat shadowformat(0, nullptr, true, true, DXGI_FORMAT_R16_TYPELESS);
-	shadowpPipeline.createGraphicsPipeline(render.mDevice, shadowRootSig, ShadowShader, shadowformat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(), VERTEX_LAYOUT_TYPE_SPLIT_ALL);
+	shadowpPipeline.createGraphicsPipeline(render.mDevice, shadowRootSig, ShadowShader, shadowformat, DepthStencilState::DepthStencilState(true), BlendState::BlendState(), RasterizerState::RasterizerState(D3D12_CULL_MODE_BACK), VERTEX_LAYOUT_TYPE_SPLIT_ALL);
 	//shadowpPipeline.createGraphicsPipeline()
 
 	shadowviewport.setup(0, 0, (float)shadowwidth, (float)shadowheight);

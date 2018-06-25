@@ -7,16 +7,6 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/matrix.hpp>
 #include <glm/gtc/type_ptr.hpp>
-enum FrustumPlane
-{
-	FRUSTUM_PLANE_LEFT,
-	FRUSTUM_PLANE_RIGHT,
-	FRUSTUM_PLANE_TOP,
-	FRUSTUM_PLANE_BOTTOM,
-	FRUSTUM_PLANE_FAR,
-	FRUSTUM_PLANE_NEAR,
-	FRUSTUM_PLANE_COUNT
-};
 struct ViewProjection
 {
 	glm::mat4x4 mView;

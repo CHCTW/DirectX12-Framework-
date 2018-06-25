@@ -26,14 +26,27 @@ void PointLight::update()
 	temp.z = mLightData.mPosition.z;
 
 
-	mLightData.mView[0] = glm::lookAt(temp, temp + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0));
+	/*mLightData.mView[0] = glm::lookAt(temp, temp + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0));
 	mLightData.mView[1] = glm::lookAt(temp, temp + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0));
 
 	mLightData.mView[2] = glm::lookAt(temp, temp + glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, 0.0, 1.0)); //z is correct
 	mLightData.mView[3] = glm::lookAt(temp, temp + glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, -1.0));
 
 	mLightData.mView[4] = glm::lookAt(temp, temp + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0));
-	mLightData.mView[5] = glm::lookAt(temp, temp + glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, -1.0, 0.0));
+	mLightData.mView[5] = glm::lookAt(temp, temp + glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, -1.0, 0.0));*/
+
+
+
+	mLightData.mView[0] = glm::lookAtLH(temp, temp + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+	mLightData.mView[1] = glm::lookAtLH(temp, temp + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+
+	mLightData.mView[2] = glm::lookAtLH(temp, temp + glm::vec3(0.0, -1.0, 0.0), glm::vec3(1.0, 0.0,0.0)); //z is correct
+	mLightData.mView[3] = glm::lookAtLH(temp, temp + glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0));
+
+	// +z
+	mLightData.mView[4] = glm::lookAtLH(temp, temp + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, 1.0, 0.0));
+	// -z
+	mLightData.mView[5] = glm::lookAtLH(temp, temp + glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, 1.0, 0.0));
 
 
 
@@ -41,7 +54,7 @@ void PointLight::update()
 void PointLight::setRadius(float r)
 {
 	mLightData.mRadius = r;
-	mLightData.mProjection = glm::perspective(mFOV*(3.14159f) / 180.0f, 1.0f, 0.01f, mLightData.mRadius);
+	mLightData.mProjection = glm::perspectiveLH(mFOV*(3.14159f) / 180.0f, 1.0f, 0.01f, mLightData.mRadius);
 }
 
 void PointLight::setIntensity(float i)
@@ -55,14 +68,39 @@ void PointLight::setColor(float r, float g, float b)
 PointLightData const * PointLight::getLightData()
 {
 	glm::vec3 temp = glm::vec3(mLightData.mPosition.x, mLightData.mPosition.y, mLightData.mPosition.z);
-		mLightData.mView[0] = glm::lookAt(temp, temp + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0));
-	mLightData.mView[1] = glm::lookAt(temp, temp + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0));
+	//	mLightData.mView[0] = glm::lookAt(temp, temp + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0));
+	//mLightData.mView[1] = glm::lookAt(temp, temp + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0));
 
-	mLightData.mView[2] = glm::lookAt(temp, temp + glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, 0.0, 1.0)); //z is correct
-	mLightData.mView[3] = glm::lookAt(temp, temp + glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, -1.0));
+	//mLightData.mView[2] = glm::lookAt(temp, temp + glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, 0.0, 1.0)); //z is correct
+	//mLightData.mView[3] = glm::lookAt(temp, temp + glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, -1.0));
 
-	mLightData.mView[4] = glm::lookAt(temp, temp + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0));
-	mLightData.mView[5] = glm::lookAt(temp, temp + glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, -1.0, 0.0));
+	//mLightData.mView[4] = glm::lookAt(temp, temp + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0));
+	//mLightData.mView[5] = glm::lookAt(temp, temp + glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, -1.0, 0.0));
+
+
+	mLightData.mView[0] = glm::lookAtLH(temp, temp + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+	mLightData.mView[1] = glm::lookAtLH(temp, temp + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+
+	mLightData.mView[2] = glm::lookAt(temp, temp + glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, 0.0, -1.0)); //z is correct
+
+
+
+	mLightData.mView[3] = glm::lookAt(temp, temp + glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0));
+
+	// +z
+	mLightData.mView[4] = glm::lookAtLH(temp, temp + glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, 1.0, 0.0));
+	// -z
+	mLightData.mView[5] = glm::lookAtLH(temp, temp + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, 1.0, 0.0));
+
+
+	//	mLightData.mView[0] = glm::lookAt(temp, temp + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0));
+	//mLightData.mView[1] = glm::lookAt(temp, temp + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0));
+
+	//mLightData.mView[2] = glm::lookAt(temp, temp + glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, 0.0, 1.0)); //z is correct
+	//mLightData.mView[3] = glm::lookAt(temp, temp + glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, -1.0));
+
+	//mLightData.mView[4] = glm::lookAt(temp, temp + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0));
+	//mLightData.mView[5] = glm::lookAt(temp, temp + glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, -1.0, 0.0));
 
 	return &mLightData;
 }

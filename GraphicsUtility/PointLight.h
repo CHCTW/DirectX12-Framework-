@@ -23,7 +23,7 @@ public:
 	{
 		mLightData.mColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0);
 		mLightData.mRadius = 100;
-		mLightData.mProjection = glm::perspective(mFOV*(3.14159f) / 180.0f, mRatio, mFront, mLightData.mRadius);
+		mLightData.mProjection = glm::perspectiveLH(mFOV*(3.14159f) / 180.0f, mRatio, mFront, mLightData.mRadius);
 		mLightData.mIntensity = 1000;
 		mLightData.mPosition = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		update();
