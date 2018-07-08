@@ -239,11 +239,17 @@ const static char *MipMapShadersName[MIP_MAP_GEN_COUNT]
 enum Cube_Mip_Map_Generate_Type
 {
 	CUBE_MIP_MAP_GEN_SRGB_A_DISC = 0,
+	CUBE_MIP_MAP_GEN_RGBA_LINEAR_DISC = 1,
+	CUBE_MIP_MAP_GEN_SRGB_A_GAUSSIAN = 2,
+	CUBE_MIP_MAP_GEN_RGBA_LINEAR_GAUSSIAN = 3,
 	CUBE_MIP_MAP_GEN_COUNT
 };
 
 const static char *CubeMipMapShadersName[MIP_MAP_GEN_COUNT]
 {
 	"CubeDownScale_Srgb_A_Disc.hlsl",
+	"CubeDownScale_Rgba_Linear_Disc.hlsl",
+	"CubeDownScale_Srgb_A_Gaussian.hlsl",
+	"CubeDownScale_Rgba_Linear_Gaussian.hlsl",
 
 };

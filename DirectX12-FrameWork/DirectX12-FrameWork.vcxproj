@@ -22,7 +22,7 @@
     <ProjectGuid>{62932349-890C-4D8C-A0E3-BB9885B98500}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>DirectX12FrameWork</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -215,9 +215,18 @@
     <None Include="..\Shaders\DirectX12-Framework\DownScale.hlsli" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="..\Shaders\DirectX12-Framework\CubeDownScale_Rgba_Linear_Disc.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Shaders\DirectX12-Framework\CubeDownScale_Rgba_Linear_Gaussian.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
     <FxCompile Include="..\Shaders\DirectX12-Framework\CubeDownScale_Srgb_A_Disc.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="..\Shaders\DirectX12-Framework\CubeDownScale_Srgb_A_Gaussian.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
     <FxCompile Include="..\Shaders\DirectX12-Framework\DownScale_Rgba_Linear_Box_Clamp.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>

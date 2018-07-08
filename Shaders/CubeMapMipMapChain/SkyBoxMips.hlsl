@@ -16,6 +16,11 @@ struct PSInput
 	float2 uv : TEXCOORD;
     float3 viewdir : VIEW;
 };
+float3 ToneMapACES(float3 hdr)
+{
+    const float A = 2.51, B = 0.03, C = 2.43, D = 0.59, E = 0.14;
+    return saturate((hdr * (A * hdr + B)) / (hdr * (C * hdr + D) + E));
+}
 PSInput VSMain(uint id : SV_VertexID)
 {
 	PSInput result;
@@ -58,5 +63,11 @@ PSInput VSMain(uint id : SV_VertexID)
 
 float4 PSMain(PSInput input) : SV_TARGET
 {
-    return cube.SampleLevel(g_sampler, input.viewdir, lod);
+
+  
+    float tlod = min(5.0f, lod);
+    float3 final = ToneMapACES(cube.SampleLevel(g_sampler, input.viewdir, tlod).xyz);
+    final = pow(final, 1.0f / 2.2f);
+    return float4(final,0.0f);
+   // return float4(cube.SampleLevel(g_sampler, input.viewdir, tlod));
 }

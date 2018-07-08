@@ -38,34 +38,34 @@
     <FxCompile Include="..\..\Shaders\ScreenSpaceReflection\CombineDraw.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
+    <FxCompile Include="..\..\Shaders\ScreenSpaceReflection\ConeTrace.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
     <FxCompile Include="..\..\Shaders\ScreenSpaceReflection\GaussianBlur.hlsl">
-      <Filter>Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="..\..\Shaders\ScreenSpaceReflection\ObjectFrsutumCulling.hlsl">
-      <Filter>Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="..\..\Shaders\ScreenSpaceReflection\SilhouetteEdgeExtract.hlsl">
-      <Filter>Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="..\..\Shaders\ScreenSpaceReflection\ScreenSpaceRayTrace.hlsl">
-      <Filter>Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="..\..\Shaders\ScreenSpaceReflection\LinearHierarchicalZGenerate.hlsl">
-      <Filter>Shader</Filter>
-    </FxCompile>
-    <FxCompile Include="..\..\Shaders\ScreenSpaceReflection\GaussianToTemp.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
     <FxCompile Include="..\..\Shaders\ScreenSpaceReflection\GaussianToLowHDR.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
-    <FxCompile Include="..\..\Shaders\ScreenSpaceReflection\ConeTrace.hlsl">
+    <FxCompile Include="..\..\Shaders\ScreenSpaceReflection\GaussianToTemp.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
     <FxCompile Include="..\..\Shaders\ScreenSpaceReflection\IntergrateBRDF.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
     <FxCompile Include="..\..\Shaders\ScreenSpaceReflection\LinearHierarchicalZFinish.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Shaders\ScreenSpaceReflection\LinearHierarchicalZGenerate.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Shaders\ScreenSpaceReflection\ObjectFrsutumCulling.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Shaders\ScreenSpaceReflection\ScreenSpaceRayTrace.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Shaders\ScreenSpaceReflection\SilhouetteEdgeExtract.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
   </ItemGroup>

@@ -252,5 +252,14 @@
     <FxCompile Include="..\Shaders\DirectX12-Framework\CubeDownScale_Srgb_A_Disc.hlsl">
       <Filter>Render\Shader</Filter>
     </FxCompile>
+    <FxCompile Include="..\Shaders\DirectX12-Framework\CubeDownScale_Rgba_Linear_Disc.hlsl">
+      <Filter>Render\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Shaders\DirectX12-Framework\CubeDownScale_Rgba_Linear_Gaussian.hlsl">
+      <Filter>Render\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Shaders\DirectX12-Framework\CubeDownScale_Srgb_A_Gaussian.hlsl">
+      <Filter>Render\Shader</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

@@ -540,7 +540,7 @@ bool CommandList::updateTextureData(DynamicUploadBuffer& upload, Texture& textur
 	
 
 }
-bool CommandList::copyTextureData(Texture& dsttexture, Texture& srctexture, void  const * data, UINT startlevel, UINT levelnum, UINT startslice, UINT slicenum)
+bool CommandList::copyTextureData(Texture& dsttexture, Texture& srctexture, UINT startlevel, UINT levelnum, UINT startslice, UINT slicenum)
 {
 	if(!srctexture.mResource || !dsttexture.mResource)
 		return false;

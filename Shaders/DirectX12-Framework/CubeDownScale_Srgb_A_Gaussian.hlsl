@@ -1,3 +1,3 @@
 #define SRGB_A  
-#define DISC_FILTER
+#define GAUSSIAN_FILTER
 #include "CubeDownScale.hlsli"

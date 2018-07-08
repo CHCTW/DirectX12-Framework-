@@ -11,7 +11,7 @@
 
 
 static Pipeline DownSamplePipeline;
-Render::Render():mDevice(NULL), mSwapChainAccout(0),
+Render::Render() :mDevice(NULL), mSwapChainAccout(0),
 mDxgiFactory(NULL), mDxgiAdaptor(NULL), mSwapChain(NULL), mSwapChainRenderTarget(NULL)
 {
 	mCommandQueue[COMMAND_TYPE_GRAPHICS] = nullptr;
@@ -32,9 +32,9 @@ bool Render::initialize()
 		dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
 	}
 #endif
-	
 
-	hr = CreateDXGIFactory2(dxgiFactoryFlags,IID_PPV_ARGS(&mDxgiFactory));
+
+	hr = CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&mDxgiFactory));
 	if (FAILED(hr))
 	{
 		std::cout << "Create Fail";
@@ -48,19 +48,19 @@ bool Render::initialize()
 		if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
 		{
 			// we dont want a software device
-			adapterIndex++; 
+			adapterIndex++;
 			continue;
 		}
 		hr = D3D12CreateDevice(mDxgiAdaptor, D3D_FEATURE_LEVEL_11_0, _uuidof(ID3D12Device), nullptr);
 		if (SUCCEEDED(hr))
 		{
-			hr =  D3D12CreateDevice(mDxgiAdaptor, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&mDevice));
+			hr = D3D12CreateDevice(mDxgiAdaptor, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&mDevice));
 			break;
 		}
 		mDxgiAdaptor->Release();
 		adapterIndex++;
 	}
-	
+
 
 
 	//mDevice->CheckFeatureSupport
@@ -78,7 +78,7 @@ bool Render::initialize()
 	hr = mDevice->CreateCommandQueue(&queueDes, IID_PPV_ARGS(&mCommandQueue[COMMAND_TYPE_COPY]));
 
 
-	
+
 	if (!SUCCEEDED(hr))
 	{
 		std::cout << "Fail to create command queue" << std::endl;
@@ -89,7 +89,7 @@ bool Render::initialize()
 	mFence.initialize(*this);
 	mFence.fenceValue = 1;
 	mFenceEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-	
+
 	for (int i = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV; i < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES; i++)
 	{
 		if (!mDescriptorHeaps[i].ininitialize(mDevice, HeapSizes[i], (D3D12_DESCRIPTOR_HEAP_TYPE)i))
@@ -104,7 +104,7 @@ bool Render::initialize()
 
 
 	// create pipelien for generate  mipmpaps
-	
+
 	mMipmapsig.mParameters.resize(2);
 	mMipmapsig.mParameters[0].mType = PARAMETERTYPE_ROOTCONSTANT; // mips level
 	mMipmapsig.mParameters[0].mBindSlot = 0;
@@ -125,19 +125,19 @@ bool Render::initialize()
 
 
 	mCubeMipmapsig.mParameters.resize(5);
-	mCubeMipmapsig.mParameters[0].mType = PARAMETERTYPE_CBV; // mips level
+	mCubeMipmapsig.mParameters[0].mType = PARAMETERTYPE_CBV; // cube view matrix
 	mCubeMipmapsig.mParameters[0].mBindSlot = 0;
 	mCubeMipmapsig.mParameters[0].mResCounts = 1;
 	mCubeMipmapsig.mParameters[1].mType = PARAMETERTYPE_ROOTCONSTANT; // mips level
 	mCubeMipmapsig.mParameters[1].mBindSlot = 1;
 	mCubeMipmapsig.mParameters[1].mResCounts = 1;
-	mCubeMipmapsig.mParameters[2].mType = PARAMETERTYPE_SRV; // input+ouput, both uav state
+	mCubeMipmapsig.mParameters[2].mType = PARAMETERTYPE_SRV; // input cube texture
 	mCubeMipmapsig.mParameters[2].mBindSlot = 0;
 	mCubeMipmapsig.mParameters[2].mResCounts = 1;
-	mCubeMipmapsig.mParameters[3].mType = PARAMETERTYPE_UAV; // input+ouput, both uav state
+	mCubeMipmapsig.mParameters[3].mType = PARAMETERTYPE_UAV; // ouput face
 	mCubeMipmapsig.mParameters[3].mBindSlot = 0;
 	mCubeMipmapsig.mParameters[3].mResCounts = 1;
-	mCubeMipmapsig.mParameters[4].mType = PARAMETERTYPE_SAMPLER; // input+ouput, both uav state
+	mCubeMipmapsig.mParameters[4].mType = PARAMETERTYPE_SAMPLER; // bilinear sampler
 	mCubeMipmapsig.mParameters[4].mBindSlot = 0;
 	mCubeMipmapsig.mParameters[4].mResCounts = 1;
 
@@ -270,7 +270,7 @@ void Render::executeCommands(CommandList *cmds, UINT counts)
 	}
 	//cmds[0].mType
 
-	
+
 	mCommandQueue[cmds[0].mType]->ExecuteCommandLists(counts, lists);
 	//mCommandQueue[COMMAND_TYPE_GRAPHICS]->ExecuteCommandLists(counts, lists);
 }
@@ -283,7 +283,7 @@ void Render::insertSignalFence(Fence& fence, CommandType cmdtype)
 }
 void Render::waitFenceIncreament(Fence& fence)
 {
-//	HANDLE handle;
+	//	HANDLE handle;
 	if (fence.state == FENCE_STATE_INSERTED)
 	{
 		if (fence.mDx12Fence->GetCompletedValue() < fence.fenceValue)
@@ -321,8 +321,8 @@ bool Render::present()
 void Render::generateMipMapOffline(Texture& texture, Mip_Map_Generate_Type type, UINT genstartlevel, UINT genendlevel)
 {
 
-	
-	unsigned int levelto = min(genendlevel, (UINT)texture.textureDesc.MipLevels-1);
+
+	unsigned int levelto = min(genendlevel, (UINT)texture.textureDesc.MipLevels - 1);
 	DescriptorHeap tempHeaps;
 	tempHeaps.ininitialize(this->mDevice, 1); // a temp descriptor heap
 	CommandAllocator cmdalloc;
@@ -347,17 +347,17 @@ void Render::generateMipMapOffline(Texture& texture, Mip_Map_Generate_Type type,
 		// copy data;
 		cmdlist.bindDescriptorHeaps(&tempHeaps);
 		cmdlist.resourceTransition(texture, D3D12_RESOURCE_STATE_COPY_SOURCE);
-		cmdlist.resourceTransition(gentexture, D3D12_RESOURCE_STATE_COPY_DEST,true);
+		cmdlist.resourceTransition(gentexture, D3D12_RESOURCE_STATE_COPY_DEST, true);
 		cmdlist.copyResource(texture, gentexture);
 		cmdlist.resourceTransition(gentexture, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, true);
 
 		cmdlist.bindComputeRootSigature(mMipmapsig, false);
 		for (srcslice.miplevel = genstartlevel; srcslice.miplevel <= levelto; ++srcslice.miplevel)
 		{
-		
+
 			cmdlist.setBarrier();
 			//const Resource && t = gentexture;
-			cmdlist.bindComputeResource(1, gentexture, srcslice.miplevel-1);// bind miplevel-1 and miplevel, miplevel-1 is src texture, miplevel is desttexture
+			cmdlist.bindComputeResource(1, gentexture, srcslice.miplevel - 1);// bind miplevel-1 and miplevel, miplevel-1 is src texture, miplevel is desttexture
 			unsigned int width = gentexture.mLayouts[srcslice.miplevel].Footprint.Width; // since each slice should have the same format, can always take the first slice
 			unsigned int height = gentexture.mLayouts[srcslice.miplevel].Footprint.Height;
 			for (srcslice.slicenum = 0; srcslice.slicenum < texture.textureDesc.DepthOrArraySize; ++srcslice.slicenum)
@@ -370,22 +370,22 @@ void Render::generateMipMapOffline(Texture& texture, Mip_Map_Generate_Type type,
 		}
 		cmdlist.resourceTransition(gentexture, D3D12_RESOURCE_STATE_COPY_SOURCE);
 		cmdlist.resourceTransition(texture, D3D12_RESOURCE_STATE_COPY_DEST, true);
-		cmdlist.copyResource(gentexture,texture);
+		cmdlist.copyResource(gentexture, texture);
 		for (int i = 0; i < srcprevstate.size(); ++i)
 		{
-			cmdlist.resourceTransition(texture, srcprevstate[i],false,i);
+			cmdlist.resourceTransition(texture, srcprevstate[i], false, i);
 		}
 		cmdlist.setBarrier();
 
 
 		cmdlist.close();
 		this->executeCommands(&cmdlist);
-	//	UINT64 getcurrent = mFence.mDx12Fence->GetCompletedValue();
+		//	UINT64 getcurrent = mFence.mDx12Fence->GetCompletedValue();
 		this->insertSignalFence(tempfenses);
 		this->waitFenceIncreament(tempfenses);
-		
+
 	}
-	else 
+	else
 	{
 		std::cout << "Wrong Texture Type to generate Mip Map" << std::endl;
 	}
@@ -395,10 +395,10 @@ void Render::generateMipMapOffline(Texture& texture, Mip_Map_Generate_Type type,
 	cmdalloc.release();
 	cmdlist.release();
 	tempfenses.release();
-	
+
 
 }
-void Render::generateCubeMipMapOffline(Texture& texture, Cube_Mip_Map_Generate_Type type, UINT genstartlevel, UINT genendlevel )
+void Render::generateCubeMipMapOffline(Texture& texture, Cube_Mip_Map_Generate_Type type, UINT genstartlevel, UINT genendlevel)
 {
 	unsigned int levelto = min(genendlevel, (UINT)texture.textureDesc.MipLevels - 1);
 	DescriptorHeap tempHeaps;
@@ -421,35 +421,62 @@ void Render::generateCubeMipMapOffline(Texture& texture, Cube_Mip_Map_Generate_T
 	cmdlist.initial(this->mDevice, cmdalloc);
 	Fence tempfenses;
 	tempfenses.initialize(*this);
-	Texture gentexture;
+	Texture gentexture,srctexture;
 	vector<D3D12_RESOURCE_STATES> srcprevstate = texture.mState;
 	if (texture.mSRVType == TEXTURE_SRV_TYPE_CUBE)
 	{
 		cout << "Generate for texture Cube" << endl;
 		struct SRCSlice
 		{
-			unsigned int slicenum;
 			unsigned int miplevel;
 		} srcslice;
 		CubeCamera capture;
-		gentexture.CreateTexture(*this, tempHeaps, texture.mFormat, texture.textureDesc.Width, texture.textureDesc.Height, texture.textureDesc.DepthOrArraySize, texture.textureDesc.MipLevels, TEXTURE_SRV_TYPE_CUBE, TEXTURE_USAGE_SRV_UAV, TEXTURE_ALL_MIPS_USE_UAV);
+		gentexture.CreateTexture(*this, tempHeaps, texture.mFormat, texture.textureDesc.Width, texture.textureDesc.Height, texture.textureDesc.DepthOrArraySize, texture.textureDesc.MipLevels, TEXTURE_SRV_TYPE_2D, TEXTURE_USAGE_SRV_UAV, TEXTURE_ALL_MIPS_USE_UAV);
+		srctexture.CreateTexture(*this, tempHeaps, texture.mFormat, texture.textureDesc.Width, texture.textureDesc.Height, texture.textureDesc.DepthOrArraySize/6, texture.textureDesc.MipLevels, TEXTURE_SRV_TYPE_CUBE);
 		cmdalloc.reset();
 		cmdlist.reset(mCubeMipmapPipelines[type]);
 		// copy data;
-		cmdlist.bindDescriptorHeaps(&tempHeaps,&tempSamplerHeaps);
+		cmdlist.bindDescriptorHeaps(&tempHeaps, &tempSamplerHeaps);
 		cmdlist.resourceTransition(texture, D3D12_RESOURCE_STATE_COPY_SOURCE);
-		cmdlist.resourceTransition(gentexture, D3D12_RESOURCE_STATE_COPY_DEST, true);
-		cmdlist.copyResource(texture, gentexture);
-		cmdlist.resourceTransition(gentexture, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, true);
+		cmdlist.resourceTransition(srctexture, D3D12_RESOURCE_STATE_COPY_DEST, true);
+		cmdlist.copyResource(texture, srctexture);
+
 
 		cmdlist.bindComputeRootSigature(mCubeMipmapsig, false);
 		cmdlist.bindComputeResource(0, volconsbuf);
 		cmdlist.bindComputeSampler(4, sampler);
+		for (srcslice.miplevel = genstartlevel - 1; srcslice.miplevel < levelto; ++srcslice.miplevel)
+		{
+			cmdlist.bindComputeConstant(1, &srcslice.miplevel);
+			// for each face
+			unsigned int width = gentexture.mLayouts[(srcslice.miplevel + 1)].Footprint.Width; // since each slice should have the same format, can always take the first face
+			unsigned int height = gentexture.mLayouts[(srcslice.miplevel + 1)].Footprint.Height;
 
+			cmdlist.resourceTransition(srctexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+			cmdlist.resourceTransition(gentexture, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, true);
+			cmdlist.bindComputeResource(2, srctexture);
+			// since uav only have texture arrary, only bind once for one level
+			cmdlist.bindComputeResource(3, gentexture, srcslice.miplevel + 1);
+			// calculate next level cube map, z is 6 since we want to genrate all 6 face, this might be change once we support cubetexturearray 
+			cmdlist.dispatch((width + MipMapChainBLockSize - 1) / MipMapChainBLockSize, (height + MipMapChainBLockSize - 1) / MipMapChainBLockSize, 6);
 
+			// prepare to copy current mip level data back to src texture
+			cmdlist.resourceTransition(srctexture, D3D12_RESOURCE_STATE_COPY_DEST);
+			cmdlist.resourceTransition(gentexture, D3D12_RESOURCE_STATE_COPY_SOURCE, true);
+			// copy generate data back to src texture
+			cmdlist.copyTextureData(srctexture, gentexture, srcslice.miplevel + 1, 1, 0, 6);
 
+		}
 
-
+		cmdlist.resourceTransition(srctexture, D3D12_RESOURCE_STATE_COPY_SOURCE);
+		cmdlist.resourceTransition(texture, D3D12_RESOURCE_STATE_COPY_DEST, true);
+		cmdlist.copyResource(srctexture, texture);
+		// done set state back to orignal state
+		for (int i = 0; i < srcprevstate.size(); ++i)
+		{
+			cmdlist.resourceTransition(texture, srcprevstate[i], false, i);
+		}
+		cmdlist.setBarrier();
 		cmdlist.close();
 		this->executeCommands(&cmdlist);
 		//	UINT64 getcurrent = mFence.mDx12Fence->GetCompletedValue();
@@ -461,6 +488,7 @@ void Render::generateCubeMipMapOffline(Texture& texture, Cube_Mip_Map_Generate_T
 	constantbuffer.release();
 	tempSamplerHeaps.release();
 	gentexture.release();
+	srctexture.release();
 	tempHeaps.release();
 	cmdalloc.release();
 	cmdlist.release();
@@ -485,12 +513,12 @@ void Render::updateBufferOffline(Buffer& destbuffer, void const * data, UINT64 d
 
 	for (int i = 0; i < bufferstate.size(); ++i)
 	{
-		cmdlist.resourceTransition(destbuffer, bufferstate[i],false,i);
+		cmdlist.resourceTransition(destbuffer, bufferstate[i], false, i);
 	}
 	cmdlist.setBarrier();
 	cmdlist.close();
 
-	
+
 	this->executeCommands(&cmdlist);
 	//	UINT64 getcurrent = mFence.mDx12Fence->GetCompletedValue();
 	this->insertSignalFence(tempfenses);

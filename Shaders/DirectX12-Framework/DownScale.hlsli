@@ -149,7 +149,7 @@ static float gaussweight[3][3] =
 };
 static float totalinv = 1.0f;
 static const int gausswidth = 3;
-void gaussianfilterandwrite(float4 data[3][3], uint2 pos)
+void gaussianfilterandwrite(float4 data[gausswidth][gausswidth], uint2 pos)
 {
     float4 result = float4(0.0f, 0.0f, 0.0f, 0.0f);
 #if defined(SRGB_A)
