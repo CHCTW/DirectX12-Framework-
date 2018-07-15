@@ -3,6 +3,15 @@ A framework for learning DirectX12 and demonstrate graphics techniques
 
 ![image](https://user-images.githubusercontent.com/30221942/41207912-0460ed48-6cd2-11e8-9a49-69f5b8cd9ba9.png)
 
+## Some To do Topics:
+### Unit Tests:
+    GUI : Intergrate with IMGUI
+    Refine Occulusion Culling : Should use reporjection from last frame and depth buffer to make the scene more stable
+### Graphics Techniques:
+    Volumetric Light : Draw light volume in ray marching or shape meth
+    Terrain
+    
+
 
 ## The framework sperate into sveral parts:
 
