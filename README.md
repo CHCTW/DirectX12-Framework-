@@ -56,6 +56,7 @@ https://www.gamasutra.com/blogs/EGORYUSOV/20160421/270974/Efficient_Implementati
 24. TriplanarProjection : A preparation for Terrain rendering. This projection fix the most stretch problem with simple uv mapping.
 https://www.youtube.com/watch?v=5jGMriB03Xs&feature=youtu.be
 ![image](https://user-images.githubusercontent.com/30221942/37317423-02e62ccc-2622-11e8-913c-44a54792628f.png)
+25. CubeMipMapChain :  Use compute shader to generate cube map mipmaps offline
 
 ### 2. Graphics Techniques: Projects in this part is for demostaring some graphcis techniques(lighting, deffered shading...)
 
