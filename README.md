@@ -11,7 +11,7 @@ A framework for learning DirectX12 and demonstrate graphics techniques
     Compress Texture load
     Decal
 ### Graphics Techniques:
-    Volumetric Light : Draw light volume in ray marching or shape meth
+    Volumetric Light : Draw light volume in ray marching or volume shape method
     Terrain
     
 
