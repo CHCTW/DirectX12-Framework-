@@ -7,6 +7,8 @@ A framework for learning DirectX12 and demonstrate graphics techniques
 ### Unit Tests:
     GUI : Intergrate with IMGUI
     Refine Occulusion Culling : Should use reporjection from last frame and depth buffer to make the scene more stable
+    Texture Output
+    Compress Texture load
 ### Graphics Techniques:
     Volumetric Light : Draw light volume in ray marching or shape meth
     Terrain
