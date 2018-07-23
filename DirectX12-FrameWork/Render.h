@@ -73,7 +73,7 @@ public:
 
 	
 private:
-	//Structure for mip-map generate block
+	//Structure for mip-map generate block, tools area
 	RootSignature mMipmapsig;
 	Pipeline mMipmapPipelines[MIP_MAP_GEN_COUNT];
 

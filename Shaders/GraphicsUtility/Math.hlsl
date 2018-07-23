@@ -167,3 +167,9 @@ struct GaussionData
     float3 padding;
     float4 weight[(MAXRADIUS * 2 + 1+3)/4];
 };
+
+// a random 2d function from https://thebookofshaders.com/12/ 
+float2 random2(float2 p)
+{
+    return frac(sin(float2(dot(p, float2(127.1, 311.7)), dot(p, float2(269.5, 183.3)))) * 43758.5453);
+}

@@ -10,7 +10,6 @@
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
 
 
-
 // TODO: reference additional headers your program requires here
 #include <glm/glm.hpp>
 #include <unordered_map>
@@ -56,4 +55,17 @@ enum CubeFaceOrder
 	CUBE_FACE_ORDER_POSITIVE_Z = 4,
 	CUBE_FACE_ORDER_NEGATIVE_Z = 5,
 	CUBE_FACE_ORDER_COUNT
+};
+
+
+enum GPUNoiseTextureType
+{
+	GPU_NOISE_TEXTURE_TYPE_2D_WORLEY,
+	GPU_NOISE_TEXTURE_TYPE_COUNT
+};
+
+
+const static char *NoiseTextureShadersName[GPU_NOISE_TEXTURE_TYPE_COUNT]
+{
+	"WorleyNoise2D.hlsl"
 };

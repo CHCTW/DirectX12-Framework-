@@ -65,9 +65,9 @@ float4 PSMain(PSInput input) : SV_TARGET
 {
 
   
-    float tlod = min(5.0f, lod);
+    float tlod = min(10.0f, lod);
     float3 final = ToneMapACES(cube.SampleLevel(g_sampler, input.viewdir, tlod).xyz);
     final = pow(final, 1.0f / 2.2f);
-    return float4(final,0.0f);
-   // return float4(cube.SampleLevel(g_sampler, input.viewdir, tlod));
+   // return float4(final,0.0f);
+   return float4(cube.SampleLevel(g_sampler, input.viewdir, tlod));
 }

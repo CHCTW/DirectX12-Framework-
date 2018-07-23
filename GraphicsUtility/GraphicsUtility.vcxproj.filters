@@ -22,6 +22,9 @@
     <Filter Include="Shader">
       <UniqueIdentifier>{c6ba5129-f1ce-43c5-aaaf-f412ace38096}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Tools">
+      <UniqueIdentifier>{97fff083-c474-40bb-af78-9544569e1446}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -75,6 +78,9 @@
     <ClInclude Include="CubeCamera.h">
       <Filter>Camera</Filter>
     </ClInclude>
+    <ClInclude Include="GPUNoiseTextureGenerator.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SpecCamera.cpp">
@@ -119,6 +125,9 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GPUNoiseTextureGenerator.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\Shaders\GraphicsUtility\GraphicsUtility.hlsl">
@@ -128,6 +137,9 @@
       <Filter>Shader</Filter>
     </FxCompile>
     <FxCompile Include="..\Shaders\GraphicsUtility\Math.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Shaders\GraphicsUtility\WorleyNoise2D.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
   </ItemGroup>

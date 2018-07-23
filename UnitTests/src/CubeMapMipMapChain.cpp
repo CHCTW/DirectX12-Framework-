@@ -47,6 +47,7 @@ bool press = false;
 
 Texture skyBox;
 Sampler sampler;
+//D3D12_FILTER_MIN_MAG_MIP_POINT
 DescriptorHeap samplerheap;
 
 float lod = 0;
@@ -124,29 +125,37 @@ void loadAsset()
 	cameraBuffer.maptoCpu();
 
 	Image img[6];
-	/*img[0].load("Assets/Textures/right.jpg", 1);
+	img[0].load("Assets/Textures/right.jpg", 1);
 	img[1].load("Assets/Textures/left.jpg", 1);
 	img[2].load("Assets/Textures/top.jpg", 1);
 	img[3].load("Assets/Textures/bottom.jpg", 1);
 	img[4].load("Assets/Textures/back.jpg", 1);
-	img[5].load("Assets/Textures/front.jpg", 1);*/
+	img[5].load("Assets/Textures/front.jpg", 1);
 
 
-	/*img[0].load("Assets/Textures/milk0003.hdr", 1);
-	img[1].load("Assets/Textures/milk0001.hdr", 1);
-	img[2].load("Assets/Textures/milk0005.hdr", 1);
-	img[3].load("Assets/Textures/milk0004.hdr", 1);
-	img[4].load("Assets/Textures/milk0006.hdr", 1);
-	img[5].load("Assets/Textures/milk0002.hdr", 1);*/
+	//img[0].load("Assets/Textures/milk0003.hdr", 1);
+	//img[1].load("Assets/Textures/milk0001.hdr", 1);
+	//img[2].load("Assets/Textures/milk0005.hdr", 1);
+	//img[3].load("Assets/Textures/milk0004.hdr", 1);
+	//img[4].load("Assets/Textures/milk0006.hdr", 1);
+	//img[5].load("Assets/Textures/milk0002.hdr", 1);
 
-	img[0].load("Assets/Textures/GravelPlaza0003.hdr", 1);
-	img[1].load("Assets/Textures/GravelPlaza0001.hdr", 1);
-	img[2].load("Assets/Textures/GravelPlaza0005.hdr", 1);
-	img[3].load("Assets/Textures/GravelPlaza0004.hdr", 1);
-	img[4].load("Assets/Textures/GravelPlaza0006.hdr", 1);
-	img[5].load("Assets/Textures/GravelPlaza0002.hdr", 1);
+	//img[0].load("Assets/Textures/GravelPlaza0003.hdr", 1);
+	//img[1].load("Assets/Textures/GravelPlaza0001.hdr", 1);
+	//img[2].load("Assets/Textures/GravelPlaza0005.hdr", 1);
+	//img[3].load("Assets/Textures/GravelPlaza0004.hdr", 1);
+	//img[4].load("Assets/Textures/GravelPlaza0006.hdr", 1);
+	//img[5].load("Assets/Textures/GravelPlaza0002.hdr", 1);
 
 
+
+
+	//img[0].load("Assets/Textures/factorycatwalk0003.hdr", 1);
+	//img[1].load("Assets/Textures/factorycatwalk0001.hdr", 1);
+	//img[2].load("Assets/Textures/factorycatwalk0005.hdr", 1);
+	//img[3].load("Assets/Textures/factorycatwalk0004.hdr", 1);
+	//img[4].load("Assets/Textures/factorycatwalk0006.hdr", 1);
+	//img[5].load("Assets/Textures/factorycatwalk0002.hdr", 1);
 
 	int width, height, bpp;
 	//	unsigned char* rgb = stbi_load("Assets/Textures/front.jpg", &width, &height, &bpp, 4);
@@ -166,7 +175,7 @@ void loadAsset()
 	//skyBox.addSahderResorceView(srvheap);
 
 
-	skyBox.CreateTexture(render, srvheap, DXGI_FORMAT_R32G32B32A32_FLOAT, img[0].mWidth, img[0].mHeight, 1, 10, TEXTURE_SRV_TYPE_CUBE);
+	skyBox.CreateTexture(render, srvheap, DXGI_FORMAT_R8G8B8A8_UNORM, img[0].mWidth, img[0].mHeight, 1, 10, TEXTURE_SRV_TYPE_CUBE);
 
 
 	import.ReadFile("Assets/sphere.obj", aiProcessPreset_TargetRealtime_Fast);
@@ -232,7 +241,7 @@ void loadAsset()
 	render.waitFenceIncreament(fence);
 
 
-	render.generateCubeMipMapOffline(skyBox, CUBE_MIP_MAP_GEN_RGBA_LINEAR_GAUSSIAN, 1, 9);
+	render.generateCubeMipMapOffline(skyBox, CUBE_MIP_MAP_GEN_SRGB_A_GAUSSIAN, 1, 9);
 	//	import.FreeScene();
 
 }

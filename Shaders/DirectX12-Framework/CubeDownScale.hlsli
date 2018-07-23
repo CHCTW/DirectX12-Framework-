@@ -34,12 +34,12 @@ example SRGBA+BOX_FILTER
 
 static float3 faceup[6] =
 {
+    float3(1.0, 0.0f, 0.0f),
     float3(0.0, 1.0f, 0.0f),
-    float3(0.0, 1.0f, 0.0f),
-    float3(0.0, 0.0f, -1.0f),
     float3(0.0, 0.0f, 1.0f),
-    float3(0.0, 1.0f, 0.0f),
-    float3(0.0, 1.0f, 0.0f)
+    float3(1.0, 0.0f, 1.0f),
+    float3(0.0, 1.0f, 1.0f),
+    float3(1.0, 1.0f, 0.0f)
 };
 
 
@@ -77,25 +77,32 @@ SamplerState BiSampler : register(s0);
 
 
 #if defined(DISC_FILTER)
-void discfilterandwrite(float4 data[17], uint2 pos, uint face)
+void discfilterandwrite(float4 data[17],float cospow, uint2 pos, uint face)
 {
     float4 res = float4(0.0f, 0.0f, 0.0f, 0.0f);
+    float total = 0.0f;
 #if defined(SRGB_A)
     [unroll]
     for (uint i = 0; i < 17; ++i)
     {
-        res += pow(data[i], 2.2f);
+        if(i==0)
+            res += pow(data[i], 2.2f);
+        else
+            res += pow(data[i], 2.2f)*cospow;
     }
-    res /= 17.0f;
+    res /= (cospow*16+1.0f);
     DesTexture[uint3(pos, face)] = pow(res, 1.0f / 2.2f);
 #endif
 #if defined(RGBA_LINEAR)
     [unroll]
     for (uint i = 0; i < 17; ++i)
     {
-        res += data[i];
+        if(i==0)
+            res += data[i];
+        else
+            res += data[i]*cospow;
     }
-    res /= 17.0f;
+    res /= (cospow*16+1.0f);
     DesTexture[uint3(pos, face)] = res;
 #endif
 }
@@ -107,6 +114,7 @@ void discfilterandwrite(float4 data[17], uint2 pos, uint face)
 #if defined(GAUSSIAN_FILTER)
 static float gaussweight[3] =
 { 0.38774, 0.24477, 0.06136 };
+//{ 0.2, 0.45, 0.05 };
 
 
 
@@ -162,33 +170,73 @@ void CSMain(uint3 gid : SV_GroupID, uint3 tid : SV_DispatchThreadID) // tid is t
     uint totalmip;
     uint face = gid.z;
 
+
     SrcTexture.GetDimensions(srcMipLevel + 1, dim.x, dim.y, totalmip);
-    float2 fdim = dim.xy;
+        
+    if (all(pos.xy < dim.xy))
+    {
+    
+    
 
-    float2 uv = float2(tid.xy);
-    float2 uvnear = float2(tid.x * 2.0f - 1.0f, tid.y * 2.0f - 1.0f);
-    uv += float2(0.5f, 0.5f);
-    uv /= fdim;
+        float2 fdim = dim.xy;
+  //      float2(1.0f,1.0f);
+   // float scale = (fdim.x - 1) / fdim.x;
 
-    uvnear += float2(0.5f, 0.5f);
-    uvnear /= (fdim * 2);
+        float2 uv = float2(tid.xy);
+        
+    //uv += uv / (fdim - float2(1.0f,1.0f));
+        float2 uvnear = float2(tid.xy) + float2(1.0f,0.0f);
+        uv += float2(0.5f, 0.5f);
+        uv /= (fdim);
+        float para = (abs(uv.x - 0.5f) + abs(uv.y - 0.5f))*0.5f
+        +1.0f;
 
-    float3 vpos = getViewPos(uv, face);
-    float3 vposnear = getViewPos(uvnear, face);
+   // uv.x = clamp(uv.x, 0.0f, 1.0f);
+  //  uv.y = clamp(uv.y, 0.0f, 1.0f);
 
-    float len = length(vpos);
-    float3 vdir = normalize(vpos);
-    float3 vdirnear = normalize(vposnear);
+        //uvnear += float2(0.5f, 0.5f);
+        uvnear /= (fdim);
+
+        float3 vpos = getViewPos(uv, face);
+
+
+
+    //float M = max(max(abs(vpos.x), abs(vpos.y)), abs(vpos.z));
+    //float scale = (fdim.x - 1) / fdim.x;
+    //if (abs(vpos.x) != M)
+    //    vpos.x *= scale;
+    //if (abs(vpos.y) != M)
+    //    vpos.y *= scale;
+    //if (abs(vpos.z) != M)
+    //    vpos.z *= scale;
+
+
+        float3 vposnear = getViewPos(uvnear, face);
+
+        float len = length(vpos);
+    //len = 10.0f;
+        float3 vdir = normalize(vpos);
+        float3 vdirnear = normalize(vposnear);
   
-    float angleoffset = acos(dot(vdir, vdirnear));
+        float angleoffset = abs(acos(dot(vdir, vdirnear))) * para;
 
-//    angleoffset = (PI * 0.5f) / (fdim.x * 2.0f);
-	
+     //   angleoffset = (PI * 0.5f) / (fdim.x) * para;
+     //   len = 1.0f;
 	// get radius
-    float radius = tan(angleoffset) * len;
+#ifdef DISC_FILTER
+        float radius = tan(angleoffset) * len;
+        float cospow = pow(dot(vdir, vdirnear),32);
 
-    float3 tangent = normalize(cross(faceup[face], vdir));
-    float3 bitangent = normalize(cross(vdir, tangent));
+#endif
+
+#ifdef GAUSSIAN_FILTER
+        float radius = tan(angleoffset) * len * para * clamp((srcMipLevel - 5.0f) / 3.0f,
+        1.0f, 5.0f);
+
+#endif
+
+        float3 tangent = normalize(cross(faceup[face], vdir));
+        float3 bitangent = normalize(cross(vdir, tangent));
 
 #ifdef DISC_FILTER
     float discangleoffset = (2 * PI) / 16.0f;
@@ -209,7 +257,7 @@ void CSMain(uint3 gid : SV_GroupID, uint3 tid : SV_DispatchThreadID) // tid is t
         phi += discangleoffset;
     }
     data[0] = SrcTexture.SampleLevel(BiSampler, vpos, srcMipLevel);
-    discfilterandwrite(data, pos.xy, face);
+    discfilterandwrite(data, cospow,pos.xy, face);
 #endif
 
 #ifdef GAUSSIAN_FILTER
@@ -218,9 +266,9 @@ void CSMain(uint3 gid : SV_GroupID, uint3 tid : SV_DispatchThreadID) // tid is t
     data[0] = float4(0.0, 0.0, 0.0, 0.0);
     data[1] = float4(0.0, 0.0, 0.0, 0.0);
     data[2] = float4(0.0, 0.0, 0.0, 0.0);
-    float discangleoffset = (2 * PI) / 16.0f;
+    float discangleoffset = (2 * PI) / 8.0f;
 	[unroll]
-    for (uint i = 0; i < 16; ++i)
+    for (uint i = 0; i < 8; ++i)
     {
         float3 view = vpos + cos(phi) * tangent * radius + sin(phi) * bitangent * radius;
 #if defined(SRGB_A)
@@ -231,12 +279,14 @@ void CSMain(uint3 gid : SV_GroupID, uint3 tid : SV_DispatchThreadID) // tid is t
 #endif
         phi += discangleoffset;
     }
-    data[1] /= 16.0f;
-    discangleoffset = (2 * PI) / 32.0f;
+    data[1] /= 8.0f;
+
+
+    discangleoffset = (2 * PI) / 16.0f;
     radius *= 2;
     phi = 0.0f;
 	[unroll]
-    for (uint i = 0; i < 32; ++i)
+    for (uint i = 0; i < 16; ++i)
     {
         float3 view = vpos + cos(phi) * tangent * radius + sin(phi) * bitangent * radius;
 #if defined(SRGB_A)
@@ -247,7 +297,7 @@ void CSMain(uint3 gid : SV_GroupID, uint3 tid : SV_DispatchThreadID) // tid is t
 #endif
         phi += discangleoffset;
     }
-    data[2] /= 32.0f;
+    data[2] /= 16.0f;
 #if defined(SRGB_A)
 		 data[0] += pow(SrcTexture.SampleLevel(BiSampler, vpos, srcMipLevel),2.2f);
 #endif
@@ -257,5 +307,6 @@ void CSMain(uint3 gid : SV_GroupID, uint3 tid : SV_DispatchThreadID) // tid is t
     gaussianfilterandwrite(data, pos.xy, face);
 
 #endif
-
+    //  DesTexture[uint3(pos.xy, face)] = float4(vdir, 0.0f);
+    }
 }
