@@ -57,6 +57,7 @@ https://www.gamasutra.com/blogs/EGORYUSOV/20160421/270974/Efficient_Implementati
 https://www.youtube.com/watch?v=5jGMriB03Xs&feature=youtu.be
 ![image](https://user-images.githubusercontent.com/30221942/37317423-02e62ccc-2622-11e8-913c-44a54792628f.png)
 25. CubeMipMapChain :  Use compute shader to generate cube map mipmaps offline
+26. NoiseTexture : Use compute shader to generate different types of noise texture. WIP
 
 ### 2. Graphics Techniques: Projects in this part is for demostaring some graphcis techniques(lighting, deffered shading...)
 
