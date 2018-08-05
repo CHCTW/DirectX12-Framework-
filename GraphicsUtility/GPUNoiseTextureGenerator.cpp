@@ -22,6 +22,21 @@ void GPUNoiseTextureGenerator::initialize(Render& render)
 	mNoiseRootSignature[GPU_NOISE_TEXTURE_TYPE_2D_WORLEY].mParameters[1].mResCounts = 1;
 	mNoiseRootSignature[GPU_NOISE_TEXTURE_TYPE_2D_WORLEY].initialize(render.mDevice);
 
+
+
+
+	mNoiseRootSignature[GPU_NOISE_TEXTURE_TYPE_2D_PERLIN].mParameters.resize(2);
+
+	mNoiseRootSignature[GPU_NOISE_TEXTURE_TYPE_2D_PERLIN].mParameters[0].mType = PARAMETERTYPE_ROOTCONSTANT;
+	mNoiseRootSignature[GPU_NOISE_TEXTURE_TYPE_2D_PERLIN].mParameters[0].mBindSlot = 0;
+	mNoiseRootSignature[GPU_NOISE_TEXTURE_TYPE_2D_PERLIN].mParameters[0].mResCounts = 6;
+	mNoiseRootSignature[GPU_NOISE_TEXTURE_TYPE_2D_PERLIN].mParameters[1].mType = PARAMETERTYPE_UAV;
+	mNoiseRootSignature[GPU_NOISE_TEXTURE_TYPE_2D_PERLIN].mParameters[1].mBindSlot = 0;
+	mNoiseRootSignature[GPU_NOISE_TEXTURE_TYPE_2D_PERLIN].mParameters[1].mResCounts = 1;
+	mNoiseRootSignature[GPU_NOISE_TEXTURE_TYPE_2D_PERLIN].initialize(render.mDevice);
+
+
+
 	std::string shaderpath("Shaders/GraphicsUtility/");
 	ShaderSet noiseshaders[GPU_NOISE_TEXTURE_TYPE_COUNT];
 
@@ -43,7 +58,7 @@ void GPUNoiseTextureGenerator::recordPureGenerateWorleyNoise2D(CommandList &reco
 {
 	if (texture.mSRVType != TEXTURE_SRV_TYPE_2D && texture.textureDesc.DepthOrArraySize != 1)
 		return;
-	NoiseConstData data;
+	WorleyNoiseConstData data;
 	data.offsetx = offsetx;
 	data.offsety = offsety;
 	data.scale = scale;
@@ -54,6 +69,25 @@ void GPUNoiseTextureGenerator::recordPureGenerateWorleyNoise2D(CommandList &reco
 	recordlist.bindComputeConstant(0,&data);
 	recordlist.bindComputeResource(1, texture, miplevel);
 	unsigned int width = texture.mLayouts[miplevel].Footprint.Width; 
+	unsigned int height = texture.mLayouts[miplevel].Footprint.Height;
+	recordlist.dispatch((width + NoiseTextureBLockSize - 1) / NoiseTextureBLockSize, (height + NoiseTextureBLockSize - 1) / NoiseTextureBLockSize, 1);
+}
+void GPUNoiseTextureGenerator::recordPureGeneratePerlinNoise2D(CommandList &recordlist, Texture& texture, float frequency, float time,float valuescale, int repeat, float offsetx , float offsety , int miplevel)
+{
+	if (texture.mSRVType != TEXTURE_SRV_TYPE_2D && texture.textureDesc.DepthOrArraySize != 1)
+		return;
+	PerlinNoise2DConstData data;
+	data.offsetx = offsetx;
+	data.offsety = offsety;
+	data.frequency = frequency;
+	data.seed = time;
+	data.repeatvalue = repeat;
+	data.valuescale = valuescale;
+	recordlist.bindComputeRootSigature(mNoiseRootSignature[GPU_NOISE_TEXTURE_TYPE_2D_PERLIN]);
+	recordlist.bindPipeline(mNoisePipeline[GPU_NOISE_TEXTURE_TYPE_2D_PERLIN]);
+	recordlist.bindComputeConstant(0, &data);
+	recordlist.bindComputeResource(1, texture, miplevel);
+	unsigned int width = texture.mLayouts[miplevel].Footprint.Width;
 	unsigned int height = texture.mLayouts[miplevel].Footprint.Height;
 	recordlist.dispatch((width + NoiseTextureBLockSize - 1) / NoiseTextureBLockSize, (height + NoiseTextureBLockSize - 1) / NoiseTextureBLockSize, 1);
 }
