@@ -24,6 +24,17 @@ struct PerlinNoise2DConstData
 	float offsetx; //0~1
 	float offsety; //0~1
 };
+struct OctaveNoise2DConstData
+{
+	int octaves;
+	float persistance;
+	float frequency;
+	float valuescale;
+	int repeatvalue;
+	float seed; // any value > 0
+	float offsetx; //0~1
+	float offsety; //0~1
+};
 class GPUNoiseTextureGenerator
 {
 public:
@@ -33,6 +44,7 @@ public:
 	void release();
 	void recordPureGenerateWorleyNoise2D(CommandList &recordlist,Texture& texture,bool reverse = false,float scale = 1.0f,float time = 0.0f,unsigned int offsetx = 0, unsigned int offsety = 0,int miplevel = 0);
 	void recordPureGeneratePerlinNoise2D(CommandList &recordlist, Texture& texture,float frequency,float time = 0.0f, float valuescale = 1.0f,int repeat = 0,float offsetx = 0, float offsety = 0, int miplevel = 0);
+	void recordPureGenerateOctaveNoise2D(CommandList &recordlist, Texture& texture, float frequency,int octave = 1,float persistance = 1.0f, float time = 0.0f, float valuescale = 1.0f, int repeat = 0, float offsetx = 0, float offsety = 0, int miplevel = 0);
 
 private:
 	Pipeline mNoisePipeline[GPU_NOISE_TEXTURE_TYPE_COUNT];

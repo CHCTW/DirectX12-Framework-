@@ -62,6 +62,7 @@ enum GPUNoiseTextureType
 {
 	GPU_NOISE_TEXTURE_TYPE_2D_WORLEY,
 	GPU_NOISE_TEXTURE_TYPE_2D_PERLIN,
+	GPU_NOISE_TEXTURE_TYPE_2D_OCTAVE,
 	GPU_NOISE_TEXTURE_TYPE_COUNT
 };
 
@@ -69,5 +70,6 @@ enum GPUNoiseTextureType
 const static char *NoiseTextureShadersName[GPU_NOISE_TEXTURE_TYPE_COUNT]
 {
 	"WorleyNoise2D.hlsl",
-	"PerlinNoise2D.hlsl"
+	"PerlinNoise2D.hlsl",
+	"OctaveNoise2D.hlsl"
 };

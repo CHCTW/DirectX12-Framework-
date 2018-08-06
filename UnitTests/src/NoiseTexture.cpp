@@ -186,7 +186,10 @@ void update()
 //	noiseGenerator.recordPureGenerateWorleyNoise2D(cmdlist, NoiseTexture2D,false,5, animatetime);
 
 
-	noiseGenerator.recordPureGeneratePerlinNoise2D(cmdlist, NoiseTexture2D,10, animatetime*0.1,1.0,5, animatetime*0.01, animatetime*0.05);
+	//noiseGenerator.recordPureGeneratePerlinNoise2D(cmdlist, NoiseTexture2D,4, animatetime*0.1,1.0,4);
+
+	noiseGenerator.recordPureGenerateOctaveNoise2D(cmdlist, NoiseTexture2D, 8,8,0.6, animatetime*0.2,1.0f,8, animatetime*0.1);
+
 	cmdlist.resourceTransition(NoiseTexture2D, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, true);
 
 	cmdlist.bindPipeline(pipeline);
