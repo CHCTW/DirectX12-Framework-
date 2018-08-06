@@ -57,7 +57,10 @@ https://www.gamasutra.com/blogs/EGORYUSOV/20160421/270974/Efficient_Implementati
 https://www.youtube.com/watch?v=5jGMriB03Xs&feature=youtu.be
 ![image](https://user-images.githubusercontent.com/30221942/37317423-02e62ccc-2622-11e8-913c-44a54792628f.png)
 25. CubeMipMapChain :  Use compute shader to generate cube map mipmaps offline
-
+26. NoiseTexture : Use compute shader to generate different types of noise texture. WIP
+    a. Worley
+    b. Perlin
+![image](https://user-images.githubusercontent.com/30221942/43690203-0089728e-98bb-11e8-8c0e-7774fb1b83e6.png)
 ### 2. Graphics Techniques: Projects in this part is for demostaring some graphcis techniques(lighting, deffered shading...)
 
 BRDF : Use Physics Basic Rendering to lit the scene and demostrate how different material looks like
