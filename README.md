@@ -60,7 +60,9 @@ https://www.youtube.com/watch?v=5jGMriB03Xs&feature=youtu.be
 26. NoiseTexture : Use compute shader to generate different types of noise texture. WIP
     a. Worley
     b. Perlin
+    c. Octave
 ![image](https://user-images.githubusercontent.com/30221942/43690203-0089728e-98bb-11e8-8c0e-7774fb1b83e6.png)
+![image](https://user-images.githubusercontent.com/30221942/43709281-3f430146-9921-11e8-9152-d650459c87ad.png)
 ### 2. Graphics Techniques: Projects in this part is for demostaring some graphcis techniques(lighting, deffered shading...)
 
 BRDF : Use Physics Basic Rendering to lit the scene and demostrate how different material looks like
