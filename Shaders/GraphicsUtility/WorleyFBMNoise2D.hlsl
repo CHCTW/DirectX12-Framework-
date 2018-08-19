@@ -6,6 +6,7 @@ cbuffer noiseconsts : register(b0)
     float time;
     float2 offset;
     uint reverse;
+    int octave;
 };
 globallycoherent RWTexture2D<float> NoiseTexture : register(u0);
 
@@ -28,17 +29,25 @@ void CSMain(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID, uint3 
         float2 rst = float2(0.5f, 0.5f) - st;
 
         st.x *= fdim.x / fdim.y;
-        st *= scale;
-        rst *= scale;
-        //st += float2(scale / 2.0f, scale / 2.0f);
-       // st = fmod(st, float(scale));
 
-        float mindist = 1.0f;
+        float total = 0.0f;
+        uint r = reverse;
+        float totalweight = 1.0f;
+        float currentweight = 1.0f;
+        float currentscale = scale;
+        for (int i = 0; i < octave; ++i)
+        {
+        
+            float2 cst = st * currentscale;
+            total += worleynoise2d(cst, time, r) * currentweight;
+            totalweight += currentweight;
+            currentweight *= 0.5f;
+            currentscale *= 2.0f;
 
-
-        NoiseTexture[id.xy] = worleynoise2d(st, time, reverse);
+        }
+        total /= totalweight;
+        NoiseTexture[id.xy] = total;
         
     }
-
     
 }

@@ -32,26 +32,25 @@ void CSMain(uint3 id : SV_DispatchThreadID, uint3 tid : SV_GroupThreadID, uint3 
         float r = repeatvalue;
         float total = 0.0f;
         float result = 0.0f;
+        float worley = 0.0f;
         for (int i = 0; i < octaves; ++i)
         {
             result += perlinnoise2d(
         fid.x * f, fid.y * f, seed, r) * v;
             total += v;
+            worley += worleynoise2d(fid * f / 2.0f, seed, 1) * v;
             v *= persistance;
+  
             f *= 2;
             r *= 2;
         }
         result /= total;
-        result *= valuescale;
+        worley /= total;
+        worley = pow(worley, 1.5f);
+        float newresult = (result * 0.4 + worley * 0.6);
         NoiseTexture[id.xy]
-         = result;
+         = newresult * valuescale;
 
-
-     // execellent way to have nice cloud like noise
-    //    NoiseTexture[id.xy]
-    //     = abs(clamp(pow(result, 6) * 64, 0, 1) - 1);
     }
- 
-
     
 }

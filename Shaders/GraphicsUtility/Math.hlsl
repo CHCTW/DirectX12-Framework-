@@ -1,4 +1,4 @@
-void generateNomralizePlane(in float3 points[3],out float4 plane) // winding is important here, please consider the noraml vector for the plane
+void generateNomralizePlane(in float3 points[3], out float4 plane) // winding is important here, please consider the noraml vector for the plane
 {
     float3 vec1 = (points[1] - points[0]);
     float3 vec2 = (points[2] - points[0]);
@@ -20,11 +20,11 @@ void generateUnomralizePlane(in float3 A, in float3 B, in float3 C, out float4 p
 }
 
 
-bool InsidePlane(in float3 testpoint,in float4 plane)
+bool InsidePlane(in float3 testpoint, in float4 plane)
 {
     return (dot(float4(testpoint, 1.0f), plane) >= 0);
 }
-void generateCorner(float4 min, float4 max, out float4 cornor[8], in float4x4 Transform) 
+void generateCorner(float4 min, float4 max, out float4 cornor[8], in float4x4 Transform)
 {
   //  float4 c[8];
     cornor[0] = mul(Transform, float4(max.x, max.y, max.z, 1)); // top-right-back
@@ -37,10 +37,10 @@ void generateCorner(float4 min, float4 max, out float4 cornor[8], in float4x4 Tr
     cornor[7] = mul(Transform, float4(min.x, min.y, min.z, 1));
     //corner = c;
 }
-void generateAlignBox(in float4 cornor[8],out float3 minedge,out float3 maxedge)
+void generateAlignBox(in float4 cornor[8], out float3 minedge, out float3 maxedge)
 {
     minedge = cornor[0].xyz;
-    maxedge= cornor[0].xyz;
+    maxedge = cornor[0].xyz;
     [unroll]
     for (int i = 1; i < 8; ++i)
     {
@@ -49,7 +49,7 @@ void generateAlignBox(in float4 cornor[8],out float3 minedge,out float3 maxedge)
     }
 
 }
-bool AlignBoxisSphereIntsec(in float3 mines,in float3 maxes,in float3 center,in float radius)
+bool AlignBoxisSphereIntsec(in float3 mines, in float3 maxes, in float3 center, in float radius)
 {
     float3 closest = max(mines - center, 0.0) + max(center - maxes, 0.0);
     return (dot(closest, closest) <= radius * radius);
@@ -127,22 +127,22 @@ bool FlatPointInsideTriangle(in float3 A, in float3 B, in float3 C, float3 p)
 
 }
 
-float3 findPojectionPoint(in float4 plane,in float3 p)
+float3 findPojectionPoint(in float4 plane, in float3 p)
 {
     float t = dot(plane, float4(p, 1.0)) / dot(plane.xyz, plane.xyz);
     return p - t * plane.xyz;
 
 }
-inline bool IsSphereTriangleIntersectBackCull(in float3 A, in float3 B, in float3 C,in float3 center,in float radius)
+inline bool IsSphereTriangleIntersectBackCull(in float3 A, in float3 B, in float3 C, in float3 center, in float radius)
 {
-    float4 plane = float4(1.0,1.0,1.0,1.0);
+    float4 plane = float4(1.0, 1.0, 1.0, 1.0);
     generateUnomralizePlane(A, B, C, plane);
     float3 viewdir = center - A;
     bool face = (dot(plane.xyz, viewdir) >= 0.0f);
     float3 projectionpoint = findPojectionPoint(plane, center);
     float3 vec = projectionpoint - center;
     float rsquare = radius * radius;
-    bool intersect =  dot(vec, vec) <= rsquare;
+    bool intersect = dot(vec, vec) <= rsquare;
     vec = A - center; // check all three point, whehter it is inside sphere
     bool inside = dot(vec, vec) <= rsquare;
     vec = B - center;
@@ -150,7 +150,7 @@ inline bool IsSphereTriangleIntersectBackCull(in float3 A, in float3 B, in float
     vec = C - center;
     inside = inside || dot(vec, vec) <= rsquare;
     bool intri = FlatPointInsideTriangle(A, B, C, projectionpoint); // check whetbher porjection point is in triangle
-    return face && (inside || (intri && intersect)); 
+    return face && (inside || (intri && intersect));
 
 }
 #define MAXRADIUS 50
@@ -165,7 +165,7 @@ struct GaussionData
 
     uint radius;
     float3 padding;
-    float4 weight[(MAXRADIUS * 2 + 1+3)/4];
+    float4 weight[(MAXRADIUS * 2 + 1 + 3) / 4];
 };
 
 // a random 2d function from https://thebookofshaders.com/12/ 
@@ -175,18 +175,20 @@ float2 random2(float2 p)
 }
 
 // functions for perlin noise from http://flafla2.github.io/2014/08/09/perlinnoise.html
-static int permutation[512] = { 151,160,137,91,90,15,					// Hash lookup table as defined by Ken Perlin.  This is a randomly
-		131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,8,99,37,240,21,10,23,	// arranged array of all numbers from 0-255 inclusive.
-		190, 6,148,247,120,234,75,0,26,197,62,94,252,219,203,117,35,11,32,57,177,33,
-		88,237,149,56,87,174,20,125,136,171,168, 68,175,74,165,71,134,139,48,27,166,
-		77,146,158,231,83,111,229,122,60,211,133,230,220,105,92,41,55,46,245,40,244,
-		102,143,54, 65,25,63,161, 1,216,80,73,209,76,132,187,208, 89,18,169,200,196,
-		135,130,116,188,159,86,164,100,109,198,173,186, 3,64,52,217,226,250,124,123,
-		5,202,38,147,118,126,255,82,85,212,207,206,59,227,47,16,58,17,182,189,28,42,
-		223,183,170,213,119,248,152, 2,44,154,163, 70,221,153,101,155,167, 43,172,9,
-		129,22,39,253, 19,98,108,110,79,113,224,232,178,185, 112,104,218,246,97,228,
-		251,34,242,193,238,210,144,12,191,179,162,241, 81,51,145,235,249,14,239,107,
-		49,192,214, 31,181,199,106,157,184, 84,204,176,115,121,50,45,127, 4,150,254,
+static int permutation[512] =
+{
+    151, 160, 137, 91, 90, 15, // Hash lookup table as defined by Ken Perlin.  This is a randomly
+		131, 13, 201, 95, 96, 53, 194, 233, 7, 225, 140, 36, 103, 30, 69, 142, 8, 99, 37, 240, 21, 10, 23, // arranged array of all numbers from 0-255 inclusive.
+		190, 6, 148, 247, 120, 234, 75, 0, 26, 197, 62, 94, 252, 219, 203, 117, 35, 11, 32, 57, 177, 33,
+		88, 237, 149, 56, 87, 174, 20, 125, 136, 171, 168, 68, 175, 74, 165, 71, 134, 139, 48, 27, 166,
+		77, 146, 158, 231, 83, 111, 229, 122, 60, 211, 133, 230, 220, 105, 92, 41, 55, 46, 245, 40, 244,
+		102, 143, 54, 65, 25, 63, 161, 1, 216, 80, 73, 209, 76, 132, 187, 208, 89, 18, 169, 200, 196,
+		135, 130, 116, 188, 159, 86, 164, 100, 109, 198, 173, 186, 3, 64, 52, 217, 226, 250, 124, 123,
+		5, 202, 38, 147, 118, 126, 255, 82, 85, 212, 207, 206, 59, 227, 47, 16, 58, 17, 182, 189, 28, 42,
+		223, 183, 170, 213, 119, 248, 152, 2, 44, 154, 163, 70, 221, 153, 101, 155, 167, 43, 172, 9,
+		129, 22, 39, 253, 19, 98, 108, 110, 79, 113, 224, 232, 178, 185, 112, 104, 218, 246, 97, 228,
+		251, 34, 242, 193, 238, 210, 144, 12, 191, 179, 162, 241, 81, 51, 145, 235, 249, 14, 239, 107,
+		49, 192, 214, 31, 181, 199, 106, 157, 184, 84, 204, 176, 115, 121, 50, 45, 127, 4, 150, 254,
 		138, 236, 205, 93, 222, 114, 67, 29, 24, 72, 243, 141, 128, 195, 78, 66, 215, 61, 156, 180, 151, 160, 137, 91, 90, 15, // Hash lookup table as defined by Ken Perlin.  This is a randomly
 		131, 13, 201, 95, 96, 53, 194, 233, 7, 225, 140, 36, 103, 30, 69, 142, 8, 99, 37, 240, 21, 10, 23, // arranged array of all numbers from 0-255 inclusive.
 		190, 6, 148, 247, 120, 234, 75, 0, 26, 197, 62, 94, 252, 219, 203, 117, 35, 11, 32, 57, 177, 33,
@@ -201,22 +203,22 @@ static int permutation[512] = { 151,160,137,91,90,15,					// Hash lookup table a
 		49, 192, 214, 31, 181, 199, 106, 157, 184, 84, 204, 176, 115, 121, 50, 45, 127, 4, 150, 254,
 		138, 236, 205, 93, 222, 114, 67, 29, 24, 72, 243, 141, 128, 195, 78, 66, 215, 61, 156, 180
 };
-float gradient(int hashnumber,float x, float y,float z)
+float gradient(int hashnumber, float x, float y, float z)
 {
     int hash = hashnumber & 15;
     float u;
-    if (hash<8)
+    if (hash < 8)
         u = x;
     else
         u = y;
     float v;
-    if (hash<4)
+    if (hash < 4)
         v = y;
-    else if (hash==12||hash==14)
+    else if (hash == 12 || hash == 14)
         v = x;
     else
         v = z;
-    if(hash & 1!=0)
+    if (hash & 1 != 0)
         u = -u;
     if (hash & 2 != 0)
         v = -v;
@@ -227,15 +229,15 @@ float fade(float t)
 {
     return t * t * t * (t * (t * 6 - 15) + 10);
 }
-float lerpforfrac(float a, float b,float x)
+float lerpforfrac(float a, float b, float x)
 {
     return a + x * (b - a);
 }
-float repeatinc(float x,int repeat)
+float repeatinc(float x, int repeat)
 {
-    float inc = x+1;
+    float inc = x + 1;
     if (repeat > 0)
-        inc = fmod(inc, (float)repeat);
+        inc = fmod(inc, (float) repeat);
     return inc;
 }
 float perlinnoise(float x, float y, float z, int repeat)
@@ -243,11 +245,11 @@ float perlinnoise(float x, float y, float z, int repeat)
     float rx = x;
     float ry = y;
     float rz = z;
-    if (repeat>0)
+    if (repeat > 0)
     {
-        rx = fmod(rx, (float)repeat);
-        ry = fmod(ry, (float)repeat);
-        rz = fmod(rz, (float)repeat);
+        rx = fmod(rx, (float) repeat);
+        ry = fmod(ry, (float) repeat);
+        rz = fmod(rz, (float) repeat);
     }
     int xi = int(floor(rx)) & 255;
     int yi = int(floor(ry)) & 255;
@@ -260,8 +262,8 @@ float perlinnoise(float x, float y, float z, int repeat)
     float w = fade(zf);
     int aaa, aba, aab, abb, baa, bba, bab, bbb;
     aaa = permutation[permutation[permutation[xi] + yi] + zi];
-    aba = permutation[permutation[permutation[xi] + repeatinc(yi,repeat)] + zi];
-    aab = permutation[permutation[permutation[xi] + yi] + repeatinc(zi,repeat)];
+    aba = permutation[permutation[permutation[xi] + repeatinc(yi, repeat)] + zi];
+    aab = permutation[permutation[permutation[xi] + yi] + repeatinc(zi, repeat)];
     abb = permutation[permutation[permutation[xi] + repeatinc(yi, repeat)] + repeatinc(zi, repeat)];
     baa = permutation[permutation[permutation[repeatinc(xi, repeat)] + yi] + zi];
     bba = permutation[permutation[permutation[repeatinc(xi, repeat)] + repeatinc(yi, repeat)] + zi];
@@ -329,4 +331,38 @@ float perlinnoise2d(float x, float y, float z, int repeat)
 		          	u);
     y2 = lerpforfrac(x1, x2, v);
     return (lerpforfrac(y1, y2, w) + 1.0f) / 2.0f;
+}
+
+
+float worleynoise2d(float2 st, float t, uint isreverse)
+{
+    
+    float mindist = 1.0f;
+
+        // i_st from 0 ~ scale should be int
+        
+    float2 i_st = floor(st);
+    float2 f_st = frac(st);
+ 
+
+
+    for (int y = -1; y <= 1; y++)
+    {
+        for (int x = -1; x <= 1; x++)
+        {
+            float2 neighbor = float2(float(x), float(y));
+            float2 p = random2(i_st + neighbor);
+            p = 0.5 + 0.5 * sin(t + 6.2831 * p);
+            float2 diff = neighbor + p - (f_st);
+             
+            mindist = min(mindist, length(diff));
+          
+        }
+    }
+
+    if (isreverse == 0)
+        return mindist;
+    else
+        return pow(1.0f - mindist, 1.0f);
+    
 }

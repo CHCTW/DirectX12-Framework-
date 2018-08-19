@@ -183,12 +183,15 @@ void update()
 	cmdlist.bindDescriptorHeaps(&srvheap, &samplerheap);
 
 	cmdlist.resourceTransition(NoiseTexture2D, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, true);
-//	noiseGenerator.recordPureGenerateWorleyNoise2D(cmdlist, NoiseTexture2D,false,5, animatetime);
+//	noiseGenerator.recordPureGenerateWorleyNoise2D(cmdlist, NoiseTexture2D,false,10, animatetime*0.1f);
+
+//	noiseGenerator.recordPureGenerateWorleyFBMNoise2D(cmdlist, NoiseTexture2D, true, 4, animatetime*0.1f, 5);
+//	noiseGenerator.recordPureGeneratePerlinNoise2D(cmdlist, NoiseTexture2D,8, animatetime*0.1,1.0,8);
+
+//	noiseGenerator.recordPureGenerateOctaveNoise2D(cmdlist, NoiseTexture2D, 16,4,0.5f, animatetime*0.05,1.5f,8);
 
 
-	//noiseGenerator.recordPureGeneratePerlinNoise2D(cmdlist, NoiseTexture2D,4, animatetime*0.1,1.0,4);
-
-	noiseGenerator.recordPureGenerateOctaveNoise2D(cmdlist, NoiseTexture2D, 8,8,0.6, animatetime*0.2,1.0f,8, animatetime*0.1);
+	noiseGenerator.recordPureGeneratePerlinWorleyNoise2D(cmdlist, NoiseTexture2D, 16, 4, 0.5f, animatetime*0.1, 1.5f, 8);
 
 	cmdlist.resourceTransition(NoiseTexture2D, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, true);
 

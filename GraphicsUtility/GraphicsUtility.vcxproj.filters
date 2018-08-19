@@ -148,5 +148,11 @@
     <FxCompile Include="..\Shaders\GraphicsUtility\OctaveNoise2D.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
+    <FxCompile Include="..\Shaders\GraphicsUtility\WorleyFBMNoise2D.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Shaders\GraphicsUtility\PerlinWorleyNoise2D.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
