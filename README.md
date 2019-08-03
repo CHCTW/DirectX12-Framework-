@@ -5,7 +5,8 @@ A framework for learning DirectX12 and demonstrate graphics techniques
 
 ## Some To do Topics:
 ### Unit Tests:
-    GUI : Intergrate with IMGUI
+    Add protobuf to define pipeline setting
+    Add mutilthread asset loading
     Refine Occulusion Culling : Should use reporjection from last frame and depth buffer to make the scene more stable
     Texture Output
     Compress Texture load
