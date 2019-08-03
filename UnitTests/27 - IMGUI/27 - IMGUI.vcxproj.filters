@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="IMGUI.cpp">
+    <ClCompile Include="..\src\IMGUI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
