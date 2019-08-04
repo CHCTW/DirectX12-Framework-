@@ -17,6 +17,9 @@
 #include <chrono>
 #include <random>
 #include <array>
+#include "imgui/imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_dx12.h"
 using namespace std;
 Render render;
 static uint32_t swapChainCount = 3;
@@ -36,7 +39,7 @@ Scissor scissor;
 DescriptorHeap srvheap;
 DescriptorHeap rtvheap;
 DescriptorHeap dsvheap;
-
+DescriptorHeap imgui_srvheap;
 ShaderSet shaderset;
 Assimp::Importer import;
 SpecCamera camera;
@@ -146,7 +149,7 @@ std::default_random_engine generator(3);
 std::uniform_real_distribution<float> distributionXZ(-50.0, 50.0);
 std::uniform_real_distribution<float> distributionY(5.0, 100.0f);
 std::uniform_real_distribution<float> distributionintensity(100, 1500);
-std::uniform_real_distribution<float> distributionradius(20.0, 20.0);;
+std::uniform_real_distribution<float> distributionradius(20.0, 20.0);
 std::array<double, 2> intervals{ 0.0, 1.0 };
 std::array<float, 2> weights{ 1500 , 1500.0 };
 std::piecewise_linear_distribution<double>
@@ -213,6 +216,18 @@ void initializeRender()
 	srvheap.ininitialize(render.mDevice, 1);
 	rtvheap.ininitialize(render.mDevice, 1, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	dsvheap.ininitialize(render.mDevice, 1, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+	imgui_srvheap.ininitialize(render.mDevice, 100);
+
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGui::StyleColorsDark();
+	// Setup Platform/Renderer bindings
+	ImGui_ImplGlfw_InitForOpenGL(windows.mWindow, true);
+	ImGui_ImplDX12_Init(render.mDevice, swapChainCount,
+		retformat.mRenderTargetFormat[0],
+		imgui_srvheap.getHandles(SRV, 0).Cpu,
+		imgui_srvheap.getHandles(SRV, 0).Gpu);
 
 	DXGI_FORMAT formats[3];
 	formats[0] = DXGI_FORMAT_R16G16_FLOAT; // normal
@@ -967,6 +982,10 @@ void loadAsset()
 
 void releaseRender()
 {
+	ImGui_ImplDX12_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
+	imgui_srvheap.release();
 	
 	render.waitFenceIncreament(fences[0]);
 	render.waitFenceIncreament(fences[1]);
@@ -1069,6 +1088,17 @@ void update()
 	gamecamera.updateViewProj();
 //	cameraBuffer.updateBufferfromCpu(gamecamera.getMatrix(), sizeof(ViewProjection));
 	frameIndex = render.getCurrentSwapChainIndex();
+
+	ImGui_ImplDX12_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
+
+	{
+
+		ImGui::Begin("Multiple Point light shadow map: ");                      
+		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		ImGui::End();
+	}
 
 	render.waitFence(fences[frameIndex]);
 	if (fences[frameIndex].finished())
@@ -1239,7 +1269,9 @@ void update()
 	cmdlist[frameIndex].bindGraphicsRootSigature(combinesig);
 	cmdlist[frameIndex].drawInstance(3, 1, 0, 0);
 
-
+	cmdlist[frameIndex].bindDescriptorHeaps(&imgui_srvheap);
+	ImGui::Render();
+	ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), cmdlist[frameIndex].mDx12CommandList);
 	cmdlist[frameIndex].swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT,true);
 
 
