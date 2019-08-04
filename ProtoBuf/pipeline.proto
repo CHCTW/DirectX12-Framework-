@@ -1,0 +1,23 @@
+syntax = "proto2";
+package Config;
+message Pipeline{
+	message Shader{
+		required string path = 1;
+		required string entry_point = 2;
+		enum Type{
+			VERTREX= 0;
+			PIXEL= 1;
+			COMPUTE= 2;
+			GEOMETRY= 3;
+			TESSELATION_DOMAIN= 4;
+			TESSELATION_HULL= 5;
+		}
+		required Type type = 3;
+	}
+	enum Type{
+		GRAPHICS = 0;
+		COMPUTE  = 1;
+	}
+	required Type type = 1;
+	repeated Shader shaders = 2;
+}

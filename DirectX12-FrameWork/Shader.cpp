@@ -3,13 +3,14 @@
 #include <d3dcompiler.h>
 #include <cwchar>
 #include <vector>
-
 Shader::Shader():mType(SHADERTYPE_COUNT), mShader(NULL)
 {
 
 }
 bool Shader::load(char const* filepath, char const * entryPoint, ShaderType type)
 {
+	mFilePath = filepath;
+	mEntryPoint = entryPoint;
 	std::wstring strins;
 	strins.resize(256);
 	WCHAR wsz[256];
@@ -22,7 +23,6 @@ bool Shader::load(char const* filepath, char const * entryPoint, ShaderType type
 	UINT compileFlags = D3DCOMPILE_ENABLE_UNBOUNDED_DESCRIPTOR_TABLES| D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR;
 #endif
 	HRESULT hr = D3DCompileFromFile(wsz, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, entryPoint, Targetchars[type], compileFlags, 0, &mShader, &error);
-	
 	if (error)
 	{
 		OutputDebugStringA(reinterpret_cast<const char*>(error->GetBufferPointer()));
@@ -113,3 +113,4 @@ std::vector<D3D12_INPUT_ELEMENT_DESC> Shader::getInputElements(VertexInputLayOut
 
 	return inputs;
 }
+
