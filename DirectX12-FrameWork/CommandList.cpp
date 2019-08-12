@@ -89,7 +89,7 @@ void CommandList::bindPipeline(Pipeline& pipeline)
 //	else
 //		res.mState[subresource] = stataf;
 //}
-void CommandList::UAVWait(Resource& res, bool barrier)
+void CommandList::UAVWait(GPUResource& res, bool barrier)
 {
 	D3D12_RESOURCE_BARRIER wait;
 	wait.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
@@ -102,7 +102,7 @@ void CommandList::UAVWait(Resource& res, bool barrier)
 	}
 
 }
-void CommandList::resourceTransition(Resource& res, D3D12_RESOURCE_STATES stataf, bool barrier, UINT subresource,D3D12_RESOURCE_BARRIER_FLAGS flags)
+void CommandList::resourceTransition(GPUResource& res, D3D12_RESOURCE_STATES stataf, bool barrier, UINT subresource,D3D12_RESOURCE_BARRIER_FLAGS flags)
 {
 	if (subresource == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)
 	{
@@ -453,7 +453,7 @@ void CommandList::setTopolgy(D3D_PRIMITIVE_TOPOLOGY topo)
 {
 	mDx12CommandList->IASetPrimitiveTopology(topo);
 }
-bool CommandList::copyResource(Resource &src, Resource &desc)
+bool CommandList::copyResource(GPUResource&src, GPUResource&desc)
 {
 	mDx12CommandList->CopyResource(desc.mResource,src.mResource);
 	return true;
@@ -649,7 +649,7 @@ void CommandList::bindComputeSampler(UINT rootindex, Sampler& sampler)
 	}
 	mDx12CommandList->SetComputeRootDescriptorTable(rootindex, sampler.mSampler.Gpu);
 }
-void CommandList::bindGraphicsResource(UINT rootindex, Resource & res)
+void CommandList::bindGraphicsResource(UINT rootindex, GPUResource& res)
 {
 	if (mCurrentBindGraphicsRootSig == nullptr)
 	{
@@ -657,7 +657,7 @@ void CommandList::bindGraphicsResource(UINT rootindex, Resource & res)
 	}
 	bindGraphicsResource(rootindex, res, mCurrentBindGraphicsRootSig->mParameters[rootindex].mUAVMipLevel);
 }
-void CommandList::bindGraphicsResource(UINT rootindex, Resource& res, UINT uavmiplevel)
+void CommandList::bindGraphicsResource(UINT rootindex, GPUResource& res, UINT uavmiplevel)
 {
 	if (mCurrentBindGraphicsRootSig == nullptr)
 	{
@@ -796,7 +796,7 @@ void CommandList::bindComputeRootSigature(RootSignature& rootsig, bool bindresou
 		}
 	}
 }
-void CommandList::bindComputeResource(UINT rootindex, Resource& res)
+void CommandList::bindComputeResource(UINT rootindex, GPUResource& res)
 {
 	if (mCurrentBindComputeRootSig == nullptr)
 	{
@@ -804,7 +804,7 @@ void CommandList::bindComputeResource(UINT rootindex, Resource& res)
 	}
 	bindComputeResource(rootindex, res, mCurrentBindComputeRootSig->mParameters[rootindex].mUAVMipLevel);
 }
-void CommandList::bindComputeResource(UINT rootindex,Resource& res,UINT uavmiplevel)
+void CommandList::bindComputeResource(UINT rootindex, GPUResource& res,UINT uavmiplevel)
 {
 	if(mCurrentBindComputeRootSig==nullptr)
 	{

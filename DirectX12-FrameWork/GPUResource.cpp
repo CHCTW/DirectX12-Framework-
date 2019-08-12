@@ -1,5 +1,5 @@
-#include "Resource.h"
-void Resource::release()
+#include "GPUResource.h"
+void GPUResource::release()
 {
 
 	mRTV.clear();

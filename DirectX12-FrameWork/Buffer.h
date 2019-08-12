@@ -1,10 +1,10 @@
 #pragma once
 #include "d3dx12.h"
 #include "stdafx.h"
-#include "Resource.h"
+#include "GPUResource.h"
 class DescriptorHeap;
 class Render;
-class Buffer :public Resource
+class Buffer :public GPUResource
 {
 public:
 	Buffer();

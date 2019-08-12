@@ -9,7 +9,7 @@ class RootSignature;
 class ViewPort;
 class Scissor;
 class DescriptorHeap;
-class Resource;
+class GPUResource;
 class CommandSignature;
 class QueryHeap;
 class SwapChainBuffer;
@@ -30,10 +30,10 @@ public:
 	bool close();
 	void bindGraphicsRootSigature(RootSignature& rootsig,bool bindresource = true);
 	void bindComputeRootSigature(RootSignature& rootsig, bool bindresource = true);
-	void bindGraphicsResource(UINT rootindex, Resource& res,UINT uavmiplevel);
-	void bindComputeResource(UINT rootindex, Resource& res, UINT uavmiplevel);
-	void bindGraphicsResource(UINT rootindex, Resource& res);
-	void bindComputeResource(UINT rootindex, Resource& res);
+	void bindGraphicsResource(UINT rootindex, GPUResource& res,UINT uavmiplevel);
+	void bindComputeResource(UINT rootindex, GPUResource& res, UINT uavmiplevel);
+	void bindGraphicsResource(UINT rootindex, GPUResource& res);
+	void bindComputeResource(UINT rootindex, GPUResource& res);
 	void bindGraphicsSampler(UINT rootindex, Sampler& sampler);
 	void bindComputeSampler(UINT rootindex, Sampler& sampler);
 
@@ -120,8 +120,8 @@ public:
 	//
 	//void resourceBarrier(Resource& res, D3D12_RESOURCE_STATES statbef, D3D12_RESOURCE_STATES stataf, UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
 	//	D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
-	void UAVWait(Resource& res,bool barrier);
-	void resourceTransition(Resource& res,D3D12_RESOURCE_STATES stataf, bool barrier = false,UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
+	void UAVWait(GPUResource& res,bool barrier);
+	void resourceTransition(GPUResource& res,D3D12_RESOURCE_STATES stataf, bool barrier = false,UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
 		D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
 
 	void swapChainBufferTransition(SwapChainBuffer& res, D3D12_RESOURCE_STATES stataf, bool barrier = false,
@@ -132,7 +132,7 @@ public:
 
 
 	// this metod can only use when these 2 resource are exactly the same, or their format is comptable
-	bool copyResource(Resource &src, Resource &desc);
+	bool copyResource(GPUResource&src, GPUResource&desc);
 
 	bool updateTextureData(DynamicUploadBuffer& upload,Texture& texture, void  const * data, UINT startlevel = 0, UINT levelnum = -1, UINT startslice = 0, UINT slicenum = -1);
 	bool updateTextureData(Texture& texture, void  const * data,UINT startlevel = 0,UINT levelnum = -1 , UINT startslice = 0, UINT slicenum = -1);

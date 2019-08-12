@@ -1,0 +1,66 @@
+#pragma once
+Purpose : get a cpu resource with multithreading support,
+Need: multirhreading, callback, cache also have a ability to discard resource in multithreading way, that is take minimum time to release
+
+1. use json to set up the path for each resource
+  ex: shader: /shader
+      image: Assets/Texture
+	  work thread num: 3
+
+
+2. All resource will be manage via a manager, 
+useage RESOURCE::getImage("name",[&](ResourceHandle& const handle){  ...do some cpu work},immedate or not,relase after or not); 
+RESOURCE::getScene("name",[&](ResourceHandle& const handle){  ...do some gpu work},immedate or not,relase after or not);
+
+
+3. There will be a function that wait for a resource done(include the call back), this should block the main thread
+  RESOURCE.waitImageLoad("name")
+  RESOURCE.waitAllResourceLoad();
+ 
+
+4. Release with multi-thread also
+	RESOURCE.releaseImage("name",[&](){..some other work??},immedate?)
+
+5. Relase all resource in desctuctor
+6. Resouce Manger should be singleton
+/***************************************************************************************************************************************************************/
+
+Design:
+RescourceHandle: A base class, it's easy for storing and for call back
+		A state describe the resource : loaded,loading,unload
+		a private virtual zero function: a funtion to load the resource implmentation this should only called by the RESOURCE work thread
+		ImageHandler : just add image inside it, will add getImage() to get a const && Image 
+		// also a type to indicate the resouce type
+
+Work: a work to store the handle and the callback
+		shared_ptr<Handler> handler // a handler 
+		std::function<void()> callback; // store a captured lambda function
+
+		
+
+ResourceManager:
+	//store the loaded resource 
+	unordered_map<string,shared_ptr<ImageHandler>> ImageCache;
+	unordered_map<string,shared_ptr<SceneHandler>> SceneCache;
+	unordered_map<string,shared_ptr<MeshHandler>> MeshCache;
+	// queue for storing the work when a multithread work join it will first check waiting que is there if yes, 
+	 deque<work> waitingque;
+	 // a help structure to check the work use full path name as key
+	 //deque<work> workingque;
+	 unordered_set<string> checkworkingwork 
+	 //GetIamge() : create a work and a handler for the cache if the clear after callback, this won't store in the cache need to set the state as unload
+	 //             put the work into waiting queue 
+	 
+
+	 // Load() : the thread working what it does:
+				 1.  check the waiting work the state if it's loaded
+						loaded->do call back
+						unloaded->check is it in the workingque : in-->move the work to the back of the waiting queue
+																  out-->put the work name in the workingset,start to work on the loading resource from disk
+		       
+			     2. do the call back,remove from the working set
+				 3. if has clear flag, immedate clear the resource 
+
+
+
+

@@ -3,7 +3,7 @@
 #include "d3dx12.h"
 #include <vector>
 using namespace std;
-class Resource
+class GPUResource
 {
 public:
 	ResourceType mType;
@@ -20,7 +20,7 @@ public:
 
 	D3D12_GPU_VIRTUAL_ADDRESS GpuAddress;
 	void* CpuMapAddress;
-	Resource():mResource(nullptr),mUploadBuffer(nullptr), CpuMapAddress(nullptr)
+	GPUResource():mResource(nullptr),mUploadBuffer(nullptr), CpuMapAddress(nullptr)
 	{
 
 	}

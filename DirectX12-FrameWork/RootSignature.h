@@ -2,7 +2,7 @@
 #include "d3dx12.h"
 #include <vector>
 #include "stdafx.h"
-class Resource;
+class GPUResource;
 
 class Sampler;
 
@@ -28,7 +28,7 @@ struct RootParameter
 	};
 	union
 	{
-		Resource* mResource;
+		GPUResource* mResource;
 		Sampler* mSampler;
 		const void *mConstantData;
 	};

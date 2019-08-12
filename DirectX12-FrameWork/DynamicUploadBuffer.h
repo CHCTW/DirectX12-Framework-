@@ -3,7 +3,6 @@
 #include <vector>
 #include <deque>
 #include <mutex>
-#include "Resource.h"
 using namespace std;
 class Render;
 class CommandList;

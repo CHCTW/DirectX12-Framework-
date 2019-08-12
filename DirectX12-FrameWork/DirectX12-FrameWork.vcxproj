@@ -158,7 +158,7 @@
     <ClInclude Include="RasterizerState.h" />
     <ClInclude Include="Render.h" />
     <ClInclude Include="RenderTarget.h" />
-    <ClInclude Include="Resource.h" />
+    <ClInclude Include="GPUResource.h" />
     <ClInclude Include="RootSignature.h" />
     <ClInclude Include="Sampler.h" />
     <ClInclude Include="Scissor.h" />
@@ -169,7 +169,6 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="ViewPort.h" />
-    <ClInclude Include="VolatileConstantBuffer.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
@@ -190,7 +189,7 @@
     <ClCompile Include="RasterizerState.cpp" />
     <ClCompile Include="Render.cpp" />
     <ClCompile Include="RenderTarget.cpp" />
-    <ClCompile Include="Resource.cpp" />
+    <ClCompile Include="GPUResource.cpp" />
     <ClCompile Include="RootSignature.cpp" />
     <ClCompile Include="Sampler.cpp" />
     <ClCompile Include="Scissor.cpp" />
@@ -204,7 +203,6 @@
     <ClCompile Include="SwapChainBuffer.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="ViewPort.cpp" />
-    <ClCompile Include="VolatileConstantBuffer.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>

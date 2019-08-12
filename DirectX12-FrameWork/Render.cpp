@@ -12,7 +12,7 @@
 
 static Pipeline DownSamplePipeline;
 Render::Render() :mDevice(NULL), mSwapChainAccout(0),
-mDxgiFactory(NULL), mDxgiAdaptor(NULL), mSwapChain(NULL), mSwapChainRenderTarget(NULL)
+mDxgiFactory(NULL), mDxgiAdaptor(NULL), mSwapChain(NULL), mSwapChainRenderTarget(NULL),mDebugLayer(NULL)
 {
 	mCommandQueue[COMMAND_TYPE_GRAPHICS] = nullptr;
 	mCommandQueue[COMMAND_TYPE_COMPUTE] = nullptr;

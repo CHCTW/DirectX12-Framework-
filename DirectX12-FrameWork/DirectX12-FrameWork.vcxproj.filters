@@ -81,9 +81,6 @@
     <ClInclude Include="Buffer.h">
       <Filter>Render\Structers\Resource</Filter>
     </ClInclude>
-    <ClInclude Include="Resource.h">
-      <Filter>Render\Structers\Resource</Filter>
-    </ClInclude>
     <ClInclude Include="Texture.h">
       <Filter>Render\Structers\Resource</Filter>
     </ClInclude>
@@ -120,13 +117,13 @@
     <ClInclude Include="SwapChainBuffer.h">
       <Filter>Render\Structers\Resource</Filter>
     </ClInclude>
-    <ClInclude Include="VolatileConstantBuffer.h">
-      <Filter>Render\Structers\Resource</Filter>
-    </ClInclude>
     <ClInclude Include="DynamicUploadBuffer.h">
       <Filter>Render\Structers\Resource</Filter>
     </ClInclude>
     <ClInclude Include="DynamicConstantBuffer.h">
+      <Filter>Render\Structers\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="GPUResource.h">
       <Filter>Render\Structers\Resource</Filter>
     </ClInclude>
   </ItemGroup>
@@ -167,9 +164,6 @@
     <ClCompile Include="Buffer.cpp">
       <Filter>Render\Structers\Resource</Filter>
     </ClCompile>
-    <ClCompile Include="Resource.cpp">
-      <Filter>Render\Structers\Resource</Filter>
-    </ClCompile>
     <ClCompile Include="Texture.cpp">
       <Filter>Render\Structers\Resource</Filter>
     </ClCompile>
@@ -206,13 +200,13 @@
     <ClCompile Include="SwapChainBuffer.cpp">
       <Filter>Render\Structers\Resource</Filter>
     </ClCompile>
-    <ClCompile Include="VolatileConstantBuffer.cpp">
-      <Filter>Render\Structers\Resource</Filter>
-    </ClCompile>
     <ClCompile Include="DynamicUploadBuffer.cpp">
       <Filter>Render\Structers\Resource</Filter>
     </ClCompile>
     <ClCompile Include="DynamicConstantBuffer.cpp">
+      <Filter>Render\Structers\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="GPUResource.cpp">
       <Filter>Render\Structers\Resource</Filter>
     </ClCompile>
   </ItemGroup>

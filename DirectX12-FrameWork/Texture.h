@@ -1,7 +1,7 @@
 #pragma once
 #include "d3dx12.h"
 #include "stdafx.h"
-#include "Resource.h"
+#include "GPUResource.h"
 #include <iostream>
 
 using namespace std;
@@ -35,7 +35,7 @@ enum TEXTURE_ALL_MIPS_USE
 };
 
 
-class Texture : public Resource
+class Texture : public GPUResource
 {
 public:
 	Texture();
