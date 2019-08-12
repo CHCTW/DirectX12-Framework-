@@ -15,10 +15,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="pipeline.proto">
+    <None Include="protoc.exe">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="protoc.exe">
+    <None Include="pipeline.proto">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>
@@ -28,13 +28,13 @@
     </Text>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="pipeline.pb.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="pipeline.pb.cc">
+    <ClCompile Include="..\include\ProtoBuf\pipeline.pb.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\ProtoBuf\pipeline.pb.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

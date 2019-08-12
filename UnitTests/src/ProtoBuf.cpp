@@ -11,7 +11,6 @@
 #include "imgui/imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_dx12.h"
-#include "pipeline.pb.h"
 #include <google/protobuf/util/json_util.h>
 using namespace std;
 Render render;
@@ -53,7 +52,14 @@ void initializeRender()
 	Config::Pipeline::Shader inputshader;
 	configshader.set_path("Shaders/NoiseTexture/NoiseTexture.hlsl");
 	configshader.set_entry_point("VSMain");
-	configshader.set_type(Config::Pipeline::Shader::Type::Pipeline_Shader_Type_VERTREX);
+	configshader.set_type(Config::Pipeline::Shader::Type::Pipeline_Shader_Type_VERTEX);
+	std::string ouput;
+	google::protobuf::util::MessageToJsonString(configshader, &ouput);
+	cout << ouput << endl;
+
+	Shader test;
+	test.loadFromProto(configshader);
+
 	
 
 	render.initialize();

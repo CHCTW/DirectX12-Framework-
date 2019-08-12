@@ -22,7 +22,11 @@
     <ClCompile Include="..\src\ProtoBuf.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\Shaders\shader.config" />
+    <None Include="..\..\Shaders\shader.config">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\Shaders\shader.json" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

@@ -1,0 +1,5 @@
+{
+  "path": "Shaders/NoiseTexture/NoiseTexture.hlsl",
+  "entry_point": "VSMain",
+  "type": "VERTEX"
+}

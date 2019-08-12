@@ -23,5 +23,8 @@
     <None Include="..\..\Shaders\shader.config">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="..\..\Shaders\shader.json">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -5,7 +5,7 @@ message Pipeline{
 		required string path = 1;
 		required string entry_point = 2;
 		enum Type{
-			VERTREX= 0;
+			VERTEX= 0;
 			PIXEL= 1;
 			COMPUTE= 2;
 			GEOMETRY= 3;

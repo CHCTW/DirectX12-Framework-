@@ -3,11 +3,39 @@
 #include <d3dcompiler.h>
 #include <cwchar>
 #include <vector>
+ShaderType convertFromProtoShaderType(Config::Pipeline::Shader::Type type)
+{
+	ShaderType ret(ShaderType::VS);
+	switch (type)
+	{
+		case Config::Pipeline::Shader::Type::Pipeline_Shader_Type_VERTEX:
+		ret = ShaderType::VS;
+		break;
+	case Config::Pipeline::Shader::Type::Pipeline_Shader_Type_PIXEL:
+		ret = ShaderType::PS;
+		break;
+	case Config::Pipeline::Shader::Type::Pipeline_Shader_Type_GEOMETRY:
+		ret = ShaderType::GS;
+		break;
+	case Config::Pipeline::Shader::Type::Pipeline_Shader_Type_COMPUTE:
+		ret = ShaderType::CS;
+		break;
+	case Config::Pipeline::Shader::Type::Pipeline_Shader_Type_TESSELATION_DOMAIN:
+		ret = ShaderType::DS;
+		break;
+	case Config::Pipeline::Shader::Type::Pipeline_Shader_Type_TESSELATION_HULL:
+		ret = ShaderType::HS;
+		break;
+	default:
+		break;
+	}
+	return ret;
+}
 Shader::Shader():mType(SHADERTYPE_COUNT), mShader(NULL)
 {
 
 }
-bool Shader::load(char const* filepath, char const * entryPoint, ShaderType type)
+bool Shader::load(std::string const&& filepath, std::string const&& entryPoint, ShaderType type)
 {
 	mFilePath = filepath;
 	mEntryPoint = entryPoint;
@@ -15,14 +43,14 @@ bool Shader::load(char const* filepath, char const * entryPoint, ShaderType type
 	strins.resize(256);
 	WCHAR wsz[256];
 	ID3DBlob* error;
-	swprintf(wsz,256, L"%S", filepath);
+	swprintf(wsz,256, L"%S", filepath.c_str());
 #if defined(_DEBUG)
 	// Enable better shader debugging with the graphics debugging tools.
 	UINT compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION| D3DCOMPILE_ENABLE_UNBOUNDED_DESCRIPTOR_TABLES| D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR;
 #else
 	UINT compileFlags = D3DCOMPILE_ENABLE_UNBOUNDED_DESCRIPTOR_TABLES| D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR;
 #endif
-	HRESULT hr = D3DCompileFromFile(wsz, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, entryPoint, Targetchars[type], compileFlags, 0, &mShader, &error);
+	HRESULT hr = D3DCompileFromFile(wsz, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, entryPoint.c_str(), Targetchars[type], compileFlags, 0, &mShader, &error);
 	if (error)
 	{
 		OutputDebugStringA(reinterpret_cast<const char*>(error->GetBufferPointer()));
@@ -113,4 +141,8 @@ std::vector<D3D12_INPUT_ELEMENT_DESC> Shader::getInputElements(VertexInputLayOut
 
 	return inputs;
 }
-
+bool Shader::load_from_proto_(const Config::Pipeline::Shader&& shader)
+{
+	//return this->load_(shader.path(), shader.entry_point(), convertFromProtoShaderType(shader.type()));
+	return true;
+}
