@@ -1,16 +1,18 @@
-#pragma once
 Purpose : get a cpu resource with multithreading support,
 Need: multirhreading, callback, cache also have a ability to discard resource in multithreading way, that is take minimum time to release
+
+
 
 1. use json to set up the path for each resource
   ex: shader: /shader
       image: Assets/Texture
-	  work thread num: 3
+	  image work thread num: 3
+	  shader work thread num : 1
+	  scene work trhread num : 3
 
-
-2. All resource will be manage via a manager, 
-useage RESOURCE::getImage("name",[&](ResourceHandle& const handle){  ...do some cpu work},immedate or not,relase after or not); 
-RESOURCE::getScene("name",[&](ResourceHandle& const handle){  ...do some gpu work},immedate or not,relase after or not);
+2. All resource will be manage via a manager, will return a weak_ptr<Resource> should use loaded or not check first
+useage shared_ptr<Image> RESOURCE::getImage("name",[&](Imgage& const iamge){  ...do some cpu work},immedate or not,relase after or not); 
+RESOURCE::getScene("name",[&](Scene& const scene){  ...do some gpu work},immedate or not,relase after or not);
 
 
 3. There will be a function that wait for a resource done(include the call back), this should block the main thread
@@ -20,24 +22,150 @@ RESOURCE::getScene("name",[&](ResourceHandle& const handle){  ...do some gpu wor
 
 4. Release with multi-thread also
 	RESOURCE.releaseImage("name",[&](){..some other work??},immedate?)
+	// or
+	RESOURCE.releaseImage(shared_ptr<Resource> iamge,[&](){..some other work??},immedate?)
 
 5. Relase all resource in desctuctor
 6. Resouce Manger should be singleton
 /***************************************************************************************************************************************************************/
 
 Design:
-RescourceHandle: A base class, it's easy for storing and for call back
-		A state describe the resource : loaded,loading,unload
-		a private virtual zero function: a funtion to load the resource implmentation this should only called by the RESOURCE work thread
-		ImageHandler : just add image inside it, will add getImage() to get a const && Image 
-		// also a type to indicate the resouce type
 
-Work: a work to store the handle and the callback
-		shared_ptr<Handler> handler // a handler 
-		std::function<void()> callback; // store a captured lambda function
+Rescource: A base class, it's easy for storing 
+		A string to store the full path name: "C;/assetes/image/brick.jpg"....
+		An atomic state describe the resource : loaded,loading,unload
+		A bool for ready or not
+		A enum to state the real type of the resource, image, shader, mesh......
+		A zero function called load() : this is thre real part for loading implmentation,
+		A virtual function called relase() : this is the real part for realease, if use std container well, this might be empty funcrtion all the time,
 
-		
 
+
+Template
+<Type T>
+Work: a work to store the resouce and the callback
+		sting filename;
+		shared_ptr<T> resource;
+		bool cache;
+		std::function<void(T const & t)> callback; // store a captured lambda function
+
+
+
+
+ For Resource Manager we are going to divide into different manager for differnt type of resource:
+template<Type t>
+Manager(int numofthread,string loadpath);
+
+Data : 
+	unordered_map<string,shared_ptr<T>> ResourceCache;// queue for storing the work 
+
+list<work<T>> waitingque;
+           unorderd_set<string> unloadque;
+	unorderd_set<string> loadingque;// a set for storing the resource that is loading	
+	std::mutex work_mutex; // a mutex to protect when take a work from list 
+	std::mutex resrouce_mutex; 
+            atomic<bool> running;  
+Method:
+            shared_ptr<T>  getReource(std::string filename,std::function<void(T const &t)> = {},bool immedate = false,bool cache =true) // most used method get resrouce, can get a reource immediately but won't・ if not using immediate, probably won・t have the data 
+First check whether the resource already cached( maybe unload or loading
+if(yes) get the Resource
+if(no)  create a new Resource and 
+if(!immediate)add filename to unloadque
+Call addWork(filename,callback,resource,immedate,cache)
+Return resource;
+ 
+	 void addWork(std::string filename,std::function<void(T const &t),,shared_ptr<T> resource,bool immedate,bool cache)// add work funciton, use default to create an empty std::function 
+	 
+create Work work with file name and function point, cache
+	 if immedate : just execute LoadResource(Work work)\
+	 else put the work into list<work> (need to use work_mutex)
+void ResrouceLoading(shared_ptr<T> resource, cache)  // real loading part, loading and remove from loadingque if needed
+{
+               //  can add try catch here
+	   Try
+   {
+     resource->load();
+    }
+    cach(e)
+    {
+      // if fail just set state to fail ,won・t remove it
+        cout<<filenam resource fail; 
+        if(cache)
+        {
+  resrouce_mutexlock gruard
+   remove filename from loadingque
+                     }   
+          resource->state = fail;
+        return;
+    }
+    // done, success set the state
+    resource->state = loaded;
+  if(cache)
+  {
+        resrouce_mutexlock gruard
+        remove filename from loadingque 
+  }   
+}
+
+void ExectueWork(work)// real part to execute the work, 
+Check is the work・s  cache 
+if(yes)  got for check the loadingque and  unloadque 
+  
+         isloading = true    
+          {
+                  work_mutex lock gruard
+                     if(find filename in unloadque)
+          {
+		isloading = false
+		Remove from unloadque;
+		loadingque.insert(filename);
+                       Needtoload  = true;
+          }
+          Else if(not  find filename in loadingqueue)
+		     isloading = false
+          }
+      // wait if there is already one loading
+      while(isloading )
+{
+	{
+	   resrouce_mutexlock gruard
+	   if(not  find filename in loadingqueue)
+	 isloading = false
+}
+sleep(100 ms) // this can be adjust
+}
+     if(Needtoload ) ResrouceLoading(resource, cache)
+Do the call back     work->callback(resource)
+If not cached since shared_ptr will auto run destructor probably don・t need to do anything
+ // the loop function for execute the work, should be used by the async thread will call the ExectueWork()
+{
+          Bool needtoWork;
+           while(running.load())
+{
+      {
+
+        Work temp;
+       {
+             Work_mutex lock guard
+             if(!waitingque.empty())
+{
+   Need_work = true;
+    temp = waitingque.front();
+    waitingque.pop_front();
+            }
+                   }
+                 if( Need_work )
+                          ExectueWork(temp)
+                 Else   // need think about conidtion wait 
+                          sleep(100ms);
+}
+}
+
+
+
+
+/****************************************************************************************/
+// last part of the resource manager , it's a gather of resource manager
 ResourceManager:
 	//store the loaded resource 
 	unordered_map<string,shared_ptr<ImageHandler>> ImageCache;
@@ -52,7 +180,7 @@ ResourceManager:
 	 //             put the work into waiting queue 
 	 
 
-	 // Load() : the thread working what it does:
+	 // Load() : the working thread what it does:
 				 1.  check the waiting work the state if it's loaded
 						loaded->do call back
 						unloaded->check is it in the workingque : in-->move the work to the back of the waiting queue
@@ -60,6 +188,7 @@ ResourceManager:
 		       
 			     2. do the call back,remove from the working set
 				 3. if has clear flag, immedate clear the resource 
+
 
 
 

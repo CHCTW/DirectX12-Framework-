@@ -31,9 +31,18 @@
     <Filter Include="Render\Shader">
       <UniqueIdentifier>{de1fd3b5-1c8f-4c2c-8b46-be45038cf4af}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ResourceManager">
+      <UniqueIdentifier>{ef571081-c289-46e8-9704-7401d0abbac8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ResourceManager\CPUResource">
+      <UniqueIdentifier>{4f3603f7-1f06-4f8c-80ea-7bb8f8586558}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
+    <Text Include="resource_load_thought.txt">
+      <Filter>Systems</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">

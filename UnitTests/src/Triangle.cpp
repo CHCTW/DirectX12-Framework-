@@ -152,7 +152,7 @@ void update()
 	cmdlist.swapChainBufferTransition(render.mSwapChainRenderTarget[frameIndex], D3D12_RESOURCE_STATE_PRESENT,true);
 	cmdlist.close();
 	render.executeCommands(&cmdlist);
-	render.present();
+        render.present();
 	render.insertSignalFence(fence);
 	render.waitFenceIncreament(fence);
 }

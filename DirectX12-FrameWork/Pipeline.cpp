@@ -35,7 +35,7 @@ bool Pipeline::createGraphicsPipeline(ID3D12Device* device, RootSignature& roots
 		psoDesc.HS = CD3DX12_SHADER_BYTECODE(shaderset.shaders[HS].mShader);
 	psoDesc.pRootSignature = rootsig.mRootSignature;
 	psoDesc.RasterizerState = raster.mRasterizerState;
-	psoDesc.BlendState = blendstate.mBlendState;
+ 	psoDesc.BlendState = blendstate.mBlendState;
 	psoDesc.SampleMask = UINT_MAX;
 	psoDesc.PrimitiveTopologyType = topype;
 	psoDesc.NumRenderTargets = format.mNumofRenderTargets;
@@ -57,7 +57,6 @@ bool Pipeline::createGraphicsPipeline(ID3D12Device* device, RootSignature& roots
 
 
 	psoDesc.SampleDesc.Count = 1;
-
 
 
 

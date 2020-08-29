@@ -193,6 +193,8 @@ bool Render::createSwapChain(Window& window, UINT  count, DXGI_FORMAT format)
 	rtvdesc.Texture2D.MipSlice = 0;
 	rtvdesc.Texture2D.PlaneSlice = 0;
 
+
+
 	for (UINT i = 0; i < count; ++i)
 	{
 		/*mSwapChainRenderTarget[i].mWidth = window.mWidth;

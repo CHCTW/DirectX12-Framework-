@@ -474,7 +474,7 @@ void Texture::addUnorderedAccessView(DescriptorHeap& heap)
 	uavDesc.Texture2D.PlaneSlice = 0;
 	mUAV.push_back (heap.addResource(UAV, mResource, &uavDesc, nullptr));
 }
-
+ 
 void Texture::CreateTexture(Render& render, DescriptorHeap& srvuavheap, DXGI_FORMAT format, UINT width, UINT height, UINT arraySize, UINT mipLevel,
 	TEXTURE_SRV_TYPE srvtype, TEXTURE_USAGE usage, TEXTURE_ALL_MIPS_USE mipuse,
 	ClearValue& clear, D3D12_RESOURCE_STATES state)
